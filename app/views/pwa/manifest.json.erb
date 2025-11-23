@@ -1,5 +1,5 @@
 {
-  "name": "Villagers",
+  "name": "<%= Village.setup_complete? ? Village.first&.name : "Villagers" %>",
   "icons": [
     {
       "src": "/icon.png",
@@ -16,7 +16,7 @@
   "start_url": "/",
   "display": "standalone",
   "scope": "/",
-  "description": "Villagers.",
+  "description": "<%= Village.setup_complete? ? "#{Village.first&.name} volunteer management" : "Villagers volunteer management" %>.",
   "theme_color": "red",
   "background_color": "red"
 }
