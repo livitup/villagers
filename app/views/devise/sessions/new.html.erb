@@ -1,9 +1,9 @@
 <div class="container mt-5">
   <div class="row justify-content-center">
-    <div class="col-md-6">
-      <div class="card">
-        <div class="card-header">
-          <h2 class="h3 mb-0">Log in</h2>
+    <div class="col-md-5 col-lg-4">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0 text-center">Log in</h2>
         </div>
         <div class="card-body">
           <%= form_for(resource, as: resource_name, url: session_path(resource_name), local: true) do |f| %>
@@ -11,12 +11,12 @@
 
             <div class="mb-3">
               <%= f.label :email, class: "form-label" %>
-              <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "form-control" %>
+              <%= f.email_field :email, autofocus: true, autocomplete: "email", class: "form-control form-control-lg" %>
             </div>
 
             <div class="mb-3">
               <%= f.label :password, class: "form-label" %>
-              <%= f.password_field :password, autocomplete: "current-password", class: "form-control" %>
+              <%= f.password_field :password, autocomplete: "current-password", class: "form-control form-control-lg" %>
             </div>
 
             <% if devise_mapping.rememberable? %>
@@ -26,12 +26,12 @@
               </div>
             <% end %>
 
-            <div class="d-grid">
-              <%= f.submit "Log in", class: "btn btn-primary" %>
+            <div class="d-grid mb-3">
+              <%= f.submit "Log in", class: "btn btn-primary btn-lg" %>
             </div>
           <% end %>
 
-          <hr class="my-4">
+          <hr>
 
           <%= render "devise/shared/links" %>
         </div>
