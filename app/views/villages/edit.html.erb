@@ -1,0 +1,38 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0">Edit Village Settings</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @village, url: village_path, local: true do |form| %>
+            <% if @village.errors.any? %>
+              <div class="alert alert-danger">
+                <h5 class="alert-heading">Please fix the following errors:</h5>
+                <ul class="mb-0">
+                  <% @village.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <%= form.label :name, "Village Name", class: "form-label" %>
+              <%= form.text_field :name, class: "form-control form-control-lg", required: true, autofocus: true %>
+              <div class="form-text">
+                This is the name of your village (e.g., "Ham Radio Village"). This name will be displayed throughout the application.
+              </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <%= link_to "Cancel", village_path, class: "btn btn-outline-secondary" %>
+              <%= form.submit "Update Village", class: "btn btn-primary btn-lg" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
