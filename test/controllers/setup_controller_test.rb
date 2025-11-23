@@ -30,7 +30,7 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
 
     user = User.last
     assert_equal "admin@example.com", user.email
-    assert user.authenticate("password123")
+    assert user.valid_password?("password123")
   end
 
   test "should not create village with invalid data" do
