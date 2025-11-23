@@ -15,11 +15,6 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         <% if user_signed_in? %>
-          <% if current_user.village_admin? %>
-            <li class="nav-item">
-              <%= link_to "Village Settings", village_path, class: "nav-link" %>
-            </li>
-          <% end %>
           <li class="nav-item">
             <%= link_to "Profile", edit_user_registration_path, class: "nav-link" %>
           </li>
