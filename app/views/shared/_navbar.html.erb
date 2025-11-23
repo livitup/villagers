@@ -15,25 +15,6 @@
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
         <% if user_signed_in? %>
-          <% if Village.setup_complete? && Village.any? %>
-            <% village = Village.first %>
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="villageDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                Village
-              </a>
-              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="villageDropdown">
-                <li>
-                  <%= link_to "View Village", village_path, class: "dropdown-item" %>
-                </li>
-                <% if current_user.village_admin? %>
-                  <li><hr class="dropdown-divider"></li>
-                  <li>
-                    <%= link_to "Edit Village Settings", edit_village_path, class: "dropdown-item" %>
-                  </li>
-                <% end %>
-              </ul>
-            </li>
-          <% end %>
           <li class="nav-item">
             <%= link_to "Profile", edit_user_registration_path, class: "nav-link" %>
           </li>
