@@ -1,0 +1,43 @@
+<div class="container mt-5">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+          <h2 class="h4 mb-0"><%= @conference.name %></h2>
+          <% if policy(@conference).update? %>
+            <%= link_to "Edit", edit_conference_path(@conference), class: "btn btn-light btn-sm" %>
+          <% end %>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <dt class="col-sm-3">Location:</dt>
+            <dd class="col-sm-9"><%= @conference.location || "Not specified" %></dd>
+
+            <dt class="col-sm-3">Start Date:</dt>
+            <dd class="col-sm-9"><%= @conference.start_date.strftime("%B %d, %Y") %></dd>
+
+            <dt class="col-sm-3">End Date:</dt>
+            <dd class="col-sm-9"><%= @conference.end_date.strftime("%B %d, %Y") %></dd>
+
+            <% if @conference.conference_hours_start && @conference.conference_hours_end %>
+              <dt class="col-sm-3">Conference Hours:</dt>
+              <dd class="col-sm-9">
+                <%= @conference.conference_hours_start.strftime("%l:%M %p") %> - 
+                <%= @conference.conference_hours_end.strftime("%l:%M %p") %>
+              </dd>
+            <% end %>
+
+            <% lead = @conference.conference_roles.find_by(role_name: ConferenceRole::CONFERENCE_LEAD)&.user %>
+            <% if lead %>
+              <dt class="col-sm-3">Conference Lead:</dt>
+              <dd class="col-sm-9"><%= lead.email %></dd>
+            <% end %>
+          </dl>
+        </div>
+        <div class="card-footer">
+          <%= link_to "← Back to Conferences", conferences_path, class: "btn btn-link" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
