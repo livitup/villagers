@@ -1,25 +1,27 @@
 class ConferencesController < ApplicationController
   before_action :set_conference, only: [ :show, :edit, :update, :destroy ]
   before_action :set_village
-  before_action :authorize_conference
 
   def index
     @conferences = policy_scope(Conference).order(start_date: :desc)
   end
 
   def show
+    authorize @conference
   end
 
   def new
     @conference = Conference.new
     @conference.village = @village
     @users = User.all.order(:email)
+    authorize @conference, :create?
   end
 
   def create
     @conference = Conference.new(conference_params)
     @conference.village = @village
     @users = User.all.order(:email)
+    authorize @conference, :create?
 
     if @conference.save
       # Assign conference lead if provided
@@ -38,11 +40,13 @@ class ConferencesController < ApplicationController
   end
 
   def edit
+    authorize @conference, :update?
     @users = User.all.order(:email)
     @current_lead = @conference.conference_roles.find_by(role_name: ConferenceRole::CONFERENCE_LEAD)&.user
   end
 
   def update
+    authorize @conference, :update?
     if @conference.update(conference_params)
       # Update conference lead if provided
       if params[:conference_lead_id].present?
@@ -65,6 +69,7 @@ class ConferencesController < ApplicationController
   end
 
   def destroy
+    authorize @conference, :destroy?
     @conference.destroy
     redirect_to conferences_path, notice: "Conference was successfully deleted."
   end
@@ -78,21 +83,6 @@ class ConferencesController < ApplicationController
   def set_village
     @village = Village.first
     redirect_to setup_path if @village.nil?
-  end
-
-  def authorize_conference
-    case action_name
-    when "index"
-      authorize Conference, :index?
-    when "show"
-      authorize @conference, :show?
-    when "new", "create"
-      authorize Conference, :create?
-    when "edit", "update"
-      authorize @conference, :update?
-    when "destroy"
-      authorize @conference, :destroy?
-    end
   end
 
   def conference_params
