@@ -1,6 +1,8 @@
 class ConferencesController < ApplicationController
   before_action :set_conference, only: [ :show, :edit, :update, :destroy ]
   before_action :set_village
+  skip_after_action :verify_authorized, only: [ :index ]
+  skip_after_action :verify_policy_scoped, only: [ :index ]
 
   def index
     # For now, all authenticated users can see all conferences

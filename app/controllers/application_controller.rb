@@ -12,7 +12,7 @@ class ApplicationController < ActionController::Base
 
   # Tell Pundit to use current_user for authorization
   def pundit_user
-    current_user
+    current_user if user_signed_in?
   end
 
   protected
