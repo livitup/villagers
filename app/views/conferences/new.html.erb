@@ -1,0 +1,71 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0">New Conference</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @conference, local: true do |form| %>
+            <% if @conference.errors.any? %>
+              <div class="alert alert-danger">
+                <h5 class="alert-heading">Please fix the following errors:</h5>
+                <ul class="mb-0">
+                  <% @conference.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <%= form.label :name, class: "form-label" %>
+              <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :location, class: "form-label" %>
+              <%= form.text_field :location, class: "form-control" %>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :start_date, class: "form-label" %>
+                <%= form.date_field :start_date, class: "form-control", required: true %>
+              </div>
+              <div class="col-md-6 mb-3">
+                <%= form.label :end_date, class: "form-label" %>
+                <%= form.date_field :end_date, class: "form-control", required: true %>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <%= form.label :conference_hours_start, "Conference Hours Start", class: "form-label" %>
+                <%= form.time_field :conference_hours_start, class: "form-control" %>
+              </div>
+              <div class="col-md-6 mb-3">
+                <%= form.label :conference_hours_end, "Conference Hours End", class: "form-label" %>
+                <%= form.time_field :conference_hours_end, class: "form-control" %>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :conference_lead_id, "Conference Lead", class: "form-label" %>
+              <%= form.select :conference_lead_id, 
+                  options_from_collection_for_select(@users, :id, :email, params[:conference_lead_id]),
+                  { include_blank: "Select a conference lead (optional)" },
+                  { class: "form-select" } %>
+              <div class="form-text">The conference lead will have management permissions for this conference.</div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <%= link_to "Cancel", conferences_path, class: "btn btn-outline-secondary" %>
+              <%= form.submit "Create Conference", class: "btn btn-primary btn-lg" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
