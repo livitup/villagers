@@ -1,8 +1,6 @@
 class ConferencesController < ApplicationController
   before_action :set_conference, only: [ :show, :edit, :update, :destroy ]
   before_action :set_village
-  skip_after_action :verify_authorized, only: [ :index ]
-  skip_after_action :verify_policy_scoped, only: [ :index ]
 
   def index
     # For now, all authenticated users can see all conferences
@@ -11,21 +9,21 @@ class ConferencesController < ApplicationController
   end
 
   def show
-    authorize @conference
+    authorize @conference, :show?, policy_class: ConferencePolicy
   end
 
   def new
     @conference = Conference.new
     @conference.village = @village
     @users = User.all.order(:email)
-    authorize @conference, :create?
+    authorize @conference, :create?, policy_class: ConferencePolicy
   end
 
   def create
     @conference = Conference.new(conference_params)
     @conference.village = @village
     @users = User.all.order(:email)
-    authorize @conference, :create?
+    authorize @conference, :create?, policy_class: ConferencePolicy
 
     if @conference.save
       # Assign conference lead if provided
@@ -44,13 +42,13 @@ class ConferencesController < ApplicationController
   end
 
   def edit
-    authorize @conference, :update?
+    authorize @conference, :update?, policy_class: ConferencePolicy
     @users = User.all.order(:email)
     @current_lead = @conference.conference_roles.find_by(role_name: ConferenceRole::CONFERENCE_LEAD)&.user
   end
 
   def update
-    authorize @conference, :update?
+    authorize @conference, :update?, policy_class: ConferencePolicy
     if @conference.update(conference_params)
       # Update conference lead if provided
       if params[:conference_lead_id].present?
@@ -73,7 +71,7 @@ class ConferencesController < ApplicationController
   end
 
   def destroy
-    authorize @conference, :destroy?
+    authorize @conference, :destroy?, policy_class: ConferencePolicy
     @conference.destroy
     redirect_to conferences_path, notice: "Conference was successfully deleted."
   end
