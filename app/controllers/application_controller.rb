@@ -10,6 +10,11 @@ class ApplicationController < ActionController::Base
   # Pundit authorization
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  # Tell Pundit to use current_user for authorization
+  def pundit_user
+    current_user
+  end
+
   protected
 
   def configure_permitted_parameters

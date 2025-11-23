@@ -3,7 +3,11 @@ class ConferencesController < ApplicationController
   before_action :set_village
 
   def index
-    @conferences = policy_scope(Conference).order(start_date: :desc)
+    @conferences = if user_signed_in?
+                     policy_scope(Conference).order(start_date: :desc)
+    else
+                     Conference.none
+    end
   end
 
   def show
