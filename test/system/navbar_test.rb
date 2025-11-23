@@ -58,6 +58,7 @@ class NavbarTest < ApplicationSystemTestCase
     sign_in user
     visit root_path
     assert_selector "a.dropdown-toggle", text: "Village"
+    find("a.dropdown-toggle", text: "Village").click
     assert_selector "a.dropdown-item", text: "View Village"
   end
 
