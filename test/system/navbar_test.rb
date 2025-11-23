@@ -48,4 +48,3 @@ class NavbarTest < ApplicationSystemTestCase
     assert_selector "#navbarNav.collapse"
   end
 end
-
