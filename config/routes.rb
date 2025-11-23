@@ -1,7 +1,4 @@
 Rails.application.routes.draw do
-  get "villages/show"
-  get "villages/edit"
-  get "villages/update"
   devise_for :users
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
@@ -19,6 +16,9 @@ Rails.application.routes.draw do
 
   # Village management
   resource :village, only: [ :show, :edit, :update ]
+
+  # Conference management
+  resources :conferences
 
   # Defines the root path route ("/")
   root "root#show"
