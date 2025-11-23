@@ -318,6 +318,8 @@ Based on development workflow, the following commands are authorized:
 - `git merge`
 - `git fetch`
 - `git diff`
+- `git stash`
+- `git revert`
 
 ### Rails Commands
 - `bin/rails test`
