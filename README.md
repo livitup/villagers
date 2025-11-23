@@ -1,24 +1,30 @@
-# README
+# Villagers
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Village volunteer scheduling software for hacker conference villages.
 
-Things you may want to cover:
+## Setup
 
-* Ruby version
+### Prerequisites
 
-* System dependencies
+* Ruby (see `.ruby-version`)
+* PostgreSQL
+* Node.js (see `.node-version`)
+* Yarn
 
-* Configuration
+### Installation
 
-* Database creation
+1. Clone the repository
+2. Run `bin/setup`
+3. Start the server with `bin/dev`
 
-* Database initialization
+## Configuration
 
-* How to run the test suite
+### Sass Version
 
-* Services (job queues, cache servers, search engines, etc.)
+Sass is pinned to version `1.94.2` in `package.json` to maintain consistency. Deprecation warnings from Bootstrap's SCSS files are suppressed using the `--quiet-deps` and `--silence-deprecation` flags in the build script. This prevents noise from third-party dependency warnings while still showing warnings from our own code.
 
-* Deployment instructions
+## Development
 
-* ...
+* Run tests: `bin/rails test`
+* Run system tests: `bin/rails test:system`
+* Lint code: `bin/rubocop`
