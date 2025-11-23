@@ -19,7 +19,7 @@ class ConferencePolicy < ApplicationPolicy
     user&.village_admin?
   end
 
-  class Scope < Scope
+  class Scope < ApplicationPolicy::Scope
     def resolve
       # All users can see all conferences (for now)
       scope.all

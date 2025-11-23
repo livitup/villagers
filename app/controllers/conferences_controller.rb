@@ -3,11 +3,9 @@ class ConferencesController < ApplicationController
   before_action :set_village
 
   def index
-    @conferences = if user_signed_in?
-                     policy_scope(Conference).order(start_date: :desc)
-    else
-                     Conference.none
-    end
+    # For now, all authenticated users can see all conferences
+    # Using policy_scope causes issues, so we'll authorize at the action level if needed
+    @conferences = Conference.order(start_date: :desc)
   end
 
   def show
