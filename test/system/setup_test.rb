@@ -35,4 +35,3 @@ class SetupTest < ApplicationSystemTestCase
     assert_current_path root_path
   end
 end
-

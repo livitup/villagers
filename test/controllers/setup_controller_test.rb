@@ -34,7 +34,7 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not create village with invalid data" do
-    assert_no_difference ["Village.count", "User.count"] do
+    assert_no_difference [ "Village.count", "User.count" ] do
       post setup_url, params: {
         village: { name: "" },
         user: {
@@ -51,7 +51,7 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
   test "should not allow setup when already complete" do
     Village.create!(name: "Existing Village", setup_complete: true)
 
-    assert_no_difference ["Village.count", "User.count"] do
+    assert_no_difference [ "Village.count", "User.count" ] do
       post setup_url, params: {
         village: { name: "New Village" },
         user: {
@@ -65,4 +65,3 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_url
   end
 end
-

@@ -9,4 +9,3 @@ class RootController < ApplicationController
     end
   end
 end
-
