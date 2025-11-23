@@ -1,0 +1,4 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+# Note: Village is created during setup, so we may not need fixtures here
+# Leaving empty for now

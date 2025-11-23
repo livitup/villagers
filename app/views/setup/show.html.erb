@@ -1,0 +1,61 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card">
+        <div class="card-header">
+          <h1 class="h3 mb-0">Initial Setup</h1>
+        </div>
+        <div class="card-body">
+          <p class="text-muted">Welcome! Let's get your village configured.</p>
+
+          <%= form_with url: setup_path, local: true, class: "needs-validation", novalidate: true do |form| %>
+            <% if @village.errors.any? || @user.errors.any? %>
+              <div class="alert alert-danger">
+                <h4 class="alert-heading">Please fix the following errors:</h4>
+                <ul class="mb-0">
+                  <% @village.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                  <% @user.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <%= form.label "village[name]", "Village name", class: "form-label" %>
+              <%= form.text_field "village[name]", value: @village.name, class: "form-control", required: true, autofocus: true %>
+              <div class="form-text">This is the name of your village (e.g., "Ham Radio Village")</div>
+            </div>
+
+            <hr class="my-4">
+
+            <h5 class="mb-3">Administrator Account</h5>
+
+            <div class="mb-3">
+              <%= form.label "user[email]", "Email", class: "form-label" %>
+              <%= form.email_field "user[email]", value: @user.email, class: "form-control", required: true %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label "user[password]", "Password", class: "form-label" %>
+              <%= form.password_field "user[password]", class: "form-control", required: true, minlength: 8 %>
+              <div class="form-text">Minimum 8 characters</div>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label "user[password_confirmation]", "Password confirmation", class: "form-label" %>
+              <%= form.password_field "user[password_confirmation]", class: "form-control", required: true %>
+            </div>
+
+            <div class="d-grid">
+              <%= form.submit "Complete Setup", class: "btn btn-primary btn-lg" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
