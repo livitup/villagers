@@ -1,0 +1,90 @@
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h1>Programs for <%= @conference.name %></h1>
+      <%= link_to "← Back to Conference", conference_path(@conference), class: "text-muted" %>
+    </div>
+    <% if @available_programs.any? && policy(ConferenceProgram.new(conference: @conference)).create? %>
+      <%= link_to "Enable Program", conference_new_conference_program_path(@conference), class: "btn btn-primary" %>
+    <% end %>
+  </div>
+
+  <% if @conference_programs.any? %>
+    <div class="row">
+      <% @conference_programs.each do |cp| %>
+        <div class="col-md-6 col-lg-4 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <%= cp.program.name %>
+              </h5>
+              <% if cp.public_description.present? %>
+                <p class="card-text text-muted">
+                  <%= truncate(cp.public_description, length: 100) %>
+                </p>
+              <% elsif cp.program.description.present? %>
+                <p class="card-text text-muted">
+                  <%= truncate(cp.program.description, length: 100) %>
+                </p>
+              <% end %>
+              <% if cp.day_schedules.any? %>
+                <div class="mt-2">
+                  <small class="text-muted">
+                    <strong>Schedule:</strong>
+                    <% cp.day_schedules.each do |day, schedule| %>
+                      <% if schedule["enabled"] %>
+                        <br>Day <%= day.to_i + 1 %>: <%= schedule["start"] %> - <%= schedule["end"] %>
+                      <% end %>
+                    <% end %>
+                  </small>
+                </div>
+              <% end %>
+            </div>
+            <div class="card-footer bg-transparent">
+              <% if policy(cp).update? %>
+                <%= link_to "Edit", edit_conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
+              <% end %>
+              <% if policy(cp).destroy? %>
+                <%= link_to "Disable", conference_conference_program_path(@conference, cp), method: :delete, 
+                    data: { confirm: "Are you sure you want to disable this program for this conference?" },
+                    class: "btn btn-sm btn-outline-danger" %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      <h5 class="alert-heading">No Programs Enabled</h5>
+      <p class="mb-0">
+        <% if @available_programs.any? && policy(ConferenceProgram.new(conference: @conference)).create? %>
+          Get started by <%= link_to "enabling a program", conference_new_conference_program_path(@conference), class: "alert-link" %> for this conference.
+        <% else %>
+          No programs have been enabled for this conference yet.
+        <% end %>
+      </p>
+    </div>
+  <% end %>
+
+  <% if @available_programs.any? && policy(ConferenceProgram.new(conference: @conference)).create? %>
+    <div class="mt-4">
+      <h3>Available Programs</h3>
+      <p class="text-muted">The following programs are available but not yet enabled for this conference:</p>
+      <ul class="list-group">
+        <% @available_programs.each do |program| %>
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <div>
+              <strong><%= program.name %></strong>
+              <% if program.description.present? %>
+                <br><small class="text-muted"><%= truncate(program.description, length: 150) %></small>
+              <% end %>
+            </div>
+            <%= link_to "Enable", conference_new_conference_program_path(@conference, program_id: program.id), class: "btn btn-sm btn-primary" %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+</div>
+

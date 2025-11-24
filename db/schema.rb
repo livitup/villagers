@@ -10,9 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_24_012833) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_024049) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "conference_programs", force: :cascade do |t|
+    t.bigint "conference_id", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "day_schedules", default: {}
+    t.bigint "program_id", null: false
+    t.text "public_description"
+    t.datetime "updated_at", null: false
+    t.index ["conference_id", "program_id"], name: "index_conference_programs_on_conference_id_and_program_id", unique: true
+    t.index ["conference_id"], name: "index_conference_programs_on_conference_id"
+    t.index ["program_id"], name: "index_conference_programs_on_program_id"
+  end
 
   create_table "conference_roles", force: :cascade do |t|
     t.bigint "conference_id", null: false
@@ -90,6 +102,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_012833) do
     t.datetime "updated_at", null: false
   end
 
+  add_foreign_key "conference_programs", "conferences"
+  add_foreign_key "conference_programs", "programs"
   add_foreign_key "conference_roles", "conferences"
   add_foreign_key "conference_roles", "users"
   add_foreign_key "conferences", "villages"

@@ -2,6 +2,8 @@ class Conference < ApplicationRecord
   belongs_to :village
   has_many :conference_roles, dependent: :destroy
   has_many :users, through: :conference_roles
+  has_many :conference_programs, dependent: :destroy
+  has_many :programs, through: :conference_programs
 
   validates :name, presence: true
   validates :start_date, presence: true
