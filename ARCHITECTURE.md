@@ -256,15 +256,26 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 ## Development Practices
 
 ### Workflow
-1. Create GitHub ticket for feature/bug
-2. **Before starting new branch**: Switch to main and run `git pull` to ensure you're up to date
-3. Create unique branch from main
-4. Work the ticket in the branch
-5. **CRITICAL**: All tests must pass before creating PR
-6. Run `bin/rubocop -a` before every PR or push to existing PR
-7. Fix any rubocop warnings that can't be auto-fixed
-8. Create PR
-9. Merge via GitHub website
+1. **NEW REQUEST = NEW ISSUE**: Every new feature, bug fix, or change request must start with a new GitHub issue
+2. **NEW ISSUE = NEW BRANCH**: Each issue gets its own unique branch - never work on multiple unrelated things in the same branch
+3. **Before starting new branch**: 
+   - Switch to main: `git checkout main`
+   - Pull latest: `git pull`
+   - Ensure you're up to date with origin
+4. Create unique branch from main: `git checkout -b issue-{number}-{descriptive-name}`
+5. Work the ticket in the branch - only work on that specific issue
+6. **CRITICAL**: All tests must pass before creating PR
+7. Run `bin/rubocop -a` before every PR or push to existing PR
+8. Fix any rubocop warnings that can't be auto-fixed
+9. Create PR linking to the issue
+10. Merge via GitHub website
+
+### Git Hygiene Rules
+- **One issue per branch**: Never mix multiple issues/features in one branch
+- **New request = new branch**: If asked to do something new while on an existing branch, create a new issue and branch first
+- **Always branch from main**: Never branch from another feature branch unless explicitly requested
+- **Clean up after merge**: Delete local branches after PR is merged (optional, but good practice)
+- **No work on main**: Never commit directly to main - all work goes through branches and PRs
 
 ### Testing
 - **Requirement**: Test-driven design (TDD)
