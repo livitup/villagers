@@ -19,8 +19,8 @@ Rails.application.routes.draw do
 
   # Conference management
   resources :conferences do
-    resources :conference_programs, except: [ :new ], path: "programs"
     get "programs/new", to: "conference_programs#new", as: :new_conference_program
+    resources :conference_programs, except: [ :new ], path: "programs"
   end
 
   # Program management
