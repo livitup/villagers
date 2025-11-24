@@ -89,3 +89,5 @@ class UserRoleMethodsTest < ActiveSupport::TestCase
     assert_not @user.can_manage_conference?(@conference)
   end
 end
+
+
