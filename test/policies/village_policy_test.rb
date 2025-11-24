@@ -30,5 +30,3 @@ class VillagePolicyTest < ActiveSupport::TestCase
     assert VillagePolicy.new(@village_admin, @village).update?
   end
 end
-
-
