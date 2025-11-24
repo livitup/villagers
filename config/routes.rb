@@ -22,6 +22,7 @@ Rails.application.routes.draw do
     get "programs/new", to: "conference_programs#new", as: :new_conference_program
     resources :conference_programs, except: [ :new ], path: "programs"
     get "calendar", to: "calendar#show", as: :calendar
+    resources :volunteer_signups, only: [ :index, :create, :destroy ]
   end
 
   # Program management
