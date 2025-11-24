@@ -1,0 +1,128 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0">Enable Program for <%= @conference.name %></h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: [@conference, @conference_program], url: conference_conference_programs_path(@conference), local: true do |form| %>
+            <% if @conference_program.errors.any? %>
+              <div class="alert alert-danger">
+                <h5><%= pluralize(@conference_program.errors.count, "error") %> prohibited this program from being enabled:</h5>
+                <ul class="mb-0">
+                  <% @conference_program.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <%= form.label :program_id, "Program", class: "form-label" %>
+              <%= form.collection_select :program_id, @available_programs, :id, :name, 
+                  { selected: params[:program_id]&.to_i, prompt: "Select a program" }, 
+                  { class: "form-select", required: true, id: "program_select" } %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :public_description, "Conference-Specific Description (optional)", class: "form-label" %>
+              <%= form.text_area :public_description, rows: 4, class: "form-control",
+                  id: "public_description",
+                  placeholder: "Default description will appear here when you select a program" %>
+              <small class="form-text text-muted">
+                The default program description is shown above. Change it to override for this conference, or leave it as-is to use the default.
+              </small>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Schedule</label>
+              <p class="text-muted small">
+                Specify which days this program runs and the hours for each day. 
+                The conference runs from <%= @conference.start_date.strftime("%B %d") %> to <%= @conference.end_date.strftime("%B %d, %Y") %>.
+              </p>
+              <div id="day-schedules">
+                <% (@conference.start_date..@conference.end_date).each_with_index do |date, index| %>
+                  <div class="card mb-2">
+                    <div class="card-body">
+                      <div class="form-check mb-2">
+                        <%= check_box_tag "conference_program[day_schedules][#{index}][enabled]", "1", false, 
+                            class: "form-check-input day-enabled", id: "day_#{index}_enabled",
+                            data: { day: index } %>
+                        <%= label_tag "day_#{index}_enabled", "Day #{index + 1}: #{date.strftime('%A, %B %d')}", class: "form-check-label fw-bold" %>
+                      </div>
+                      <div class="row day-schedule-fields" style="display: none;">
+                        <div class="col-md-6">
+                          <%= label_tag "conference_program[day_schedules][#{index}][start]", "Start Time", class: "form-label" %>
+                          <%= time_field_tag "conference_program[day_schedules][#{index}][start]", 
+                              @conference.conference_hours_start&.strftime("%H:%M"), 
+                              class: "form-control" %>
+                        </div>
+                        <div class="col-md-6">
+                          <%= label_tag "conference_program[day_schedules][#{index}][end]", "End Time", class: "form-label" %>
+                          <%= time_field_tag "conference_program[day_schedules][#{index}][end]", 
+                              @conference.conference_hours_end&.strftime("%H:%M"), 
+                              class: "form-control" %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+              <%= link_to "Cancel", conference_conference_programs_path(@conference), class: "btn btn-secondary" %>
+              <%= form.submit "Enable Program", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Program descriptions data
+    const programDescriptions = {
+      <% @available_programs.each do |program| %>
+      <%= program.id %>: <%= (program.description || '').to_json.html_safe %>,
+      <% end %>
+    };
+
+    const programSelect = document.getElementById('program_select');
+    const descriptionField = document.getElementById('public_description');
+
+    // Update description when program is selected
+    if (programSelect && descriptionField) {
+      programSelect.addEventListener('change', function() {
+        const programId = this.value;
+        if (programId && programDescriptions[programId]) {
+          descriptionField.value = programDescriptions[programId];
+        } else {
+          descriptionField.value = '';
+        }
+      });
+
+      // Set initial description if program is pre-selected
+      const selectedProgramId = programSelect.value;
+      if (selectedProgramId && programDescriptions[selectedProgramId]) {
+        descriptionField.value = programDescriptions[selectedProgramId];
+      }
+    }
+
+    // Day schedule checkboxes
+    document.querySelectorAll('.day-enabled').forEach(function(checkbox) {
+      checkbox.addEventListener('change', function() {
+        const dayFields = this.closest('.card').querySelector('.day-schedule-fields');
+        if (this.checked) {
+          dayFields.style.display = 'block';
+        } else {
+          dayFields.style.display = 'none';
+        }
+      });
+    });
+  });
+</script>
+

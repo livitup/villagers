@@ -18,7 +18,10 @@ Rails.application.routes.draw do
   resource :village, only: [ :show, :edit, :update ]
 
   # Conference management
-  resources :conferences
+  resources :conferences do
+    get "programs/new", to: "conference_programs#new", as: :new_conference_program
+    resources :conference_programs, except: [ :new ], path: "programs"
+  end
 
   # Program management
   resources :programs
