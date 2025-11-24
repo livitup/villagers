@@ -327,7 +327,8 @@ Based on development workflow, the following commands are authorized:
 - `git revert`
 
 ### Rails Commands
-- `bin/rails test`
+- `bin/rails test:all`
+- `bin/rails test test/path/to/file_test.rb` (specific test files)
 - `bin/rails test:system`
 - `bin/rails db:migrate`
 - `bin/rails db:seed`
