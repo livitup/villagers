@@ -10,6 +10,7 @@ class ConferencesController < ApplicationController
 
   def show
     authorize @conference, :show?, policy_class: ConferencePolicy
+    @conference_roles = @conference.conference_roles.includes(:user)
   end
 
   def new
