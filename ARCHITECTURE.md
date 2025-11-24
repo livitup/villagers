@@ -42,24 +42,25 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 
 ### 3. Programs
 - Things that the village does at conferences (e.g., "Ham Test", "Radio Operations")
-- **Status**: Not yet implemented
+- **Status**: ✅ Implemented (Issue #8, PR #42)
 - **Design Decision**: Programs are **village-level** (shared across conferences)
+- **Conference-Specific Programs**: Conference leads/admins can create conference-specific programs (Issue #51 - not yet implemented)
 - **Conference-Specific Overrides**: 
   - When a program is enabled for a conference, use a join table (`conference_programs`)
   - This join table stores conference-specific attributes like `public_description`
   - Conference leads/admins can update conference-specific details without affecting the village-level program
-- **Proposed Data Model**:
+- **Data Model**:
   - `Program` model (village-level):
-    - `name` (string)
+    - `name` (string) - unique within village
     - `description` (text) - default village-level description
     - `village_id` (belongs_to village)
-  - `ConferenceProgram` join table:
+  - `ConferenceProgram` join table (✅ Implemented - Issue #9, PR #50):
     - `conference_id` (belongs_to conference)
     - `program_id` (belongs_to program)
     - `public_description` (text) - conference-specific description override
-    - `enabled_days` (array or jsonb) - which days of conference this program runs
-    - `enabled_hours_start` (time) - start time for this program at this conference
-    - `enabled_hours_end` (time) - end time for this program at this conference
+    - `day_schedules` (jsonb) - day-specific schedules with structure: `{ "0": { "enabled": true, "start": "09:00", "end": "17:00" } }`
+      - Day index (0, 1, 2...) corresponds to day of conference (0 = first day)
+      - Each day can have `enabled` (boolean), `start` (time string), `end` (time string)
     - Unique index on `[conference_id, program_id]`
 - **Requirements**:
   - Village-level object (managed by village admins)
@@ -302,6 +303,8 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 - Use Rails helpers and partials appropriately
 - Follow ActiveRecord associations and validations
 - Use Pundit for authorization (explicit `policy_class` where needed)
+- **Route Ordering**: When using custom routes with `resources`, place custom routes BEFORE the `resources` line to avoid conflicts (e.g., `get "programs/new"` before `resources :conference_programs`)
+- **Delete Links**: Use `data: { turbo_method: :delete }` instead of `method: :delete` for Rails 7/Turbo compatibility
 
 ### Navbar Updates
 - **When creating a new model**: Add a new dropdown in the navbar with:
@@ -320,6 +323,8 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 - Policies:
   - `ConferencePolicy` - for conference authorization
   - `VillagePolicy` - for village authorization
+  - `ProgramPolicy` - for program authorization (village-level)
+  - `ConferenceProgramPolicy` - for conference program authorization
   - `ApplicationPolicy` - base policy class
 
 ### Authorization Methods
@@ -364,6 +369,9 @@ Based on development workflow, the following commands are authorized:
 - `gh pr checkout`
 - `gh pr create`
 - `gh pr list`
+- `gh issue view`
+- `gh issue create`
+- `gh issue list`
 
 ### General
 - `bin/dev` (development server)
@@ -379,19 +387,23 @@ Based on development workflow, the following commands are authorized:
 - Pundit authorization policies
 - User profile fields (name, handle, email, phone, twitter, signal, discord)
 - Database seeds for development
+- Programs model and management (Issue #8, PR #42)
+- ConferenceProgram join table with day-specific schedules (Issue #9, PR #50)
+- User permissions/roles display feature (Issue #43, PR #46)
 
 ### 🚧 Not Yet Implemented
-- Programs model and management (#35)
-- ConferenceProgram join table for program-to-conference linking (#36)
+- Conference-specific program creation for leads/admins (#51)
+- Conference location city/state dropdown (#52)
 - Timeslots model and generation (#37)
 - Volunteer signups/shifts (#38)
 - Calendar view (outlook agenda style) (#39)
-- Qualifications model and management (global and conference-specific)
-- Calendar export functionality (iCal and Google Calendar)
-- Email notifications
-- Volunteer history
-- Leaderboard
-- Organizer reports/dashboard
+- Qualifications model and management (global and conference-specific) (#40)
+- Calendar export functionality (iCal and Google Calendar) (#41)
+- Email notifications (#16)
+- Volunteer history and leaderboard (#17)
+- Conference dashboard for leads/admins (#18)
+- Reports for conference organizers (#19)
+- Conference lead dashboard card (#49)
 
 ## Questions to Clarify
 
@@ -410,4 +422,7 @@ Based on development workflow, the following commands are authorized:
 - Conference leads/admins can override/manually manage volunteer assignments
 - Programs are village-level but can have conference-specific descriptions/details
 - Timeslots are generated per conference/program combination when program is enabled
+- ConferenceProgram uses `day_schedules` (JSONB) for day-specific scheduling, not separate fields
+- Route ordering matters: custom routes must come before `resources` to avoid conflicts
+- Rails 7/Turbo requires `data: { turbo_method: :delete }` for delete links, not `method: :delete`
 
