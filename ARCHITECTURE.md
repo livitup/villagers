@@ -269,9 +269,14 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 ### Testing
 - **Requirement**: Test-driven design (TDD)
 - **Requirement**: All tests must pass before PR - **UNACCEPTABLE** to create PR with failing tests
+- **Workflow**:
+  - During development: Run specific test files (e.g., `bin/rails test test/models/program_test.rb`)
+  - Before declaring done: Run `bin/rails test:all` to verify all tests pass
 - **Commands**:
-  - `bin/rails test` - run all tests
-  - `bin/rails test:system` - run system tests
+  - `bin/rails test:all` - run all tests (use this before finalizing)
+  - `bin/rails test test/path/to/file_test.rb` - run specific test file
+  - `bin/rails test test/models/` - run all tests in a directory
+  - `bin/rails test:system` - run system tests only
 
 ### Code Quality
 - **Linting**: Run `bin/rubocop -a` before every PR or push
