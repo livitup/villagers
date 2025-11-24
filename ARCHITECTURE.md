@@ -292,6 +292,15 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 - Follow ActiveRecord associations and validations
 - Use Pundit for authorization (explicit `policy_class` where needed)
 
+### Navbar Updates
+- **When creating a new model**: Add a new dropdown in the navbar with:
+  - Link to index action (e.g., "All Programs")
+  - Link to new/create action (e.g., "New Program") - only if user has permission
+  - All links must respect roles using Pundit policies (e.g., `policy(Program).create?`)
+- **When adding functionality to existing model**: Add new links to the existing dropdown
+- **Authorization**: All navbar links must check permissions - only show links the user can access
+- **Pattern**: Follow the existing dropdown structure (see `app/views/shared/_navbar.html.erb`)
+
 ## Authorization (Pundit)
 
 ### Current Implementation
