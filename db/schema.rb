@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_24_024049) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_033225) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -67,6 +67,19 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_024049) do
     t.index ["name"], name: "index_roles_on_name", unique: true
   end
 
+  create_table "timeslots", force: :cascade do |t|
+    t.bigint "conference_program_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "current_volunteers_count", default: 0, null: false
+    t.datetime "end_time", null: false
+    t.integer "max_volunteers", default: 1, null: false
+    t.datetime "start_time", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conference_program_id", "start_time"], name: "index_timeslots_on_conference_program_id_and_start_time", unique: true
+    t.index ["conference_program_id"], name: "index_timeslots_on_conference_program_id"
+    t.index ["start_time"], name: "index_timeslots_on_start_time"
+  end
+
   create_table "user_roles", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "role_id", null: false
@@ -108,6 +121,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_024049) do
   add_foreign_key "conference_roles", "users"
   add_foreign_key "conferences", "villages"
   add_foreign_key "programs", "villages"
+  add_foreign_key "timeslots", "conference_programs"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
 end
