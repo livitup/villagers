@@ -22,15 +22,16 @@
               <%= form.label :program_id, "Program", class: "form-label" %>
               <%= form.collection_select :program_id, @available_programs, :id, :name, 
                   { selected: params[:program_id]&.to_i, prompt: "Select a program" }, 
-                  { class: "form-select", required: true } %>
+                  { class: "form-select", required: true, id: "program_select" } %>
             </div>
 
             <div class="mb-3">
               <%= form.label :public_description, "Conference-Specific Description (optional)", class: "form-label" %>
               <%= form.text_area :public_description, rows: 4, class: "form-control",
-                  placeholder: "Override the default program description for this conference" %>
+                  id: "public_description",
+                  placeholder: "Default description will appear here when you select a program" %>
               <small class="form-text text-muted">
-                Leave blank to use the default program description.
+                The default program description is shown above. Change it to override for this conference, or leave it as-is to use the default.
               </small>
             </div>
 
@@ -83,6 +84,35 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function() {
+    // Program descriptions data
+    const programDescriptions = {
+      <% @available_programs.each do |program| %>
+      <%= program.id %>: <%= (program.description || '').to_json.html_safe %>,
+      <% end %>
+    };
+
+    const programSelect = document.getElementById('program_select');
+    const descriptionField = document.getElementById('public_description');
+
+    // Update description when program is selected
+    if (programSelect && descriptionField) {
+      programSelect.addEventListener('change', function() {
+        const programId = this.value;
+        if (programId && programDescriptions[programId]) {
+          descriptionField.value = programDescriptions[programId];
+        } else {
+          descriptionField.value = '';
+        }
+      });
+
+      // Set initial description if program is pre-selected
+      const selectedProgramId = programSelect.value;
+      if (selectedProgramId && programDescriptions[selectedProgramId]) {
+        descriptionField.value = programDescriptions[selectedProgramId];
+      }
+    }
+
+    // Day schedule checkboxes
     document.querySelectorAll('.day-enabled').forEach(function(checkbox) {
       checkbox.addEventListener('change', function() {
         const dayFields = this.closest('.card').querySelector('.day-schedule-fields');

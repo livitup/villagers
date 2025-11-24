@@ -45,8 +45,8 @@
                 <%= link_to "Edit", edit_conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
               <% end %>
               <% if policy(cp).destroy? %>
-                <%= link_to "Disable", conference_conference_program_path(@conference, cp), method: :delete, 
-                    data: { confirm: "Are you sure you want to disable this program for this conference?" },
+                <%= link_to "Disable", conference_conference_program_path(@conference, cp), 
+                    data: { turbo_method: :delete, confirm: "Are you sure you want to disable this program for this conference?" },
                     class: "btn btn-sm btn-outline-danger" %>
               <% end %>
             </div>
