@@ -281,6 +281,10 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 ### Testing
 - **Requirement**: Test-driven design (TDD)
 - **Requirement**: All tests must pass before PR - **UNACCEPTABLE** to create PR with failing tests
+- **Requirement**: All routes must have smoke tests - basic tests that verify routes don't throw errors (even if they redirect)
+  - Smoke tests ensure routes are accessible and don't crash
+  - Should test all actions (index, show, new, create, edit, update, destroy) for each resource
+  - Can be minimal - just verify the route responds (200, 302, etc.) without errors
 - **Workflow**:
   - During development: Run specific test files (e.g., `bin/rails test test/models/program_test.rb`)
   - Before declaring done: Run `bin/rails test:all` to verify all tests pass
