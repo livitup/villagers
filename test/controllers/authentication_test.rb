@@ -103,4 +103,53 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_user_session_path
   end
+
+  test "should get edit registration page when signed in" do
+    user = User.create!(
+      email: "user@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    sign_in user
+    get edit_user_registration_path
+    # Route should respond (success or redirect) without error
+    assert_response :success
+  end
+
+  test "should handle update registration route" do
+    user = User.create!(
+      email: "user@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    sign_in user
+    patch user_registration_path, params: {
+      user: {
+        name: "Test User",
+        current_password: "password123"
+      }
+    }
+    # Route should respond (redirect or error) without crashing
+    assert_response :redirect
+  end
+
+  test "should get cancel registration page" do
+    user = User.create!(
+      email: "user@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    sign_in user
+    get cancel_user_registration_path
+    # Route should respond without error
+    assert_response :redirect
+  end
+
+  test "should handle edit password route" do
+    # Smoke test: route exists and doesn't crash
+    # In practice, this requires a valid reset token from email
+    get edit_user_password_path, params: { reset_password_token: "dummy_token" }
+    # Route should respond (success, redirect, or error) without crashing
+    assert_response :success
+  end
 end
