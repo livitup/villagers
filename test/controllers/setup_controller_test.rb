@@ -13,7 +13,7 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create village and admin user on valid submission" do
-    assert_difference -> { Village.count } => 1, -> { User.count } => 1 do
+    assert_difference -> { Village.count } => 1, -> { User.count } => 1, -> { UserRole.count } => 1 do
       post setup_url, params: {
         village: { name: "Ham Radio Village" },
         user: {
@@ -31,6 +31,7 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
     user = User.last
     assert_equal "admin@example.com", user.email
     assert user.valid_password?("password123")
+    assert user.village_admin?, "Setup user should be assigned village admin role"
   end
 
   test "should not create village with invalid data" do
