@@ -27,31 +27,27 @@ Sass is pinned to version `1.94.2` in `package.json` to maintain consistency. De
 
 The application includes seed data for development and testing. Run `bin/rails db:seed` to populate the database with test data.
 
-### Seed Users (all passwords are "password")
+### Seed Users
 
-1. **Village Admin**
-   - Email: `admin@example.com`
-   - Password: `password`
-   - Role: Village Administrator (can manage all conferences)
+**All seed users have the password: `password`**
 
-2. **Conference Lead (Coordinator)**
-   - Email: `coordinator@example.com`
-   - Password: `password`
-   - Role: Conference Lead for DEF CON 32
+| Email | Password | Role | Description |
+|-------|----------|------|-------------|
+| `admin@example.com` | `password` | Village Admin | Can manage all conferences and village settings |
+| `coordinator@example.com` | `password` | Conference Lead | Conference Lead for DEF CON 32 |
+| `admin1@example.com` | `password` | Conference Admin | Conference Admin for DEF CON 32 |
+| `admin2@example.com` | `password` | Conference Admin | Conference Admin for DEF CON 32 |
+| `volunteer1@example.com` | `password` | Volunteer | Can view conferences and sign up for shifts |
+| `volunteer2@example.com` | `password` | Volunteer | Can view conferences and sign up for shifts |
+| `volunteer3@example.com` | `password` | Volunteer | Can view conferences and sign up for shifts |
+| `volunteer4@example.com` | `password` | Volunteer | Can view conferences and sign up for shifts |
+| `volunteer5@example.com` | `password` | Volunteer | Can view conferences and sign up for shifts |
 
-3. **Conference Admins**
-   - Email: `admin1@example.com`
-   - Password: `password`
-   - Role: Conference Admin for DEF CON 32
-   
-   - Email: `admin2@example.com`
-   - Password: `password`
-   - Role: Conference Admin for DEF CON 32
-
-4. **Volunteers**
-   - Email: `volunteer1@example.com` through `volunteer5@example.com`
-   - Password: `password`
-   - Role: Volunteer (can view conferences and sign up for shifts)
+**Quick Login Reference:**
+- **Village Admin**: `admin@example.com` / `password`
+- **Conference Lead**: `coordinator@example.com` / `password`
+- **Conference Admin**: `admin1@example.com` or `admin2@example.com` / `password`
+- **Volunteer**: `volunteer1@example.com` through `volunteer5@example.com` / `password`
 
 ### Other Seed Data
 
