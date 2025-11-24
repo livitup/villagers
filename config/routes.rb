@@ -26,6 +26,15 @@ Rails.application.routes.draw do
   # Program management
   resources :programs
 
+  # Qualification management
+  resources :qualifications
+  resources :users do
+    resources :user_qualifications, only: [ :create, :destroy ]
+  end
+  resources :programs do
+    resources :program_qualifications, only: [ :create, :destroy ]
+  end
+
   # Defines the root path route ("/")
   root "root#show"
 end

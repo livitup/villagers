@@ -1,0 +1,44 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Qualifications</h1>
+        <% if policy(Qualification).create? %>
+          <%= link_to "New Qualification", new_qualification_path, class: "btn btn-primary" %>
+        <% end %>
+      </div>
+
+      <% if @qualifications.any? %>
+        <div class="row">
+          <% @qualifications.each do |qualification| %>
+            <div class="col-md-6 mb-3">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title"><%= qualification.name %></h5>
+                  <p class="card-text"><%= qualification.description %></p>
+                  <div class="d-flex gap-2">
+                    <%= link_to "View", qualification, class: "btn btn-sm btn-outline-primary" %>
+                    <% if policy(qualification).update? %>
+                      <%= link_to "Edit", edit_qualification_path(qualification), class: "btn btn-sm btn-outline-secondary" %>
+                    <% end %>
+                    <% if policy(qualification).destroy? %>
+                      <%= link_to "Delete", qualification, data: { turbo_method: :delete, confirm: "Are you sure?" }, class: "btn btn-sm btn-outline-danger" %>
+                    <% end %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="alert alert-info">
+          No qualifications have been created yet.
+          <% if policy(Qualification).create? %>
+            <%= link_to "Create the first qualification", new_qualification_path, class: "alert-link" %>.
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
