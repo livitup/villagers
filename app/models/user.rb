@@ -56,4 +56,13 @@ class User < ApplicationRecord
   def conference_admin_conferences
     conference_roles.where(role_name: ConferenceRole::CONFERENCE_ADMIN).includes(:conference).map(&:conference)
   end
+
+  # Qualification checking methods
+  def has_qualification?(qualification)
+    user_qualifications.exists?(qualification: qualification)
+  end
+
+  def has_qualification_for_program?(program)
+    program.qualifications.all? { |qual| has_qualification?(qual) }
+  end
 end
