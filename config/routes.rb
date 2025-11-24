@@ -20,6 +20,9 @@ Rails.application.routes.draw do
   # Conference management
   resources :conferences
 
+  # Program management
+  resources :programs
+
   # Defines the root path route ("/")
   root "root#show"
 end

@@ -31,6 +31,22 @@
               <% end %>
             </ul>
           </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="programDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Programs
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="programDropdown">
+              <li>
+                <%= link_to "All Programs", programs_path, class: "dropdown-item" %>
+              </li>
+              <% if policy(Program).create? %>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <%= link_to "New Program", new_program_path, class: "dropdown-item" %>
+                </li>
+              <% end %>
+            </ul>
+          </li>
           <li class="nav-item">
             <%= link_to "Profile", edit_user_registration_path, class: "nav-link" %>
           </li>

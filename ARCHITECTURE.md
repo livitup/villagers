@@ -269,9 +269,14 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 ### Testing
 - **Requirement**: Test-driven design (TDD)
 - **Requirement**: All tests must pass before PR - **UNACCEPTABLE** to create PR with failing tests
+- **Workflow**:
+  - During development: Run specific test files (e.g., `bin/rails test test/models/program_test.rb`)
+  - Before declaring done: Run `bin/rails test:all` to verify all tests pass
 - **Commands**:
-  - `bin/rails test` - run all tests
-  - `bin/rails test:system` - run system tests
+  - `bin/rails test:all` - run all tests (use this before finalizing)
+  - `bin/rails test test/path/to/file_test.rb` - run specific test file
+  - `bin/rails test test/models/` - run all tests in a directory
+  - `bin/rails test:system` - run system tests only
 
 ### Code Quality
 - **Linting**: Run `bin/rubocop -a` before every PR or push
@@ -286,6 +291,15 @@ Villagers is a Ruby on Rails application for hacker conference village organizer
 - Use Rails helpers and partials appropriately
 - Follow ActiveRecord associations and validations
 - Use Pundit for authorization (explicit `policy_class` where needed)
+
+### Navbar Updates
+- **When creating a new model**: Add a new dropdown in the navbar with:
+  - Link to index action (e.g., "All Programs")
+  - Link to new/create action (e.g., "New Program") - only if user has permission
+  - All links must respect roles using Pundit policies (e.g., `policy(Program).create?`)
+- **When adding functionality to existing model**: Add new links to the existing dropdown
+- **Authorization**: All navbar links must check permissions - only show links the user can access
+- **Pattern**: Follow the existing dropdown structure (see `app/views/shared/_navbar.html.erb`)
 
 ## Authorization (Pundit)
 
@@ -322,7 +336,8 @@ Based on development workflow, the following commands are authorized:
 - `git revert`
 
 ### Rails Commands
-- `bin/rails test`
+- `bin/rails test:all`
+- `bin/rails test test/path/to/file_test.rb` (specific test files)
 - `bin/rails test:system`
 - `bin/rails db:migrate`
 - `bin/rails db:seed`

@@ -47,4 +47,41 @@ class NavbarTest < ApplicationSystemTestCase
     assert_selector ".navbar-toggler", visible: :all
     assert_selector "#navbarNav.collapse"
   end
+
+  test "navbar shows programs dropdown for signed in users" do
+    Village.create!(name: "Test Village", setup_complete: true)
+    user = User.create!(
+      email: "user@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    sign_in user
+    visit root_path
+
+    assert_text "Programs"
+    click_on "Programs"
+    assert_link "All Programs"
+    assert_no_link "New Program"
+  end
+
+  test "navbar shows new program link for village admins" do
+    Village.create!(name: "Test Village", setup_complete: true)
+    village_admin = User.create!(
+      email: "admin@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    village_admin_role = Role.create!(name: Role::VILLAGE_ADMIN)
+    UserRole.create!(user: village_admin, role: village_admin_role)
+
+    sign_in village_admin
+    visit root_path
+
+    assert_text "Programs"
+    click_on "Programs"
+    assert_link "All Programs"
+    assert_link "New Program"
+  end
 end
