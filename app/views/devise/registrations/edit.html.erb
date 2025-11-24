@@ -57,6 +57,54 @@
 
           <hr class="my-4">
 
+          <h5 class="mb-3">My Permissions & Roles</h5>
+          <div class="card border-info mb-4">
+            <div class="card-body">
+              <h6 class="card-title">Your Current Roles</h6>
+              <ul class="list-unstyled mb-0">
+                <% if resource.village_admin? %>
+                  <li class="mb-2">
+                    <span class="badge bg-primary me-2">Village Admin</span>
+                    <small class="text-muted">You can manage all conferences and create programs</small>
+                  </li>
+                <% end %>
+                <% if resource.conference_lead_conferences.any? %>
+                  <li class="mb-2">
+                    <span class="badge bg-success me-2">Conference Lead</span>
+                    <small class="text-muted">
+                      You are a lead for:
+                      <% resource.conference_lead_conferences.each do |conference| %>
+                        <%= link_to conference.name, conference_path(conference), class: "text-decoration-none" %><%= "," unless conference == resource.conference_lead_conferences.last %>
+                      <% end %>
+                    </small>
+                  </li>
+                <% end %>
+                <% if resource.conference_admin_conferences.any? %>
+                  <li class="mb-2">
+                    <span class="badge bg-warning text-dark me-2">Conference Admin</span>
+                    <small class="text-muted">
+                      You are an admin for:
+                      <% resource.conference_admin_conferences.each do |conference| %>
+                        <%= link_to conference.name, conference_path(conference), class: "text-decoration-none" %><%= "," unless conference == resource.conference_admin_conferences.last %>
+                      <% end %>
+                    </small>
+                  </li>
+                <% end %>
+                <li class="mb-2">
+                  <span class="badge bg-secondary me-2">Volunteer</span>
+                  <small class="text-muted">You can view conferences and sign up for shifts</small>
+                </li>
+              </ul>
+              <% unless resource.village_admin? || resource.conference_lead_conferences.any? || resource.conference_admin_conferences.any? %>
+                <p class="text-muted small mb-0 mt-2">
+                  You currently have volunteer-level permissions. Contact a village administrator if you need additional access.
+                </p>
+              <% end %>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
           <h5 class="mb-3 text-danger">Danger Zone</h5>
           <div class="card border-danger">
             <div class="card-body">

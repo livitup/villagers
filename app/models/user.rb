@@ -37,4 +37,17 @@ class User < ApplicationRecord
     # Any registered user is a volunteer
     persisted?
   end
+
+  # Methods for displaying permissions
+  def global_roles
+    roles.pluck(:name)
+  end
+
+  def conference_lead_conferences
+    conference_roles.where(role_name: ConferenceRole::CONFERENCE_LEAD).includes(:conference).map(&:conference)
+  end
+
+  def conference_admin_conferences
+    conference_roles.where(role_name: ConferenceRole::CONFERENCE_ADMIN).includes(:conference).map(&:conference)
+  end
 end
