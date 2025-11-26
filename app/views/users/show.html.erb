@@ -1,0 +1,98 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h2><%= @user.email %></h2>
+        </div>
+        <div class="card-body">
+          <dl class="row">
+            <% if @user.name.present? %>
+              <dt class="col-sm-3">Name:</dt>
+              <dd class="col-sm-9"><%= @user.name %></dd>
+            <% end %>
+
+            <% if @user.handle.present? %>
+              <dt class="col-sm-3">Handle:</dt>
+              <dd class="col-sm-9"><%= @user.handle %></dd>
+            <% end %>
+
+            <% if @user.phone.present? %>
+              <dt class="col-sm-3">Phone:</dt>
+              <dd class="col-sm-9"><%= @user.phone %></dd>
+            <% end %>
+
+            <% if @user.twitter.present? %>
+              <dt class="col-sm-3">Twitter:</dt>
+              <dd class="col-sm-9"><%= @user.twitter %></dd>
+            <% end %>
+
+            <% if @user.signal.present? %>
+              <dt class="col-sm-3">Signal:</dt>
+              <dd class="col-sm-9"><%= @user.signal %></dd>
+            <% end %>
+
+            <% if @user.discord.present? %>
+              <dt class="col-sm-3">Discord:</dt>
+              <dd class="col-sm-9"><%= @user.discord %></dd>
+            <% end %>
+          </dl>
+
+          <hr>
+
+          <h5>Roles</h5>
+          <% if @user.village_admin? %>
+            <span class="badge bg-danger">Village Admin</span>
+          <% end %>
+          <% @user.conference_lead_conferences.each do |conference| %>
+            <span class="badge bg-primary">Lead: <%= conference.name %></span>
+          <% end %>
+          <% @user.conference_admin_conferences.each do |conference| %>
+            <span class="badge bg-info">Admin: <%= conference.name %></span>
+          <% end %>
+          <% unless @user.village_admin? || @user.conference_lead_conferences.any? || @user.conference_admin_conferences.any? %>
+            <span class="badge bg-secondary">Volunteer</span>
+          <% end %>
+
+          <hr>
+
+          <div class="card bg-light">
+            <div class="card-body">
+              <h5 class="card-title">Qualifications</h5>
+              <% if @user.qualifications.any? %>
+                <ul class="list-group list-group-flush mb-3">
+                  <% @user.qualifications.each do |qualification| %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <%= qualification.name %>
+                      <%= link_to "Remove", managed_user_user_qualification_path(@user, @user.user_qualifications.find_by(qualification: qualification)),
+                          data: { turbo_method: :delete, turbo_confirm: "Remove this qualification from #{@user.email}?" },
+                          class: "btn btn-sm btn-outline-danger" %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="text-muted">No qualifications granted yet.</p>
+              <% end %>
+
+              <% available_qualifications = @qualifications - @user.qualifications %>
+              <% if available_qualifications.any? %>
+                <%= form_with url: managed_user_user_qualifications_path(@user), method: :post, local: true, class: "d-flex gap-2" do |f| %>
+                  <select name="qualification_id" class="form-select form-select-sm" required>
+                    <option value="">Select qualification...</option>
+                    <% available_qualifications.each do |qual| %>
+                      <option value="<%= qual.id %>"><%= qual.name %></option>
+                    <% end %>
+                  </select>
+                  <%= f.submit "Grant", class: "btn btn-sm btn-primary" %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+        <div class="card-footer">
+          <%= link_to "← Back to Users", managed_users_path, class: "btn btn-link" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

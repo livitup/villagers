@@ -8,6 +8,7 @@ class ProgramsController < ApplicationController
 
   def show
     authorize @program, :show?, policy_class: ProgramPolicy
+    @qualifications = Qualification.where(village: @village).order(:name)
   end
 
   def new

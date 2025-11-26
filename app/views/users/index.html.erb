@@ -1,0 +1,50 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Users</h1>
+      </div>
+
+      <% if @users.any? %>
+        <div class="table-responsive">
+          <table class="table table-striped">
+            <thead>
+              <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Handle</th>
+                <th>Qualifications</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% @users.each do |user| %>
+                <tr>
+                  <td><%= user.email %></td>
+                  <td><%= user.name %></td>
+                  <td><%= user.handle %></td>
+                  <td>
+                    <% if user.qualifications.any? %>
+                      <% user.qualifications.each do |qual| %>
+                        <span class="badge bg-success"><%= qual.name %></span>
+                      <% end %>
+                    <% else %>
+                      <span class="text-muted">None</span>
+                    <% end %>
+                  </td>
+                  <td>
+                    <%= link_to "View", managed_user_path(user), class: "btn btn-sm btn-outline-primary" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <div class="alert alert-info">
+          No users have registered yet.
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
