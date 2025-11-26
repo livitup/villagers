@@ -63,6 +63,11 @@
               <% end %>
             </ul>
           </li>
+          <% if policy(User).index? %>
+            <li class="nav-item">
+              <%= link_to "Users", managed_users_path, class: "nav-link" %>
+            </li>
+          <% end %>
           <li class="nav-item">
             <%= link_to "Profile", edit_user_registration_path, class: "nav-link" %>
           </li>

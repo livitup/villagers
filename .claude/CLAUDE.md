@@ -28,15 +28,30 @@ Ruby on Rails app for hacker conference village organizers to manage volunteer s
 6. **Always branch from main**: Never from another feature branch unless explicitly requested
 7. **No direct commits to main**: All work goes through branches and PRs
 
-### Before Creating PRs (MANDATORY)
+### Test-Driven Development (MANDATORY)
 
-1. **All tests must pass**: Run `bin/rails test:all`
-2. **Run linter**: `bin/rubocop -a`
-3. **Fix any remaining rubocop warnings manually**
+Follow TDD for all new functionality:
+
+1. **Write a failing test first** - Define expected behavior before implementation
+2. **Write minimum code to pass** - Only enough to make the test green
+3. **Refactor** - Clean up while keeping tests green
+4. **Repeat** - Next test for next piece of functionality
+
+Do NOT write implementation code before tests. The test file should be created and failing before the implementation file exists.
+
+### Before Commits and PRs (MANDATORY)
+
+Before suggesting ANY commit or PR:
+
+1. **Run ALL tests**: `bin/rails test:all` (includes system tests)
+2. **Verify 0 failures, 0 errors** - Do not proceed if tests fail
+3. **Run linter**: `bin/rubocop -a`
+4. **Fix any remaining rubocop warnings manually**
 
 ### Testing Commands
 
-- `bin/rails test:all` - Run all tests (use before finalizing)
+- `bin/rails test:all` - Run ALL tests including system tests (REQUIRED before commits/PRs)
+- `bin/rails test` - Run unit/controller/integration tests only (faster, for iterating)
 - `bin/rails test test/path/to/file_test.rb` - Run specific test file
 - `bin/rails test test/models/` - Run directory tests
 - `bin/rails test:system` - System tests only

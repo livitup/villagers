@@ -31,7 +31,7 @@ Rails.application.routes.draw do
 
   # Qualification management
   resources :qualifications
-  resources :users do
+  resources :managed_users, controller: "users", path: "manage/users" do
     resources :user_qualifications, only: [ :create, :destroy ]
   end
   resources :programs do

@@ -11,9 +11,9 @@ class UserQualificationsController < ApplicationController
       qualification: @qualification
     )
 
-    redirect_to @user, notice: "Qualification granted successfully."
+    redirect_to managed_user_path(@user), notice: "Qualification granted successfully."
   rescue ActiveRecord::RecordInvalid => e
-    redirect_to @user, alert: "Could not grant qualification: #{e.message}"
+    redirect_to managed_user_path(@user), alert: "Could not grant qualification: #{e.message}"
   end
 
   def destroy
@@ -22,13 +22,13 @@ class UserQualificationsController < ApplicationController
     authorize @qualification, :update?, policy_class: QualificationPolicy
 
     @user_qualification.destroy
-    redirect_to @user, notice: "Qualification removed successfully."
+    redirect_to managed_user_path(@user), notice: "Qualification removed successfully."
   end
 
   private
 
   def set_user
-    @user = User.find(params[:user_id])
+    @user = User.find(params[:managed_user_id])
   end
 
   def set_village
