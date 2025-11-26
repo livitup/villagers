@@ -48,13 +48,16 @@
                     <td class="schedule-cell">
                       <% if slot_data %>
                         <% is_user_signed_up = @user_signups.include?(slot_data[:timeslot].id) %>
-                        <div class="schedule-slot <%= 'user-signed-up' if is_user_signed_up %> <%= 'slot-full' if slot_data[:full] && !is_user_signed_up %> <%= 'slot-available' if !slot_data[:full] && !is_user_signed_up %>">
+                        <% is_understaffed = slot_data[:signed_up_count] < slot_data[:max_volunteers] %>
+                        <div class="schedule-slot <%= 'user-signed-up' if is_user_signed_up %> <%= 'slot-full' if slot_data[:full] && !is_user_signed_up %> <%= 'slot-available' if !slot_data[:full] && !is_user_signed_up %> <%= 'understaffed' if is_understaffed && @can_see_all_volunteers %>">
                           <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
                             <div class="d-flex align-items-center">
                               <% if is_user_signed_up %>
                                 <span class="badge bg-success">You're signed up</span>
                               <% elsif slot_data[:full] %>
                                 <span class="badge bg-danger">Full</span>
+                              <% elsif is_understaffed && @can_see_all_volunteers %>
+                                <span class="badge bg-warning text-dark">Needs Staff</span>
                               <% else %>
                                 <span class="badge bg-info">Available</span>
                               <% end %>
@@ -77,13 +80,58 @@
                             </div>
                           </div>
 
-                          <% if @can_see_all_volunteers && slot_data[:volunteers].any? %>
+                          <% if @can_see_all_volunteers %>
                             <div class="volunteer-list mt-1">
                               <% slot_data[:volunteers].each do |volunteer| %>
-                                <small class="d-block text-truncate" title="<%= volunteer.email %>">
-                                  <%= volunteer.email %>
-                                </small>
+                                <div class="d-flex justify-content-between align-items-center">
+                                  <small class="text-truncate" title="<%= volunteer.email %>">
+                                    <%= volunteer.email %>
+                                  </small>
+                                  <%= link_to "Remove",
+                                      remove_volunteer_conference_timeslot_path(@conference, slot_data[:timeslot], user_id: volunteer.id),
+                                      data: { turbo_method: :delete, turbo_confirm: "Remove #{volunteer.email} from this shift?" },
+                                      class: "btn btn-xs btn-outline-danger" %>
+                                </div>
                               <% end %>
+                            </div>
+
+                            <div class="admin-controls mt-2 pt-2 border-top">
+                              <%= form_with url: add_volunteer_conference_timeslot_path(@conference, slot_data[:timeslot]), method: :post, local: true, class: "d-flex gap-1" do |form| %>
+                                <% available_users = @users - slot_data[:volunteers] %>
+                                <%= select_tag :user_id,
+                                    options_from_collection_for_select(available_users, :id, :email),
+                                    include_blank: "Add volunteer...",
+                                    class: "form-select form-select-sm",
+                                    style: "font-size: 0.7rem;" %>
+                                <%= form.submit "Add", class: "btn btn-sm btn-outline-primary" %>
+                              <% end %>
+                              <button type="button" class="btn btn-xs btn-outline-secondary mt-1" data-bs-toggle="modal" data-bs-target="#editCapacityModal<%= slot_data[:timeslot].id %>">
+                                Edit Capacity
+                              </button>
+                            </div>
+
+                            <!-- Edit Capacity Modal -->
+                            <div class="modal fade" id="editCapacityModal<%= slot_data[:timeslot].id %>" tabindex="-1">
+                              <div class="modal-dialog modal-sm">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <h5 class="modal-title">Edit Capacity</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                  </div>
+                                  <%= form_with url: conference_timeslot_path(@conference, slot_data[:timeslot]), method: :patch, local: true do |form| %>
+                                    <div class="modal-body">
+                                      <div class="mb-3">
+                                        <%= form.label :max_volunteers, "Max volunteers", class: "form-label" %>
+                                        <%= form.number_field :max_volunteers, value: slot_data[:max_volunteers], min: 1, class: "form-control", name: "timeslot[max_volunteers]" %>
+                                      </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                      <%= form.submit "Save", class: "btn btn-primary" %>
+                                    </div>
+                                  <% end %>
+                                </div>
+                              </div>
                             </div>
                           <% end %>
                         </div>
@@ -151,6 +199,20 @@
 
   .slot-actions {
     flex-shrink: 0;
+  }
+
+  .schedule-slot.understaffed {
+    border-color: #ffc107;
+    border-width: 2px;
+  }
+
+  .btn-xs {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.3rem;
+  }
+
+  .admin-controls {
+    font-size: 0.75rem;
   }
 
   @media (max-width: 768px) {

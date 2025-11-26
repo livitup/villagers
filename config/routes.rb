@@ -25,6 +25,12 @@ Rails.application.routes.draw do
     get "calendar", to: "calendar#show", as: :calendar
     get "schedule", to: "schedule#show", as: :schedule
     resources :volunteer_signups, only: [ :index, :create, :destroy ]
+    resources :timeslots, only: [ :update ] do
+      member do
+        post :add_volunteer
+        delete :remove_volunteer
+      end
+    end
   end
 
   # Program management
