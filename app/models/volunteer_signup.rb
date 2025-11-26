@@ -41,10 +41,6 @@ class VolunteerSignup < ApplicationRecord
     return unless user && timeslot
 
     program = timeslot.program
-    # Skip qualification check if ProgramQualification model doesn't exist (e.g., issue 11 not merged yet)
-    return unless defined?(ProgramQualification)
-    return unless program.respond_to?(:qualifications)
-
     required_qualifications = program.qualifications
 
     missing_qualifications = required_qualifications.reject { |qual| user.has_qualification?(qual) }
