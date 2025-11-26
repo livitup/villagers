@@ -1,0 +1,178 @@
+<div class="container-fluid mt-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1><%= @conference.name %> - Schedule</h1>
+        <div>
+          <%= link_to "View Calendar", conference_calendar_path(@conference), class: "btn btn-info me-2" %>
+          <%= link_to "← Back to Conference", @conference, class: "btn btn-outline-secondary" %>
+        </div>
+      </div>
+      <p class="text-muted">
+        <% if @can_see_all_volunteers %>
+          <span class="badge bg-primary">Admin View</span> Showing all volunteers across all programs
+        <% else %>
+          <span class="badge bg-secondary">Volunteer View</span> Your shifts are highlighted
+        <% end %>
+      </p>
+    </div>
+  </div>
+
+  <% @schedule_data.each do |date, day_data| %>
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h3 class="h5 mb-0"><%= date.strftime("%A, %B %d, %Y") %></h3>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered schedule-table mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="time-column">Time</th>
+                <% day_data[:programs].each do |program_id, program_data| %>
+                  <th class="program-column text-center"><%= program_data[:name] %></th>
+                <% end %>
+                <% if day_data[:programs].empty? %>
+                  <th class="text-center text-muted">No programs scheduled</th>
+                <% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% day_data[:time_slots].each do |time_slot| %>
+                <tr>
+                  <td class="time-column fw-bold">
+                    <%= Time.zone.parse("2000-01-01 #{time_slot}").strftime("%l:%M %p").strip %>
+                  </td>
+                  <% day_data[:programs].each do |program_id, program_data| %>
+                    <% slot_data = program_data[:timeslots][time_slot] %>
+                    <td class="schedule-cell">
+                      <% if slot_data %>
+                        <% is_user_signed_up = @user_signups.include?(slot_data[:timeslot].id) %>
+                        <div class="schedule-slot <%= 'user-signed-up' if is_user_signed_up %> <%= 'slot-full' if slot_data[:full] && !is_user_signed_up %> <%= 'slot-available' if !slot_data[:full] && !is_user_signed_up %>">
+                          <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
+                            <div class="d-flex align-items-center">
+                              <% if is_user_signed_up %>
+                                <span class="badge bg-success">You're signed up</span>
+                              <% elsif slot_data[:full] %>
+                                <span class="badge bg-danger">Full</span>
+                              <% else %>
+                                <span class="badge bg-info">Available</span>
+                              <% end %>
+                              <small class="text-muted ms-1">
+                                <%= slot_data[:signed_up_count] %>/<%= slot_data[:max_volunteers] %>
+                              </small>
+                            </div>
+                            <div class="slot-actions">
+                              <% if is_user_signed_up %>
+                                <%= link_to "Cancel",
+                                    conference_volunteer_signup_path(@conference, current_user.volunteer_signups.find_by(timeslot: slot_data[:timeslot])),
+                                    data: { turbo_method: :delete, turbo_confirm: "Cancel this shift?" },
+                                    class: "btn btn-sm btn-outline-danger" %>
+                              <% elsif !slot_data[:full] %>
+                                <%= form_with url: conference_volunteer_signups_path(@conference), method: :post, local: true, class: "d-inline" do |form| %>
+                                  <%= hidden_field_tag :timeslot_id, slot_data[:timeslot].id %>
+                                  <%= form.submit "Sign Up", class: "btn btn-sm btn-primary" %>
+                                <% end %>
+                              <% end %>
+                            </div>
+                          </div>
+
+                          <% if @can_see_all_volunteers && slot_data[:volunteers].any? %>
+                            <div class="volunteer-list mt-1">
+                              <% slot_data[:volunteers].each do |volunteer| %>
+                                <small class="d-block text-truncate" title="<%= volunteer.email %>">
+                                  <%= volunteer.email %>
+                                </small>
+                              <% end %>
+                            </div>
+                          <% end %>
+                        </div>
+                      <% end %>
+                    </td>
+                  <% end %>
+                  <% if day_data[:programs].empty? %>
+                    <td class="text-center text-muted">-</td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<style>
+  .schedule-table {
+    table-layout: fixed;
+  }
+
+  .time-column {
+    width: 100px;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .program-column {
+    min-width: 200px;
+  }
+
+  .schedule-cell {
+    vertical-align: top;
+    padding: 0.5rem !important;
+  }
+
+  .schedule-slot {
+    padding: 0.5rem;
+    border-radius: 4px;
+  }
+
+  .schedule-slot.user-signed-up {
+    background-color: #fff3cd;
+    border: 2px solid #ffc107;
+  }
+
+  .schedule-slot.slot-full {
+    background-color: #f8d7da;
+    border: 1px solid #dc3545;
+  }
+
+  .schedule-slot.slot-available {
+    background-color: #d1e7dd;
+    border: 1px solid #198754;
+  }
+
+  .volunteer-list {
+    font-size: 0.75rem;
+    max-height: 80px;
+    overflow-y: auto;
+  }
+
+  .slot-actions {
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 768px) {
+    .schedule-table {
+      font-size: 0.75rem;
+    }
+
+    .time-column {
+      width: 70px;
+    }
+
+    .program-column {
+      min-width: 150px;
+    }
+
+    .schedule-slot {
+      padding: 0.25rem;
+    }
+
+    .btn-sm {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.4rem;
+    }
+  }
+</style>

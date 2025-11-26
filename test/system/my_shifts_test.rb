@@ -78,9 +78,8 @@ class MyShiftsTest < ApplicationSystemTestCase
     login_as @user
     visit conference_path(@conference)
 
-    click_on "My Shifts"
+    click_link "My Shifts", class: "btn-success"
 
-    assert_text "My Shifts"
-    assert_current_path conference_volunteer_signups_path(@conference)
+    assert_text "My Shifts - #{@conference.name}"
   end
 end
