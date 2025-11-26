@@ -103,9 +103,12 @@
         </div>
         <div class="card-footer d-flex justify-content-between">
           <%= link_to "← Back to Conferences", conferences_path, class: "btn btn-link" %>
-          <% if policy(@conference).update? %>
-            <%= link_to "Manage Programs", conference_conference_programs_path(@conference), class: "btn btn-primary" %>
-          <% end %>
+          <div>
+            <%= link_to "View Calendar", conference_calendar_path(@conference), class: "btn btn-info me-2" %>
+            <% if policy(@conference).update? %>
+              <%= link_to "Manage Programs", conference_conference_programs_path(@conference), class: "btn btn-primary" %>
+            <% end %>
+          </div>
         </div>
       </div>
     </div>

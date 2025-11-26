@@ -1,0 +1,113 @@
+<div class="container mt-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1><%= @conference.name %> - Calendar</h1>
+        <%= link_to "← Back to Conference", @conference, class: "btn btn-outline-secondary" %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mb-3">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-body">
+          <h5>Filter by Program</h5>
+          <%= form_with url: conference_calendar_path(@conference), method: :get, local: true, class: "row g-3" do |form| %>
+            <div class="col-md-6">
+              <%= select_tag :program_id, options_from_collection_for_select(@programs, :id, :name, @selected_program_id), { include_blank: "All Programs", class: "form-select", onchange: "this.form.submit()" } %>
+            </div>
+            <div class="col-md-6">
+              <%= link_to "Clear Filter", conference_calendar_path(@conference), class: "btn btn-outline-secondary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <% @timeslots_by_day.each do |date, timeslots| %>
+      <% next if timeslots.empty? && @selected_program_id.nil? %>
+      <% filtered_timeslots = @selected_program_id ? timeslots.select { |t| t.program.id == @selected_program_id } : timeslots %>
+      <% next if filtered_timeslots.empty? %>
+
+      <div class="col-12 mb-4">
+        <div class="card">
+          <div class="card-header bg-primary text-white">
+            <h3 class="h5 mb-0"><%= date.strftime("%A, %B %d, %Y") %></h3>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-bordered mb-0">
+                <thead class="table-light">
+                  <tr>
+                    <th style="width: 120px;">Time</th>
+                    <th>Program</th>
+                    <th>Status</th>
+                    <th>Volunteers</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% filtered_timeslots.each do |timeslot| %>
+                    <% is_user_signed_up = @user_signups.include?(timeslot.id) %>
+                    <% is_full = timeslot.full? %>
+                    <tr class="<%= 'table-warning' if is_user_signed_up %> <%= 'table-secondary' if is_full && !is_user_signed_up %>">
+                      <td class="fw-bold">
+                        <%= timeslot.start_time.strftime("%l:%M %p") %> - 
+                        <%= timeslot.end_time.strftime("%l:%M %p") %>
+                      </td>
+                      <td><%= timeslot.program.name %></td>
+                      <td>
+                        <% if is_user_signed_up %>
+                          <span class="badge bg-success">You're signed up</span>
+                        <% elsif is_full %>
+                          <span class="badge bg-danger">Full</span>
+                        <% else %>
+                          <span class="badge bg-info">Available</span>
+                        <% end %>
+                      </td>
+                      <td>
+                        <%= timeslot.current_volunteers_count %> / <%= timeslot.max_volunteers %>
+                      </td>
+                      <td>
+                        <% if is_user_signed_up %>
+                          <%= link_to "Cancel", conference_volunteer_signup_path(@conference, current_user.volunteer_signups.find_by(timeslot: timeslot)), data: { turbo_method: :delete, confirm: "Are you sure?" }, class: "btn btn-sm btn-outline-danger" %>
+                        <% elsif !is_full %>
+                          <%= form_with url: conference_volunteer_signups_path(@conference), method: :post, local: true do |form| %>
+                            <%= hidden_field_tag :timeslot_id, timeslot.id %>
+                            <%= form.submit "Sign Up", class: "btn btn-sm btn-primary" %>
+                          <% end %>
+                        <% end %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+
+  <% if @timeslots_by_day.values.all?(&:empty?) %>
+    <div class="alert alert-info">
+      No timeslots available for this conference.
+    </div>
+  <% end %>
+</div>
+
+<style>
+  @media (max-width: 768px) {
+    .table-responsive {
+      font-size: 0.875rem;
+    }
+    .table th,
+    .table td {
+      padding: 0.5rem;
+    }
+  }
+</style>
+
