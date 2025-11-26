@@ -30,6 +30,12 @@
               <div class="form-text">Optional description of the program. This can be customized per conference.</div>
             </div>
 
+            <div class="mb-3">
+              <%= form.label :max_volunteers, "Default Volunteers Per Shift", class: "form-label" %>
+              <%= form.number_field :max_volunteers, min: 1, class: "form-control", style: "max-width: 150px;" %>
+              <div class="form-text">Default number of volunteers needed per 15-minute shift. Can be overridden per conference.</div>
+            </div>
+
             <div class="d-grid gap-2 d-md-flex justify-content-md-end">
               <%= link_to "Cancel", @program, class: "btn btn-outline-secondary" %>
               <%= form.submit "Update Program", class: "btn btn-primary btn-lg" %>

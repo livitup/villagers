@@ -8,4 +8,5 @@ class Program < ApplicationRecord
 
   validates :name, presence: true
   validates :name, uniqueness: { scope: :village_id, message: "must be unique within the village" }
+  validates :max_volunteers, presence: true, numericality: { greater_than: 0 }
 end

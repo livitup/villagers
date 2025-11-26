@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_26_053343) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_26_055153) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,7 +18,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_053343) do
     t.bigint "conference_id", null: false
     t.datetime "created_at", null: false
     t.jsonb "day_schedules", default: {}
-    t.integer "max_volunteers", default: 1, null: false
+    t.integer "max_volunteers"
     t.bigint "program_id", null: false
     t.text "public_description"
     t.datetime "updated_at", null: false
@@ -63,6 +63,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_053343) do
   create_table "programs", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
+    t.integer "max_volunteers", default: 1, null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.bigint "village_id", null: false

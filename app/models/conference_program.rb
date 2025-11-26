@@ -5,7 +5,12 @@ class ConferenceProgram < ApplicationRecord
 
   validates :conference, presence: true
   validates :program, presence: true, uniqueness: { scope: :conference_id }
-  validates :max_volunteers, presence: true, numericality: { greater_than: 0 }
+  validates :max_volunteers, numericality: { greater_than: 0 }, allow_nil: true
+
+  # Returns the effective max_volunteers (override or program default)
+  def effective_max_volunteers
+    max_volunteers || program&.max_volunteers || 1
+  end
 
   after_create :generate_timeslots
   after_update :regenerate_timeslots_if_needed

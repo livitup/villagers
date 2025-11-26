@@ -36,10 +36,10 @@
             </div>
 
             <div class="mb-3">
-              <%= form.label :max_volunteers, "Volunteers Needed Per Shift", class: "form-label" %>
-              <%= form.number_field :max_volunteers, min: 1, class: "form-control", style: "max-width: 150px;" %>
+              <%= form.label :max_volunteers, "Volunteers Needed Per Shift (Override)", class: "form-label" %>
+              <%= form.number_field :max_volunteers, min: 1, class: "form-control", style: "max-width: 150px;", placeholder: "Use program default" %>
               <small class="form-text text-muted">
-                How many volunteers are needed for each 15-minute timeslot? This sets the default capacity for all shifts.
+                Leave blank to use the program's default. Set a value to override for this conference only.
               </small>
             </div>
 
