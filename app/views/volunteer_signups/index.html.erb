@@ -1,0 +1,65 @@
+<div class="container mt-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1>My Shifts - <%= @conference.name %></h1>
+        <div>
+          <%= link_to "View Calendar", conference_calendar_path(@conference), class: "btn btn-primary me-2" %>
+          <%= link_to "← Back to Conference", @conference, class: "btn btn-outline-secondary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <% if @my_signups.any? %>
+    <div class="row">
+      <div class="col-12">
+        <div class="card">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">Your Signed Up Shifts (<%= @my_signups.count %>)</h5>
+          </div>
+          <div class="card-body p-0">
+            <div class="table-responsive">
+              <table class="table table-striped mb-0">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Program</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% @my_signups.each do |signup| %>
+                    <tr>
+                      <td><%= signup.timeslot.start_time.strftime("%A, %B %d") %></td>
+                      <td>
+                        <%= signup.timeslot.start_time.strftime("%l:%M %p").strip %> -
+                        <%= signup.timeslot.end_time.strftime("%l:%M %p").strip %>
+                      </td>
+                      <td><%= signup.timeslot.program.name %></td>
+                      <td>
+                        <%= link_to "Cancel", conference_volunteer_signup_path(@conference, signup),
+                            data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to cancel this shift?" },
+                            class: "btn btn-sm btn-outline-danger" %>
+                      </td>
+                    </tr>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <div class="row">
+      <div class="col-12">
+        <div class="alert alert-info">
+          <h5>No Shifts Yet</h5>
+          <p class="mb-0">You haven't signed up for any shifts yet. <%= link_to "View the calendar", conference_calendar_path(@conference) %> to find available timeslots.</p>
+        </div>
+      </div>
+    </div>
+  <% end %>
+</div>
