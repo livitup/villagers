@@ -18,7 +18,7 @@
               <%= select_tag :program_id, options_from_collection_for_select(@programs, :id, :name, @selected_program_id), { include_blank: "All Programs", class: "form-select", onchange: "this.form.submit()" } %>
             </div>
             <div class="col-md-6">
-              <%= link_to "Clear Filter", calendar_conference_path(@conference), class: "btn btn-outline-secondary" %>
+              <%= link_to "Clear Filter", conference_calendar_path(@conference), class: "btn btn-outline-secondary" %>
             </div>
           <% end %>
         </div>
