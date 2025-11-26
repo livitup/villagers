@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_24_034913) do
+ActiveRecord::Schema[8.1].define(version: 2025_11_24_035319) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_034913) do
     t.bigint "program_id", null: false
     t.bigint "qualification_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["program_id", "qualification_id"], name: "index_program_qualifications_on_program_id_and_qualification_id", unique: true
     t.index ["program_id"], name: "index_program_qualifications_on_program_id"
     t.index ["qualification_id"], name: "index_program_qualifications_on_qualification_id"
   end
@@ -144,6 +145,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_034913) do
     t.datetime "updated_at", null: false
   end
 
+  create_table "volunteer_signups", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "timeslot_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["timeslot_id"], name: "index_volunteer_signups_on_timeslot_id"
+    t.index ["user_id", "timeslot_id"], name: "index_volunteer_signups_on_user_id_and_timeslot_id", unique: true
+    t.index ["user_id"], name: "index_volunteer_signups_on_user_id"
+  end
+
   add_foreign_key "conference_programs", "conferences"
   add_foreign_key "conference_programs", "programs"
   add_foreign_key "conference_roles", "conferences"
@@ -158,4 +169,6 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_034913) do
   add_foreign_key "user_qualifications", "users"
   add_foreign_key "user_roles", "roles"
   add_foreign_key "user_roles", "users"
+  add_foreign_key "volunteer_signups", "timeslots"
+  add_foreign_key "volunteer_signups", "users"
 end

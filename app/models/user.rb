@@ -14,6 +14,9 @@ class User < ApplicationRecord
   # Qualification associations
   has_many :user_qualifications, dependent: :destroy
   has_many :qualifications, through: :user_qualifications
+  # Volunteer signup associations
+  has_many :volunteer_signups, dependent: :destroy
+  has_many :timeslots, through: :volunteer_signups
 
   # Role checking methods
   def village_admin?
