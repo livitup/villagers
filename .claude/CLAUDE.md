@@ -49,6 +49,16 @@ Before suggesting ANY commit or PR:
 3. **Run linter**: `bin/rubocop -a`
 4. **Fix any remaining rubocop warnings manually**
 
+### PRs Require Explicit Approval
+
+**Do NOT create PRs automatically.** When you believe work is ready:
+1. Commit changes to the branch
+2. Push to remote
+3. **ASK the user** if they want you to create a PR
+4. Wait for explicit confirmation before running `gh pr create`
+
+This allows the user to manually test changes before the PR is created, avoiding multiple commit/push cycles.
+
 ### Testing Commands
 
 - `bin/rails test:all` - Run ALL tests including system tests (REQUIRED before commits/PRs)

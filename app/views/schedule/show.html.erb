@@ -97,7 +97,7 @@
 
                             <div class="admin-controls mt-2 pt-2 border-top">
                               <% unless slot_data[:full] %>
-                                <%= form_with url: add_volunteer_conference_timeslot_path(@conference, slot_data[:timeslot]), method: :post, local: true, class: "d-flex gap-1" do |form| %>
+                                <%= form_with url: add_volunteer_conference_timeslot_path(@conference, slot_data[:timeslot]), method: :post, local: true, class: "d-flex gap-1 mb-2" do |form| %>
                                   <% available_users = @users - slot_data[:volunteers] %>
                                   <%= select_tag :user_id,
                                       options_from_collection_for_select(available_users, :id, :email),
@@ -107,7 +107,7 @@
                                   <%= form.submit "Add", class: "btn btn-sm btn-outline-primary" %>
                                 <% end %>
                               <% end %>
-                              <button type="button" class="btn btn-xs btn-outline-secondary mt-1" data-bs-toggle="modal" data-bs-target="#editCapacityModal<%= slot_data[:timeslot].id %>">
+                              <button type="button" class="btn btn-xs btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#editCapacityModal<%= slot_data[:timeslot].id %>">
                                 Edit Capacity
                               </button>
                             </div>
