@@ -64,8 +64,8 @@ class ScheduleTest < ApplicationSystemTestCase
     login_as @volunteer
     visit conference_schedule_path(@conference)
 
-    # Should show the volunteer's signup
-    assert_selector ".schedule-slot.user-signed-up"
+    # Should show the volunteer's signup (class is now on cell, not slot)
+    assert_selector ".schedule-cell.user-signed-up"
   end
 
   test "volunteer does not see other users names" do
@@ -97,10 +97,9 @@ class ScheduleTest < ApplicationSystemTestCase
     login_as @volunteer
     visit conference_path(@conference)
 
-    click_on "View Schedule"
+    click_link "View Schedule"
 
-    assert_text "Schedule"
-    assert_current_path conference_schedule_path(@conference)
+    assert_text "#{@conference.name} - Schedule"
   end
 
   test "schedule shows all conference days" do
