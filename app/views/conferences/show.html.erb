@@ -33,6 +33,73 @@
               <dd class="col-sm-9"><%= lead.email %></dd>
             <% end %>
           </dl>
+
+          <hr>
+
+          <h5>Conference Team</h5>
+          <div class="mb-3">
+            <strong>Conference Leads:</strong>
+            <ul class="list-group mt-2">
+              <% @conference.conference_roles.where(role_name: ConferenceRole::CONFERENCE_LEAD).includes(:user).each do |role| %>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <%= role.user.email %>
+                  <% if policy(@conference).update? && (@conference.conference_roles.where(role_name: ConferenceRole::CONFERENCE_LEAD).count > 1 || current_user.village_admin?) %>
+                    <%= link_to "Remove", conference_conference_role_path(@conference, role), data: { turbo_method: :delete, confirm: "Are you sure?" }, class: "btn btn-sm btn-outline-danger" %>
+                  <% end %>
+                </li>
+              <% end %>
+              <% if @conference.conference_roles.where(role_name: ConferenceRole::CONFERENCE_LEAD).empty? %>
+                <li class="list-group-item text-muted">No conference lead assigned</li>
+              <% end %>
+            </ul>
+          </div>
+
+          <div class="mb-3">
+            <strong>Conference Admins:</strong>
+            <ul class="list-group mt-2">
+              <% @conference.conference_roles.where(role_name: ConferenceRole::CONFERENCE_ADMIN).includes(:user).each do |role| %>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <%= role.user.email %>
+                  <% if policy(@conference).update? %>
+                    <%= link_to "Remove", conference_conference_role_path(@conference, role), data: { turbo_method: :delete, confirm: "Are you sure?" }, class: "btn btn-sm btn-outline-danger" %>
+                  <% end %>
+                </li>
+              <% end %>
+              <% if @conference.conference_roles.where(role_name: ConferenceRole::CONFERENCE_ADMIN).empty? %>
+                <li class="list-group-item text-muted">No conference admins assigned</li>
+              <% end %>
+            </ul>
+          </div>
+
+          <% if policy(@conference).update? %>
+            <div class="card mt-3">
+              <div class="card-body">
+                <h6 class="card-title">Delegate Conference Admin</h6>
+                <%= form_with url: conference_conference_roles_path(@conference), method: :post, local: true, class: "row g-3" do |form| %>
+                  <div class="col-md-8">
+                    <%= select_tag :user_id, options_from_collection_for_select(User.all.order(:email), :id, :email), { include_blank: "Select a user", class: "form-select", required: true } %>
+                  </div>
+                  <div class="col-md-4">
+                    <%= hidden_field_tag :role_name, ConferenceRole::CONFERENCE_ADMIN %>
+                    <%= form.submit "Add Admin", class: "btn btn-primary w-100" %>
+                  </div>
+                <% end %>
+                <% if current_user.village_admin? %>
+                  <hr>
+                  <h6 class="card-title">Assign Conference Lead</h6>
+                  <%= form_with url: conference_conference_roles_path(@conference), method: :post, local: true, class: "row g-3" do |form| %>
+                    <div class="col-md-8">
+                      <%= select_tag :user_id, options_from_collection_for_select(User.all.order(:email), :id, :email), { include_blank: "Select a user", class: "form-select", required: true } %>
+                    </div>
+                    <div class="col-md-4">
+                      <%= hidden_field_tag :role_name, ConferenceRole::CONFERENCE_LEAD %>
+                      <%= form.submit "Add Lead", class: "btn btn-primary w-100" %>
+                    </div>
+                  <% end %>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
         </div>
         <div class="card-footer d-flex justify-content-between">
           <%= link_to "← Back to Conferences", conferences_path, class: "btn btn-link" %>
