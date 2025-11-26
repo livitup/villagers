@@ -3,7 +3,10 @@
     <div class="col-12">
       <div class="d-flex justify-content-between align-items-center">
         <h1><%= @conference.name %> - Calendar</h1>
-        <%= link_to "← Back to Conference", @conference, class: "btn btn-outline-secondary" %>
+        <div>
+          <%= link_to "View Schedule", conference_schedule_path(@conference), class: "btn btn-info me-2" %>
+          <%= link_to "← Back to Conference", @conference, class: "btn btn-outline-secondary" %>
+        </div>
       </div>
     </div>
   </div>
