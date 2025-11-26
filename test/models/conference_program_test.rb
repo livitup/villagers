@@ -95,4 +95,47 @@ class ConferenceProgramTest < ActiveSupport::TestCase
     )
     assert_equal({}, cp.day_schedules)
   end
+
+  test "max_volunteers should default to 1" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program
+    )
+    assert_equal 1, cp.max_volunteers
+  end
+
+  test "max_volunteers must be greater than 0" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      max_volunteers: 0
+    )
+    assert_not cp.valid?
+    assert cp.errors[:max_volunteers].any?
+  end
+
+  test "max_volunteers can be set to any positive number" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      max_volunteers: 5
+    )
+    assert cp.valid?
+    assert_equal 5, cp.max_volunteers
+  end
+
+  test "timeslots inherit max_volunteers from conference_program" do
+    cp = ConferenceProgram.create!(
+      conference: @conference,
+      program: @program,
+      max_volunteers: 3,
+      day_schedules: {
+        "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" }
+      }
+    )
+    assert cp.timeslots.any?
+    cp.timeslots.each do |timeslot|
+      assert_equal 3, timeslot.max_volunteers
+    end
+  end
 end

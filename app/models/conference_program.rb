@@ -5,6 +5,7 @@ class ConferenceProgram < ApplicationRecord
 
   validates :conference, presence: true
   validates :program, presence: true, uniqueness: { scope: :conference_id }
+  validates :max_volunteers, presence: true, numericality: { greater_than: 0 }
 
   after_create :generate_timeslots
   after_update :regenerate_timeslots_if_needed

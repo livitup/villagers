@@ -29,6 +29,14 @@
             </div>
 
             <div class="mb-3">
+              <%= form.label :max_volunteers, "Volunteers Needed Per Shift", class: "form-label" %>
+              <%= form.number_field :max_volunteers, min: 1, class: "form-control", style: "max-width: 150px;" %>
+              <small class="form-text text-muted">
+                How many volunteers are needed for each 15-minute timeslot? Changing this will NOT update existing timeslots - use Edit Capacity on the schedule to update individual shifts.
+              </small>
+            </div>
+
+            <div class="mb-3">
               <label class="form-label">Schedule</label>
               <p class="text-muted small">
                 Specify which days this program runs and the hours for each day. 
