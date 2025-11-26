@@ -105,6 +105,7 @@
           <%= link_to "← Back to Conferences", conferences_path, class: "btn btn-link" %>
           <div>
             <%= link_to "My Shifts", conference_volunteer_signups_path(@conference), class: "btn btn-success me-2" %>
+            <%= link_to "View Schedule", conference_schedule_path(@conference), class: "btn btn-warning me-2" %>
             <%= link_to "View Calendar", conference_calendar_path(@conference), class: "btn btn-info me-2" %>
             <% if policy(@conference).update? %>
               <%= link_to "Manage Programs", conference_conference_programs_path(@conference), class: "btn btn-primary" %>
