@@ -105,6 +105,28 @@
 
           <hr class="my-4">
 
+          <h5 class="mb-3">My Qualifications</h5>
+          <div class="card border-success mb-4">
+            <div class="card-body">
+              <% if resource.qualifications.any? %>
+                <ul class="list-unstyled mb-0">
+                  <% resource.qualifications.each do |qualification| %>
+                    <li class="mb-2">
+                      <span class="badge bg-success me-2"><%= qualification.name %></span>
+                      <% if qualification.description.present? %>
+                        <small class="text-muted"><%= qualification.description %></small>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="text-muted mb-0">You don't have any qualifications yet. Contact a village administrator to have qualifications assigned to you.</p>
+              <% end %>
+            </div>
+          </div>
+
+          <hr class="my-4">
+
           <h5 class="mb-3 text-danger">Danger Zone</h5>
           <div class="card border-danger">
             <div class="card-body">

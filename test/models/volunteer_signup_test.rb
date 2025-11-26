@@ -125,4 +125,51 @@ class VolunteerSignupTest < ActiveSupport::TestCase
     @timeslot.reload
     assert_equal count_after_create - 1, @timeslot.current_volunteers_count
   end
+
+  test "should allow signup when user has required qualification" do
+    qualification = Qualification.create!(
+      name: "Licensed Ham",
+      description: "Ham radio license",
+      village: @village
+    )
+    ProgramQualification.create!(program: @program, qualification: qualification)
+    UserQualification.create!(user: @user, qualification: qualification)
+
+    signup = VolunteerSignup.new(user: @user, timeslot: @timeslot)
+    assert signup.valid?
+  end
+
+  test "should prevent signup when user lacks required qualification" do
+    qualification = Qualification.create!(
+      name: "Licensed Ham",
+      description: "Ham radio license",
+      village: @village
+    )
+    ProgramQualification.create!(program: @program, qualification: qualification)
+    # User does NOT have the qualification
+
+    signup = VolunteerSignup.new(user: @user, timeslot: @timeslot)
+    assert_not signup.valid?
+    assert signup.errors[:base].any?
+    assert_match(/required qualifications/, signup.errors[:base].first)
+  end
+
+  test "should allow signup when program has no required qualifications" do
+    # No qualifications required for program
+    signup = VolunteerSignup.new(user: @user, timeslot: @timeslot)
+    assert signup.valid?
+  end
+
+  test "should prevent signup when user lacks one of multiple required qualifications" do
+    qual1 = Qualification.create!(name: "Qual 1", description: "First qual", village: @village)
+    qual2 = Qualification.create!(name: "Qual 2", description: "Second qual", village: @village)
+    ProgramQualification.create!(program: @program, qualification: qual1)
+    ProgramQualification.create!(program: @program, qualification: qual2)
+    # User only has one qualification
+    UserQualification.create!(user: @user, qualification: qual1)
+
+    signup = VolunteerSignup.new(user: @user, timeslot: @timeslot)
+    assert_not signup.valid?
+    assert_match(/Qual 2/, signup.errors[:base].first)
+  end
 end
