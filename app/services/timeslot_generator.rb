@@ -44,7 +44,7 @@ class TimeslotGenerator
       Timeslot.create!(
         conference_program: @conference_program,
         start_time: current_time,
-        max_volunteers: 1
+        max_volunteers: @conference_program.effective_max_volunteers
       )
       current_time += 15.minutes
     end

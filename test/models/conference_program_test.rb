@@ -95,4 +95,85 @@ class ConferenceProgramTest < ActiveSupport::TestCase
     )
     assert_equal({}, cp.day_schedules)
   end
+
+  test "max_volunteers can be nil to use program default" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      max_volunteers: nil
+    )
+    assert cp.valid?
+    assert_nil cp.max_volunteers
+  end
+
+  test "max_volunteers must be greater than 0 if set" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      max_volunteers: 0
+    )
+    assert_not cp.valid?
+    assert cp.errors[:max_volunteers].any?
+  end
+
+  test "max_volunteers can be set to any positive number" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      max_volunteers: 5
+    )
+    assert cp.valid?
+    assert_equal 5, cp.max_volunteers
+  end
+
+  test "effective_max_volunteers returns override when set" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      max_volunteers: 5
+    )
+    assert_equal 5, cp.effective_max_volunteers
+  end
+
+  test "effective_max_volunteers falls back to program default" do
+    @program.update!(max_volunteers: 3)
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      max_volunteers: nil
+    )
+    assert_equal 3, cp.effective_max_volunteers
+  end
+
+  test "timeslots inherit effective_max_volunteers" do
+    @program.update!(max_volunteers: 3)
+    cp = ConferenceProgram.create!(
+      conference: @conference,
+      program: @program,
+      max_volunteers: nil,
+      day_schedules: {
+        "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" }
+      }
+    )
+    assert cp.timeslots.any?
+    cp.timeslots.each do |timeslot|
+      assert_equal 3, timeslot.max_volunteers
+    end
+  end
+
+  test "timeslots use override when set" do
+    @program.update!(max_volunteers: 3)
+    cp = ConferenceProgram.create!(
+      conference: @conference,
+      program: @program,
+      max_volunteers: 5,
+      day_schedules: {
+        "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" }
+      }
+    )
+    assert cp.timeslots.any?
+    cp.timeslots.each do |timeslot|
+      assert_equal 5, timeslot.max_volunteers
+    end
+  end
 end
