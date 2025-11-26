@@ -30,12 +30,12 @@ class CalendarControllerTest < ActionDispatch::IntegrationTest
 
   test "should get calendar view" do
     sign_in_user(@user)
-    get calendar_conference_path(@conference)
+    get "/conferences/#{@conference.id}/calendar"
     assert_response :success
   end
 
   test "should require authentication" do
-    get calendar_conference_path(@conference)
+    get "/conferences/#{@conference.id}/calendar"
     assert_redirected_to new_user_session_path
   end
 end
