@@ -21,10 +21,20 @@ Rails.application.routes.draw do
   resources :conferences do
     get "programs/new", to: "conference_programs#new", as: :new_conference_program
     resources :conference_programs, except: [ :new ], path: "programs"
+    resources :conference_roles, only: [ :create, :destroy ]
   end
 
   # Program management
   resources :programs
+
+  # Qualification management
+  resources :qualifications
+  resources :users do
+    resources :user_qualifications, only: [ :create, :destroy ]
+  end
+  resources :programs do
+    resources :program_qualifications, only: [ :create, :destroy ]
+  end
 
   # Defines the root path route ("/")
   root "root#show"

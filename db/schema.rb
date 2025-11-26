@@ -55,6 +55,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_24_035319) do
     t.bigint "program_id", null: false
     t.bigint "qualification_id", null: false
     t.datetime "updated_at", null: false
+    t.index ["program_id", "qualification_id"], name: "index_program_qualifications_on_program_id_and_qualification_id", unique: true
     t.index ["program_id"], name: "index_program_qualifications_on_program_id"
     t.index ["qualification_id"], name: "index_program_qualifications_on_qualification_id"
   end

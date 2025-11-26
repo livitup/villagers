@@ -1,0 +1,50 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h2><%= @qualification.name %></h2>
+        </div>
+        <div class="card-body">
+          <p><strong>Description:</strong></p>
+          <p><%= @qualification.description %></p>
+
+          <div class="mt-4">
+            <h5>Users with this Qualification</h5>
+            <% if @qualification.users.any? %>
+              <ul class="list-group">
+                <% @qualification.users.each do |user| %>
+                  <li class="list-group-item"><%= user.email %></li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="text-muted">No users have been granted this qualification yet.</p>
+            <% end %>
+          </div>
+
+          <div class="mt-4">
+            <h5>Programs Requiring this Qualification</h5>
+            <% if @qualification.programs.any? %>
+              <ul class="list-group">
+                <% @qualification.programs.each do |program| %>
+                  <li class="list-group-item">
+                    <%= link_to program.name, program %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="text-muted">No programs currently require this qualification.</p>
+            <% end %>
+          </div>
+        </div>
+        <div class="card-footer">
+          <%= link_to "← Back to Qualifications", qualifications_path, class: "btn btn-link" %>
+          <% if policy(@qualification).update? %>
+            <%= link_to "Edit", edit_qualification_path(@qualification), class: "btn btn-primary" %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
