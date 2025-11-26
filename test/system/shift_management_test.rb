@@ -106,7 +106,9 @@ class ShiftManagementTest < ApplicationSystemTestCase
     login_as @admin
     visit conference_schedule_path(@conference)
 
-    assert_selector ".understaffed"
+    # Empty slots show red background and "Needs Staff" badge
+    assert_selector ".slot-empty"
+    assert_text "Needs Staff"
   end
 
   test "volunteer cannot see admin controls" do

@@ -45,21 +45,35 @@
                   </td>
                   <% day_data[:programs].each do |program_id, program_data| %>
                     <% slot_data = program_data[:timeslots][time_slot] %>
-                    <td class="schedule-cell">
+                    <%
+                      cell_class = "schedule-cell"
+                      if slot_data
+                        is_user_signed_up = @user_signups.include?(slot_data[:timeslot].id)
+                        if is_user_signed_up
+                          cell_class += " user-signed-up"
+                        elsif slot_data[:full]
+                          cell_class += " slot-full"
+                        elsif slot_data[:signed_up_count] == 0
+                          cell_class += " slot-empty"
+                        else
+                          cell_class += " slot-partial"
+                        end
+                      end
+                    %>
+                    <td class="<%= cell_class %>">
                       <% if slot_data %>
                         <% is_user_signed_up = @user_signups.include?(slot_data[:timeslot].id) %>
-                        <% is_understaffed = slot_data[:signed_up_count] < slot_data[:max_volunteers] %>
-                        <div class="schedule-slot <%= 'user-signed-up' if is_user_signed_up %> <%= 'slot-full' if slot_data[:full] && !is_user_signed_up %> <%= 'slot-available' if !slot_data[:full] && !is_user_signed_up %> <%= 'understaffed' if is_understaffed && @can_see_all_volunteers %>">
+                        <div class="schedule-slot">
                           <div class="d-flex align-items-center justify-content-between flex-wrap gap-1">
                             <div class="d-flex align-items-center">
                               <% if is_user_signed_up %>
-                                <span class="badge bg-success">You're signed up</span>
+                                <span class="badge bg-primary">You're signed up</span>
                               <% elsif slot_data[:full] %>
-                                <span class="badge bg-danger">Full</span>
-                              <% elsif is_understaffed && @can_see_all_volunteers %>
-                                <span class="badge bg-warning text-dark">Needs Staff</span>
+                                <span class="badge bg-success">Full</span>
+                              <% elsif slot_data[:signed_up_count] == 0 %>
+                                <span class="badge bg-danger">Needs Staff</span>
                               <% else %>
-                                <span class="badge bg-info">Available</span>
+                                <span class="badge bg-warning text-dark"><%= slot_data[:signed_up_count] %> of <%= slot_data[:max_volunteers] %></span>
                               <% end %>
                               <small class="text-muted ms-1">
                                 <%= slot_data[:signed_up_count] %>/<%= slot_data[:max_volunteers] %>
@@ -173,39 +187,34 @@
     padding: 0.5rem !important;
   }
 
-  .schedule-slot {
-    padding: 0.5rem;
-    border-radius: 4px;
+  .schedule-cell.user-signed-up {
+    background-color: #cfe2ff;
   }
 
-  .schedule-slot.user-signed-up {
-    background-color: #fff3cd;
-    border: 2px solid #ffc107;
-  }
-
-  .schedule-slot.slot-full {
-    background-color: #f8d7da;
-    border: 1px solid #dc3545;
-  }
-
-  .schedule-slot.slot-available {
+  .schedule-cell.slot-full {
     background-color: #d1e7dd;
-    border: 1px solid #198754;
+  }
+
+  .schedule-cell.slot-empty {
+    background-color: #f8d7da;
+  }
+
+  .schedule-cell.slot-partial {
+    background-color: #fff3cd;
+  }
+
+  .schedule-slot {
+    padding: 0;
   }
 
   .volunteer-list {
     font-size: 0.75rem;
-    max-height: 80px;
+    max-height: 120px;
     overflow-y: auto;
   }
 
   .slot-actions {
     flex-shrink: 0;
-  }
-
-  .schedule-slot.understaffed {
-    border-color: #ffc107;
-    border-width: 2px;
   }
 
   .btn-xs {
