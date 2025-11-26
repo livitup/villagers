@@ -13,7 +13,7 @@
       <div class="card">
         <div class="card-body">
           <h5>Filter by Program</h5>
-          <%= form_with url: calendar_conference_path(@conference), method: :get, local: true, class: "row g-3" do |form| %>
+          <%= form_with url: conference_calendar_path(@conference), method: :get, local: true, class: "row g-3" do |form| %>
             <div class="col-md-6">
               <%= select_tag :program_id, options_from_collection_for_select(@programs, :id, :name, @selected_program_id), { include_blank: "All Programs", class: "form-select", onchange: "this.form.submit()" } %>
             </div>
