@@ -97,9 +97,9 @@ class ScheduleTest < ApplicationSystemTestCase
     login_as @volunteer
     visit conference_path(@conference)
 
-    click_link "View Schedule"
+    click_link "View Schedule", match: :first
 
-    assert_text "#{@conference.name} - Schedule"
+    assert_selector "h1", text: "#{@conference.name} - Schedule"
   end
 
   test "schedule shows all conference days" do
