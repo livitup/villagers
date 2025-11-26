@@ -83,7 +83,7 @@
                           <% if @can_see_all_volunteers %>
                             <div class="volunteer-list mt-1">
                               <% slot_data[:volunteers].each do |volunteer| %>
-                                <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
                                   <small class="text-truncate" title="<%= volunteer.email %>">
                                     <%= volunteer.email %>
                                   </small>
