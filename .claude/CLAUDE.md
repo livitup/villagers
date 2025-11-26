@@ -27,6 +27,7 @@ Ruby on Rails app for hacker conference village organizers to manage volunteer s
 5. **One issue per branch**: Never mix multiple issues in one branch
 6. **Always branch from main**: Never from another feature branch unless explicitly requested
 7. **No direct commits to main**: All work goes through branches and PRs
+8. **Link PRs to issues**: Include `Closes #<issue-number>` in PR body to auto-close issue on merge
 
 ### Test-Driven Development (MANDATORY)
 
