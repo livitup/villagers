@@ -3,6 +3,8 @@ class Program < ApplicationRecord
   has_many :conference_programs, dependent: :destroy
   has_many :conferences, through: :conference_programs
   has_many :timeslots, through: :conference_programs
+  has_many :program_qualifications, dependent: :destroy
+  has_many :qualifications, through: :program_qualifications
 
   validates :name, presence: true
   validates :name, uniqueness: { scope: :village_id, message: "must be unique within the village" }

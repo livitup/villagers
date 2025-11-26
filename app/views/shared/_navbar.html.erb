@@ -47,6 +47,22 @@
               <% end %>
             </ul>
           </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="qualificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Qualifications
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="qualificationDropdown">
+              <li>
+                <%= link_to "All Qualifications", qualifications_path, class: "dropdown-item" %>
+              </li>
+              <% if policy(Qualification).create? %>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <%= link_to "New Qualification", new_qualification_path, class: "dropdown-item" %>
+                </li>
+              <% end %>
+            </ul>
+          </li>
           <li class="nav-item">
             <%= link_to "Profile", edit_user_registration_path, class: "nav-link" %>
           </li>
