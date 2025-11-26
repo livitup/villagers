@@ -18,6 +18,9 @@ class ScheduleController < ApplicationController
 
     # Get all programs for this conference
     @programs = @conference.programs.order(:name)
+
+    # Get all users for admin dropdown
+    @users = User.order(:email) if @can_see_all_volunteers
   end
 
   private
