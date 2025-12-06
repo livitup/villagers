@@ -1,0 +1,57 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><%= link_to @conference.name, @conference %></li>
+          <li class="breadcrumb-item"><%= link_to "Conference Qualifications", conference_conference_qualifications_path(@conference) %></li>
+          <li class="breadcrumb-item active" aria-current="page"><%= @qualification.name %></li>
+        </ol>
+      </nav>
+
+      <div class="card">
+        <div class="card-header">
+          <h2><%= @qualification.name %></h2>
+          <span class="badge bg-info">Conference-Specific</span>
+        </div>
+        <div class="card-body">
+          <p><strong>Description:</strong></p>
+          <p><%= @qualification.description %></p>
+
+          <div class="mt-4">
+            <h5>Users with this Qualification</h5>
+            <% if @qualification.users.any? %>
+              <ul class="list-group mb-3">
+                <% @qualification.users.each do |user| %>
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <%= user.name || user.email %>
+                    <%= link_to "Revoke", conference_conference_user_qualification_path(@conference, @qualification.conference_user_qualifications.find_by(user: user)), data: { turbo_method: :delete, turbo_confirm: "Revoke this qualification from #{user.name || user.email}?" }, class: "btn btn-sm btn-outline-danger" %>
+                  </li>
+                <% end %>
+              </ul>
+            <% else %>
+              <p class="text-muted">No users have been granted this qualification yet.</p>
+            <% end %>
+          </div>
+
+          <div class="mt-4">
+            <h5>Grant Qualification to User</h5>
+            <%= form_with url: conference_conference_user_qualifications_path(@conference), method: :post, class: "row g-3" do |f| %>
+              <%= hidden_field_tag :conference_qualification_id, @qualification.id %>
+              <div class="col-md-8">
+                <%= select_tag :user_id, options_from_collection_for_select(User.order(:email), :id, :email), include_blank: "Select a user...", class: "form-select" %>
+              </div>
+              <div class="col-md-4">
+                <%= submit_tag "Grant Qualification", class: "btn btn-primary" %>
+              </div>
+            <% end %>
+          </div>
+        </div>
+        <div class="card-footer">
+          <%= link_to "Back to Conference Qualifications", conference_conference_qualifications_path(@conference), class: "btn btn-link" %>
+          <%= link_to "Edit", edit_conference_conference_qualification_path(@conference, @qualification), class: "btn btn-primary" %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

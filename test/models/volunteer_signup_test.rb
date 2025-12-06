@@ -172,4 +172,45 @@ class VolunteerSignupTest < ActiveSupport::TestCase
     assert_not signup.valid?
     assert_match(/Qual 2/, signup.errors[:base].first)
   end
+
+  test "should prevent signup when qualification is removed for this conference" do
+    qualification = Qualification.create!(
+      name: "Licensed Ham",
+      description: "Ham radio license",
+      village: @village
+    )
+    ProgramQualification.create!(program: @program, qualification: qualification)
+    UserQualification.create!(user: @user, qualification: qualification)
+    # Qualification removed for this conference
+    QualificationRemoval.create!(user: @user, qualification: qualification, conference: @conference)
+
+    signup = VolunteerSignup.new(user: @user, timeslot: @timeslot)
+    assert_not signup.valid?
+    assert_match(/required qualifications/, signup.errors[:base].first)
+  end
+
+  test "should allow signup when qualification is removed for different conference" do
+    qualification = Qualification.create!(
+      name: "Licensed Ham",
+      description: "Ham radio license",
+      village: @village
+    )
+    ProgramQualification.create!(program: @program, qualification: qualification)
+    UserQualification.create!(user: @user, qualification: qualification)
+
+    # Qualification removed for a different conference
+    other_conference = Conference.create!(
+      name: "Other Conference",
+      location: "Other Location",
+      start_date: Date.today + 10.days,
+      end_date: Date.today + 11.days,
+      conference_hours_start: Time.zone.parse("2000-01-01 09:00"),
+      conference_hours_end: Time.zone.parse("2000-01-01 17:00"),
+      village: @village
+    )
+    QualificationRemoval.create!(user: @user, qualification: qualification, conference: other_conference)
+
+    signup = VolunteerSignup.new(user: @user, timeslot: @timeslot)
+    assert signup.valid?
+  end
 end

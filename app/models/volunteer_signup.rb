@@ -41,9 +41,12 @@ class VolunteerSignup < ApplicationRecord
     return unless user && timeslot
 
     program = timeslot.program
+    conference = timeslot.conference_program.conference
     required_qualifications = program.qualifications
 
-    missing_qualifications = required_qualifications.reject { |qual| user.has_qualification?(qual) }
+    missing_qualifications = required_qualifications.reject do |qual|
+      user.effective_qualification_for_conference?(qual, conference)
+    end
 
     if missing_qualifications.any?
       errors.add(:base, "You do not have the required qualifications: #{missing_qualifications.map(&:name).join(', ')}")

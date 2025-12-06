@@ -1,0 +1,22 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><%= link_to @conference.name, @conference %></li>
+          <li class="breadcrumb-item"><%= link_to "Conference Qualifications", conference_conference_qualifications_path(@conference) %></li>
+          <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        </ol>
+      </nav>
+
+      <div class="card">
+        <div class="card-header">
+          <h2>Edit Conference Qualification</h2>
+        </div>
+        <div class="card-body">
+          <%= render "form", qualification: @qualification %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

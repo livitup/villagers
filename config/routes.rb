@@ -39,6 +39,9 @@ Rails.application.routes.draw do
         get :unmanned_shifts
       end
     end
+    resources :conference_qualifications, path: "qualifications"
+    resources :conference_user_qualifications, only: [ :create, :destroy ]
+    resources :qualification_removals, only: [ :index, :create, :destroy ]
   end
 
   # Program management

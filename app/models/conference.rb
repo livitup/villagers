@@ -5,6 +5,8 @@ class Conference < ApplicationRecord
   has_many :conference_programs, dependent: :destroy
   has_many :programs, through: :conference_programs
   has_many :timeslots, through: :conference_programs
+  has_many :conference_qualifications, dependent: :destroy
+  has_many :qualification_removals, dependent: :destroy
 
   validates :name, presence: true
   validates :start_date, presence: true

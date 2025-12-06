@@ -1,0 +1,27 @@
+<%= form_with model: [@conference, qualification], local: true do |f| %>
+  <% if qualification.errors.any? %>
+    <div class="alert alert-danger">
+      <h4 class="alert-heading"><%= pluralize(qualification.errors.count, "error") %> prohibited this qualification from being saved:</h4>
+      <ul class="mb-0">
+        <% qualification.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="mb-3">
+    <%= f.label :name, class: "form-label" %>
+    <%= f.text_field :name, class: "form-control", required: true %>
+  </div>
+
+  <div class="mb-3">
+    <%= f.label :description, class: "form-label" %>
+    <%= f.text_area :description, class: "form-control", rows: 4, required: true %>
+  </div>
+
+  <div class="d-flex gap-2">
+    <%= f.submit class: "btn btn-primary" %>
+    <%= link_to "Cancel", conference_conference_qualifications_path(@conference), class: "btn btn-outline-secondary" %>
+  </div>
+<% end %>

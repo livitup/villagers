@@ -14,6 +14,9 @@ class User < ApplicationRecord
   # Qualification associations
   has_many :user_qualifications, dependent: :destroy
   has_many :qualifications, through: :user_qualifications
+  has_many :conference_user_qualifications, dependent: :destroy
+  has_many :conference_qualifications, through: :conference_user_qualifications
+  has_many :qualification_removals, dependent: :destroy
   # Volunteer signup associations
   has_many :volunteer_signups, dependent: :destroy
   has_many :timeslots, through: :volunteer_signups
@@ -64,6 +67,20 @@ class User < ApplicationRecord
 
   def has_qualification_for_program?(program)
     program.qualifications.all? { |qual| has_qualification?(qual) }
+  end
+
+  # Conference-specific qualification methods
+  def has_conference_qualification?(conference_qualification)
+    conference_user_qualifications.exists?(conference_qualification: conference_qualification)
+  end
+
+  def qualification_removed_for_conference?(qualification, conference)
+    qualification_removals.exists?(qualification: qualification, conference: conference)
+  end
+
+  def effective_qualification_for_conference?(qualification, conference)
+    return false unless has_qualification?(qualification)
+    !qualification_removed_for_conference?(qualification, conference)
   end
 
   # Volunteer statistics methods
