@@ -2,12 +2,86 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <style>
-      /* Email styles need to be inline */
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style type="text/css">
+      /* Reset styles */
+      body, table, td, p, a, li, blockquote {
+        -webkit-text-size-adjust: 100%;
+        -ms-text-size-adjust: 100%;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100% !important;
+        background-color: #f4f4f4;
+      }
+      table {
+        border-collapse: collapse;
+      }
+      /* Email container */
+      .email-container {
+        max-width: 600px;
+        margin: 0 auto;
+        background-color: #ffffff;
+      }
+      /* Header */
+      .email-header {
+        background-color: #343a40;
+        padding: 20px;
+        text-align: center;
+      }
+      .email-header h1 {
+        color: #ffffff;
+        margin: 0;
+        font-family: Arial, sans-serif;
+        font-size: 24px;
+      }
+      /* Content */
+      .email-content {
+        padding: 30px;
+        font-family: Arial, sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333333;
+      }
+      /* Footer */
+      .email-footer {
+        background-color: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        font-family: Arial, sans-serif;
+        font-size: 12px;
+        color: #6c757d;
+      }
     </style>
   </head>
 
   <body>
-    <%= yield %>
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" bgcolor="#f4f4f4">
+      <tr>
+        <td align="center" style="padding: 20px 10px;">
+          <table class="email-container" width="600" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff">
+            <!-- Header -->
+            <tr>
+              <td class="email-header" bgcolor="#343a40" style="padding: 20px; text-align: center;">
+                <h1 style="color: #ffffff; margin: 0; font-family: Arial, sans-serif; font-size: 24px;">Villagers</h1>
+              </td>
+            </tr>
+            <!-- Content -->
+            <tr>
+              <td class="email-content" style="padding: 30px; font-family: Arial, sans-serif; font-size: 16px; line-height: 1.6; color: #333333;">
+                <%= yield %>
+              </td>
+            </tr>
+            <!-- Footer -->
+            <tr>
+              <td class="email-footer" bgcolor="#f8f9fa" style="padding: 20px; text-align: center; font-family: Arial, sans-serif; font-size: 12px; color: #6c757d;">
+                <p style="margin: 0;">Sent by Villagers - Volunteer Management System</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
   </body>
 </html>
