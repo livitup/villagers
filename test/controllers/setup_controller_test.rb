@@ -34,6 +34,27 @@ class SetupControllerTest < ActionDispatch::IntegrationTest
     assert user.village_admin?, "Setup user should be assigned village admin role"
   end
 
+  test "should sign in user after successful setup" do
+    post setup_url, params: {
+      village: { name: "Ham Radio Village" },
+      user: {
+        email: "admin@example.com",
+        password: "password123",
+        password_confirmation: "password123"
+      }
+    }
+
+    assert_redirected_to root_path
+
+    # Follow redirect and verify user is signed in
+    follow_redirect!
+    assert_response :success
+
+    # User should be signed in - verify by checking session or making authenticated request
+    user = User.find_by(email: "admin@example.com")
+    assert_equal user.id, session["warden.user.user.key"]&.first&.first
+  end
+
   test "should not create village with invalid data" do
     assert_no_difference [ "Village.count", "User.count" ] do
       post setup_url, params: {

@@ -19,6 +19,9 @@ class SetupController < ApplicationController
       village_admin_role = Role.find_or_create_by!(name: Role::VILLAGE_ADMIN)
       UserRole.find_or_create_by!(user: @user, role: village_admin_role)
 
+      # Sign in the user after setup
+      sign_in(@user)
+
       redirect_to root_path, notice: "Setup complete! Welcome to #{@village.name}."
     else
       render :show, status: :unprocessable_entity
