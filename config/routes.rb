@@ -24,6 +24,7 @@ Rails.application.routes.draw do
     resources :conference_roles, only: [ :create, :destroy ]
     get "calendar", to: "calendar#show", as: :calendar
     get "schedule", to: "schedule#show", as: :schedule
+    get "leaderboard", to: "leaderboard#conference", as: :leaderboard
     resources :volunteer_signups, only: [ :index, :create, :destroy ]
     resources :timeslots, only: [ :update ] do
       member do
@@ -44,6 +45,12 @@ Rails.application.routes.draw do
   resources :programs do
     resources :program_qualifications, only: [ :create, :destroy ]
   end
+
+  # Leaderboard
+  resources :leaderboard, only: [ :index ]
+
+  # Volunteer history
+  resources :volunteer_history, only: [ :index, :show ]
 
   # Defines the root path route ("/")
   root "root#show"

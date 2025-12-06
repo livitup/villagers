@@ -1,0 +1,63 @@
+<div class="container mt-5">
+  <nav aria-label="breadcrumb" class="mb-3">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><%= link_to "Conferences", conferences_path %></li>
+      <li class="breadcrumb-item"><%= link_to @conference.name, conference_path(@conference) %></li>
+      <li class="breadcrumb-item active" aria-current="page">Leaderboard</li>
+    </ol>
+  </nav>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><%= @conference.name %> Leaderboard</h1>
+    <%= link_to "Overall Leaderboard", leaderboard_index_path, class: "btn btn-outline-primary" %>
+  </div>
+
+  <p class="text-muted mb-4">Top volunteers for this conference, ranked by shifts.</p>
+
+  <% if @top_volunteers.any? %>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="text-center" style="width: 60px;">Rank</th>
+              <th scope="col">Volunteer</th>
+              <th scope="col" class="text-center">Shifts</th>
+              <th scope="col" class="text-center">Hours</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @top_volunteers.each_with_index do |volunteer, index| %>
+              <tr>
+                <td class="text-center">
+                  <% if index == 0 %>
+                    <span class="badge bg-warning text-dark fs-6">1</span>
+                  <% elsif index == 1 %>
+                    <span class="badge bg-secondary fs-6">2</span>
+                  <% elsif index == 2 %>
+                    <span class="badge bg-danger fs-6">3</span>
+                  <% else %>
+                    <span class="text-muted"><%= index + 1 %></span>
+                  <% end %>
+                </td>
+                <td>
+                  <strong><%= volunteer.name.presence || volunteer.email %></strong>
+                  <% if volunteer.handle.present? %>
+                    <br><small class="text-muted">@<%= volunteer.handle %></small>
+                  <% end %>
+                </td>
+                <td class="text-center"><%= volunteer.shifts_for_conference(@conference) %></td>
+                <td class="text-center"><%= number_with_precision(volunteer.hours_for_conference(@conference), precision: 1) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      <h5 class="alert-heading">No Volunteer Activity Yet</h5>
+      <p class="mb-0">No volunteers have signed up for shifts at this conference yet.</p>
+    </div>
+  <% end %>
+</div>

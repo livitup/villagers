@@ -1,0 +1,63 @@
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>My Volunteer History</h1>
+    <%= link_to "Leaderboard", leaderboard_index_path, class: "btn btn-outline-primary" %>
+  </div>
+
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm text-center">
+        <div class="card-body">
+          <h2 class="display-4 text-primary"><%= @user.total_shifts %></h2>
+          <p class="text-muted mb-0">Total Shifts</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm text-center">
+        <div class="card-body">
+          <h2 class="display-4 text-success"><%= number_with_precision(@user.total_volunteer_hours, precision: 1) %></h2>
+          <p class="text-muted mb-0">Total Hours</p>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card shadow-sm text-center">
+        <div class="card-body">
+          <h2 class="display-4 text-info"><%= @user.conferences_participated_count %></h2>
+          <p class="text-muted mb-0">Conferences</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="mb-3">Conferences Participated</h2>
+
+  <% if @conferences.any? %>
+    <div class="row">
+      <% @conferences.each do |conference| %>
+        <div class="col-md-6 mb-4">
+          <div class="card shadow-sm h-100">
+            <div class="card-body">
+              <h5 class="card-title"><%= conference.name %></h5>
+              <p class="card-text text-muted">
+                <strong>Dates:</strong> <%= conference.start_date.strftime("%B %d") %> - <%= conference.end_date.strftime("%B %d, %Y") %><br>
+                <strong>Your Shifts:</strong> <%= @user.shifts_for_conference(conference) %><br>
+                <strong>Your Hours:</strong> <%= number_with_precision(@user.hours_for_conference(conference), precision: 1) %>
+              </p>
+            </div>
+            <div class="card-footer bg-transparent">
+              <%= link_to "View Shifts", volunteer_history_path(conference), class: "btn btn-sm btn-outline-primary" %>
+              <%= link_to "Conference Leaderboard", conference_leaderboard_path(conference), class: "btn btn-sm btn-outline-secondary" %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      <h5 class="alert-heading">No Volunteer History Yet</h5>
+      <p class="mb-0">You haven't signed up for any shifts yet. <%= link_to "Browse conferences", conferences_path, class: "alert-link" %> to find volunteer opportunities.</p>
+    </div>
+  <% end %>
+</div>
