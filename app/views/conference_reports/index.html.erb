@@ -1,0 +1,64 @@
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Reports: <%= @conference.name %></h1>
+    <%= link_to "Back to Dashboard", conference_dashboard_path(@conference), class: "btn btn-outline-secondary" %>
+  </div>
+
+  <div class="row">
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Shift Assignments</h5>
+        </div>
+        <div class="card-body">
+          <p class="card-text">View who is assigned to which shifts. Shows all volunteers and their scheduled timeslots.</p>
+          <div class="d-flex gap-2">
+            <%= link_to "View Report", shift_assignments_conference_reports_path(@conference), class: "btn btn-primary" %>
+            <%= link_to "Export CSV", shift_assignments_conference_reports_path(@conference, format: :csv), class: "btn btn-outline-secondary" %>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+      <div class="card shadow-sm h-100">
+        <div class="card-header bg-warning text-dark">
+          <h5 class="mb-0">Unmanned Shifts</h5>
+        </div>
+        <div class="card-body">
+          <p class="card-text">View shifts that need more volunteers. Shows all timeslots with available spots.</p>
+          <div class="d-flex gap-2">
+            <%= link_to "View Report", unmanned_shifts_conference_reports_path(@conference), class: "btn btn-warning" %>
+            <%= link_to "Export CSV", unmanned_shifts_conference_reports_path(@conference, format: :csv), class: "btn btn-outline-secondary" %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mt-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Quick Stats</h5>
+    </div>
+    <div class="card-body">
+      <div class="row text-center">
+        <div class="col-md-3">
+          <h3 class="text-primary"><%= @conference.total_timeslots %></h3>
+          <p class="text-muted">Total Shifts</p>
+        </div>
+        <div class="col-md-3">
+          <h3 class="text-success"><%= @conference.filled_timeslots %></h3>
+          <p class="text-muted">Filled Shifts</p>
+        </div>
+        <div class="col-md-3">
+          <h3 class="text-warning"><%= @conference.unfilled_timeslots %></h3>
+          <p class="text-muted">Unmanned Shifts</p>
+        </div>
+        <div class="col-md-3">
+          <h3 class="text-info"><%= @conference.volunteer_count %></h3>
+          <p class="text-muted">Volunteers</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

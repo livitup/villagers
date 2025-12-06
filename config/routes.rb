@@ -33,6 +33,12 @@ Rails.application.routes.draw do
         delete :remove_volunteer
       end
     end
+    resources :reports, controller: "conference_reports", only: [ :index ] do
+      collection do
+        get :shift_assignments
+        get :unmanned_shifts
+      end
+    end
   end
 
   # Program management

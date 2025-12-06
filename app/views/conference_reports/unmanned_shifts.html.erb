@@ -1,0 +1,82 @@
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Unmanned Shifts: <%= @conference.name %></h1>
+    <div>
+      <%= link_to "Export CSV", unmanned_shifts_conference_reports_path(@conference, format: :csv, program_id: params[:program_id], date: params[:date]), class: "btn btn-success me-2" %>
+      <%= link_to "Back to Reports", conference_reports_path(@conference), class: "btn btn-outline-secondary" %>
+    </div>
+  </div>
+
+  <div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+      <h5 class="mb-0">Filters</h5>
+    </div>
+    <div class="card-body">
+      <%= form_with url: unmanned_shifts_conference_reports_path(@conference), method: :get, local: true, class: "row g-3" do %>
+        <div class="col-md-4">
+          <label for="program_id" class="form-label">Program</label>
+          <%= select_tag :program_id,
+              options_from_collection_for_select(@conference.programs, :id, :name, params[:program_id]),
+              include_blank: "All Programs",
+              class: "form-select" %>
+        </div>
+        <div class="col-md-4">
+          <label for="date" class="form-label">Date</label>
+          <%= date_field_tag :date, params[:date], class: "form-control", min: @conference.start_date, max: @conference.end_date %>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <%= submit_tag "Apply Filters", class: "btn btn-primary me-2" %>
+          <%= link_to "Clear", unmanned_shifts_conference_reports_path(@conference), class: "btn btn-outline-secondary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @timeslots.any? %>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Program</th>
+              <th>Current</th>
+              <th>Max</th>
+              <th>Spots Available</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @timeslots.each do |timeslot| %>
+              <% spots_available = timeslot.max_volunteers - timeslot.current_volunteers_count %>
+              <tr class="<%= timeslot.current_volunteers_count == 0 ? 'table-danger' : 'table-warning' %>">
+                <td><%= timeslot.start_time.strftime("%A, %B %d") %></td>
+                <td><%= timeslot.start_time.strftime("%l:%M %p") %> - <%= timeslot.end_time.strftime("%l:%M %p") %></td>
+                <td><%= timeslot.conference_program.program.name %></td>
+                <td><%= timeslot.current_volunteers_count %></td>
+                <td><%= timeslot.max_volunteers %></td>
+                <td><%= spots_available %></td>
+                <td>
+                  <% if timeslot.current_volunteers_count == 0 %>
+                    <span class="badge bg-danger">Unmanned</span>
+                  <% else %>
+                    <span class="badge bg-warning text-dark">Understaffed</span>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="text-muted mt-3">
+      Showing <%= @timeslots.size %> shifts that need volunteers.
+      Total spots available: <%= @timeslots.sum { |t| t.max_volunteers - t.current_volunteers_count } %>
+    </p>
+  <% else %>
+    <div class="alert alert-success">
+      <p class="mb-0">All shifts are fully staffed! No unmanned shifts found.</p>
+    </div>
+  <% end %>
+</div>
