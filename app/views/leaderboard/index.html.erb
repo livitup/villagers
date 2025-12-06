@@ -1,0 +1,57 @@
+<div class="container mt-5">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Volunteer Leaderboard</h1>
+    <%= link_to "My History", volunteer_history_index_path, class: "btn btn-outline-primary" %>
+  </div>
+
+  <p class="text-muted mb-4">Top volunteers across all conferences, ranked by total shifts.</p>
+
+  <% if @top_volunteers.any? %>
+    <div class="card shadow-sm">
+      <div class="table-responsive">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col" class="text-center" style="width: 60px;">Rank</th>
+              <th scope="col">Volunteer</th>
+              <th scope="col" class="text-center">Shifts</th>
+              <th scope="col" class="text-center">Hours</th>
+              <th scope="col" class="text-center">Conferences</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @top_volunteers.each_with_index do |volunteer, index| %>
+              <tr>
+                <td class="text-center">
+                  <% if index == 0 %>
+                    <span class="badge bg-warning text-dark fs-6">1</span>
+                  <% elsif index == 1 %>
+                    <span class="badge bg-secondary fs-6">2</span>
+                  <% elsif index == 2 %>
+                    <span class="badge bg-danger fs-6">3</span>
+                  <% else %>
+                    <span class="text-muted"><%= index + 1 %></span>
+                  <% end %>
+                </td>
+                <td>
+                  <strong><%= volunteer.name.presence || volunteer.email %></strong>
+                  <% if volunteer.handle.present? %>
+                    <br><small class="text-muted">@<%= volunteer.handle %></small>
+                  <% end %>
+                </td>
+                <td class="text-center"><%= volunteer.total_shifts %></td>
+                <td class="text-center"><%= number_with_precision(volunteer.total_volunteer_hours, precision: 1) %></td>
+                <td class="text-center"><%= volunteer.conferences_participated_count %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% else %>
+    <div class="alert alert-info">
+      <h5 class="alert-heading">No Volunteer Activity Yet</h5>
+      <p class="mb-0">No volunteers have signed up for shifts yet. Be the first!</p>
+    </div>
+  <% end %>
+</div>

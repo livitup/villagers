@@ -63,6 +63,19 @@
               <% end %>
             </ul>
           </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="volunteerDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Volunteers
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="volunteerDropdown">
+              <li>
+                <%= link_to "Leaderboard", leaderboard_index_path, class: "dropdown-item" %>
+              </li>
+              <li>
+                <%= link_to "My History", volunteer_history_index_path, class: "dropdown-item" %>
+              </li>
+            </ul>
+          </li>
           <% if policy(User).index? %>
             <li class="nav-item">
               <%= link_to "Users", managed_users_path, class: "nav-link" %>
