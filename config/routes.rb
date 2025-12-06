@@ -19,6 +19,7 @@ Rails.application.routes.draw do
 
   # Conference management
   resources :conferences do
+    get "dashboard", to: "conference_dashboard#show", as: :dashboard
     get "programs/new", to: "conference_programs#new", as: :new_conference_program
     resources :conference_programs, except: [ :new ], path: "programs"
     resources :conference_roles, only: [ :create, :destroy ]

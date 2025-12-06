@@ -13,6 +13,50 @@ class Conference < ApplicationRecord
 
   after_update :regenerate_timeslots_if_schedule_changed
 
+  # Dashboard metrics
+  def total_timeslots
+    timeslots.count
+  end
+
+  def filled_timeslots
+    timeslots.where("timeslots.current_volunteers_count >= timeslots.max_volunteers").count
+  end
+
+  def unfilled_timeslots
+    timeslots.where("timeslots.current_volunteers_count < timeslots.max_volunteers").count
+  end
+
+  def volunteer_count
+    User.joins(volunteer_signups: { timeslot: :conference_program })
+        .where(conference_programs: { conference_id: id })
+        .distinct
+        .count
+  end
+
+  def programs_count
+    conference_programs.count
+  end
+
+  def total_volunteer_hours
+    VolunteerSignup.joins(timeslot: :conference_program)
+                   .where(conference_programs: { conference_id: id })
+                   .count * 0.25
+  end
+
+  def fill_rate
+    return 0.0 if total_timeslots.zero?
+
+    (filled_timeslots.to_f / total_timeslots * 100).round(1)
+  end
+
+  def recent_signups(limit = 5)
+    VolunteerSignup.joins(timeslot: :conference_program)
+                   .where(conference_programs: { conference_id: id })
+                   .includes(user: [], timeslot: { conference_program: :program })
+                   .order(created_at: :desc)
+                   .limit(limit)
+  end
+
   private
 
   def end_date_after_start_date
