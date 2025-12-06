@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_11_26_055153) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_06_184129) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -27,6 +27,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_055153) do
     t.index ["program_id"], name: "index_conference_programs_on_program_id"
   end
 
+  create_table "conference_qualifications", force: :cascade do |t|
+    t.bigint "conference_id", null: false
+    t.datetime "created_at", null: false
+    t.text "description", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["conference_id", "name"], name: "index_conference_qualifications_on_conference_id_and_name", unique: true
+    t.index ["conference_id"], name: "index_conference_qualifications_on_conference_id"
+  end
+
   create_table "conference_roles", force: :cascade do |t|
     t.bigint "conference_id", null: false
     t.datetime "created_at", null: false
@@ -36,6 +46,16 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_055153) do
     t.index ["conference_id"], name: "index_conference_roles_on_conference_id"
     t.index ["user_id", "conference_id", "role_name"], name: "index_conference_roles_unique", unique: true
     t.index ["user_id"], name: "index_conference_roles_on_user_id"
+  end
+
+  create_table "conference_user_qualifications", force: :cascade do |t|
+    t.bigint "conference_qualification_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["conference_qualification_id"], name: "idx_on_conference_qualification_id_bd2242d465"
+    t.index ["user_id", "conference_qualification_id"], name: "idx_conf_user_quals_on_user_and_qual", unique: true
+    t.index ["user_id"], name: "index_conference_user_qualifications_on_user_id"
   end
 
   create_table "conferences", force: :cascade do |t|
@@ -69,6 +89,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_055153) do
     t.bigint "village_id", null: false
     t.index ["village_id", "name"], name: "index_programs_on_village_id_and_name", unique: true
     t.index ["village_id"], name: "index_programs_on_village_id"
+  end
+
+  create_table "qualification_removals", force: :cascade do |t|
+    t.bigint "conference_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "qualification_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["conference_id"], name: "index_qualification_removals_on_conference_id"
+    t.index ["qualification_id"], name: "index_qualification_removals_on_qualification_id"
+    t.index ["user_id", "qualification_id", "conference_id"], name: "idx_qual_removals_on_user_qual_conf", unique: true
+    t.index ["user_id"], name: "index_qualification_removals_on_user_id"
   end
 
   create_table "qualifications", force: :cascade do |t|
@@ -158,12 +190,18 @@ ActiveRecord::Schema[8.1].define(version: 2025_11_26_055153) do
 
   add_foreign_key "conference_programs", "conferences"
   add_foreign_key "conference_programs", "programs"
+  add_foreign_key "conference_qualifications", "conferences"
   add_foreign_key "conference_roles", "conferences"
   add_foreign_key "conference_roles", "users"
+  add_foreign_key "conference_user_qualifications", "conference_qualifications"
+  add_foreign_key "conference_user_qualifications", "users"
   add_foreign_key "conferences", "villages"
   add_foreign_key "program_qualifications", "programs"
   add_foreign_key "program_qualifications", "qualifications"
   add_foreign_key "programs", "villages"
+  add_foreign_key "qualification_removals", "conferences"
+  add_foreign_key "qualification_removals", "qualifications"
+  add_foreign_key "qualification_removals", "users"
   add_foreign_key "qualifications", "villages"
   add_foreign_key "timeslots", "conference_programs"
   add_foreign_key "user_qualifications", "qualifications"

@@ -1,0 +1,75 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><%= link_to @conference.name, @conference %></li>
+          <li class="breadcrumb-item active" aria-current="page">Qualification Removals</li>
+        </ol>
+      </nav>
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Qualification Removals: <%= @conference.name %></h1>
+      </div>
+
+      <div class="alert alert-info mb-4">
+        <strong>About Qualification Removals:</strong>
+        Sometimes a volunteer has a global qualification but should not use it for this specific conference.
+        Use this page to remove a global qualification from a user for this conference only.
+        This does not affect their global qualification status.
+      </div>
+
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Remove a Qualification</h5>
+            </div>
+            <div class="card-body">
+              <%= form_with url: conference_qualification_removals_path(@conference), method: :post, class: "mb-0" do %>
+                <div class="mb-3">
+                  <label for="user_id" class="form-label">User</label>
+                  <%= select_tag :user_id, options_from_collection_for_select(User.joins(:user_qualifications).distinct.order(:email), :id, :email), include_blank: "Select a user...", class: "form-select", required: true %>
+                </div>
+                <div class="mb-3">
+                  <label for="qualification_id" class="form-label">Global Qualification to Remove</label>
+                  <%= select_tag :qualification_id, options_from_collection_for_select(@global_qualifications, :id, :name), include_blank: "Select a qualification...", class: "form-select", required: true %>
+                </div>
+                <%= submit_tag "Remove Qualification for This Conference", class: "btn btn-warning" %>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header">
+              <h5 class="mb-0">Current Removals</h5>
+            </div>
+            <div class="card-body">
+              <% if @removals.any? %>
+                <ul class="list-group list-group-flush">
+                  <% @removals.each do |removal| %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <div>
+                        <strong><%= removal.user.name || removal.user.email %></strong>
+                        <br>
+                        <small class="text-muted">
+                          <span class="badge bg-secondary"><%= removal.qualification.name %></span>
+                          removed for this conference
+                        </small>
+                      </div>
+                      <%= link_to "Restore", conference_qualification_removal_path(@conference, removal), data: { turbo_method: :delete, turbo_confirm: "Restore #{removal.qualification.name} for #{removal.user.name || removal.user.email}?" }, class: "btn btn-sm btn-outline-success" %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="text-muted mb-0">No qualifications have been removed for this conference.</p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

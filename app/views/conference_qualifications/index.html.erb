@@ -1,0 +1,51 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><%= link_to @conference.name, @conference %></li>
+          <li class="breadcrumb-item active" aria-current="page">Conference Qualifications</li>
+        </ol>
+      </nav>
+
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Conference Qualifications: <%= @conference.name %></h1>
+        <%= link_to "New Qualification", new_conference_conference_qualification_path(@conference), class: "btn btn-primary" %>
+      </div>
+
+      <div class="alert alert-info mb-4">
+        <strong>Note:</strong> These qualifications are specific to this conference only.
+        For global qualifications that apply across all conferences, use the
+        <%= link_to "Global Qualifications", qualifications_path %> page.
+      </div>
+
+      <% if @qualifications.any? %>
+        <div class="row">
+          <% @qualifications.each do |qualification| %>
+            <div class="col-md-6 mb-3">
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title"><%= qualification.name %></h5>
+                  <p class="card-text"><%= qualification.description %></p>
+                  <p class="text-muted small">
+                    <%= pluralize(qualification.users.count, "user") %> with this qualification
+                  </p>
+                  <div class="d-flex gap-2">
+                    <%= link_to "View", conference_conference_qualification_path(@conference, qualification), class: "btn btn-sm btn-outline-primary" %>
+                    <%= link_to "Edit", edit_conference_conference_qualification_path(@conference, qualification), class: "btn btn-sm btn-outline-secondary" %>
+                    <%= link_to "Delete", conference_conference_qualification_path(@conference, qualification), data: { turbo_method: :delete, turbo_confirm: "Are you sure?" }, class: "btn btn-sm btn-outline-danger" %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="alert alert-secondary">
+          No conference-specific qualifications have been created yet.
+          <%= link_to "Create the first qualification", new_conference_conference_qualification_path(@conference), class: "alert-link" %>.
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
