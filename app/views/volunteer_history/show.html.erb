@@ -8,7 +8,10 @@
 
   <div class="d-flex justify-content-between align-items-center mb-4">
     <h1>My Shifts: <%= @conference.name %></h1>
-    <%= link_to "Conference Leaderboard", conference_leaderboard_path(@conference), class: "btn btn-outline-primary" %>
+    <div>
+      <%= link_to "Export to Calendar", conference_calendar_export_path(@conference), class: "btn btn-success me-2" %>
+      <%= link_to "Conference Leaderboard", conference_leaderboard_path(@conference), class: "btn btn-outline-primary" %>
+    </div>
   </div>
 
   <div class="row mb-4">

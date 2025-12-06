@@ -28,6 +28,9 @@ gem "pundit", "~> 2.3"
 # CSV support (needed in Ruby 3.4+)
 gem "csv"
 
+# Calendar export (iCal/ICS)
+gem "icalendar"
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
