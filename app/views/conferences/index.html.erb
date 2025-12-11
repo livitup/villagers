@@ -16,7 +16,7 @@
                 <%= link_to conference.name, conference_path(conference), class: "text-decoration-none" %>
               </h5>
               <p class="card-text text-muted">
-                <strong>Location:</strong> <%= conference.location || "TBD" %><br>
+                <strong>Location:</strong> <%= conference.display_location %><br>
                 <strong>Dates:</strong> <%= conference.start_date.strftime("%B %d") %> - <%= conference.end_date.strftime("%B %d, %Y") %>
               </p>
               <% if conference.conference_hours_start && conference.conference_hours_end %>

@@ -33,7 +33,9 @@ UserRole.find_or_create_by!(user: village_admin, role: village_admin_role)
 
 # Create conference
 conference = Conference.find_or_create_by!(name: "DEF CON 32", village: village) do |c|
-  c.location = "Las Vegas, NV"
+  c.country = "US"
+  c.state = "NV"
+  c.city = "Las Vegas"
   c.start_date = Date.new(2024, 8, 8)
   c.end_date = Date.new(2024, 8, 11)
   c.conference_hours_start = Time.parse("09:00")

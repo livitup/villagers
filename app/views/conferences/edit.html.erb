@@ -23,10 +23,7 @@
               <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
             </div>
 
-            <div class="mb-3">
-              <%= form.label :location, class: "form-label" %>
-              <%= form.text_field :location, class: "form-control" %>
-            </div>
+            <%= render "location_fields", form: form %>
 
             <div class="row">
               <div class="col-md-6 mb-3">

@@ -5,7 +5,7 @@ class VolunteerSignupTest < ActiveSupport::TestCase
     @village = Village.create!(name: "Test Village", setup_complete: true)
     @conference = Conference.create!(
       name: "Test Conference",
-      location: "Test Location",
+      city: "Test City", state: "NV", country: "US",
       start_date: Date.today + 1.day,
       end_date: Date.today + 2.days,
       conference_hours_start: Time.zone.parse("2000-01-01 09:00"),
@@ -201,7 +201,7 @@ class VolunteerSignupTest < ActiveSupport::TestCase
     # Qualification removed for a different conference
     other_conference = Conference.create!(
       name: "Other Conference",
-      location: "Other Location",
+      city: "Other City", state: "CA", country: "US",
       start_date: Date.today + 10.days,
       end_date: Date.today + 11.days,
       conference_hours_start: Time.zone.parse("2000-01-01 09:00"),

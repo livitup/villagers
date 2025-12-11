@@ -67,7 +67,9 @@ class ConferencesControllerTest < ActionDispatch::IntegrationTest
       post conferences_url, params: {
         conference: {
           name: "New Conference",
-          location: "Test Location",
+          country: "US",
+          state: "NV",
+          city: "Las Vegas",
           start_date: Date.today,
           end_date: Date.tomorrow,
           conference_hours_start: "09:00",
@@ -80,6 +82,9 @@ class ConferencesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to conference_path(Conference.last)
     conference = Conference.last
     assert_equal "New Conference", conference.name
+    assert_equal "Las Vegas", conference.city
+    assert_equal "NV", conference.state
+    assert_equal "US", conference.country
     assert conference.conference_roles.exists?(user: @conference_lead, role_name: ConferenceRole::CONFERENCE_LEAD)
   end
 
@@ -125,13 +130,17 @@ class ConferencesControllerTest < ActionDispatch::IntegrationTest
     patch conference_url(@conference), params: {
       conference: {
         name: "Updated Conference",
-        location: "New Location"
+        country: "US",
+        state: "CA",
+        city: "San Francisco"
       }
     }
     assert_redirected_to @conference
     @conference.reload
     assert_equal "Updated Conference", @conference.name
-    assert_equal "New Location", @conference.location
+    assert_equal "San Francisco", @conference.city
+    assert_equal "CA", @conference.state
+    assert_equal "US", @conference.country
   end
 
   test "should update conference lead" do

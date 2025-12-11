@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_06_184129) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_11_063449) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -59,13 +59,15 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_06_184129) do
   end
 
   create_table "conferences", force: :cascade do |t|
+    t.string "city"
     t.time "conference_hours_end"
     t.time "conference_hours_start"
+    t.string "country", default: "US"
     t.datetime "created_at", null: false
     t.date "end_date"
-    t.string "location"
     t.string "name"
     t.date "start_date"
+    t.string "state"
     t.datetime "updated_at", null: false
     t.bigint "village_id", null: false
     t.index ["village_id"], name: "index_conferences_on_village_id"

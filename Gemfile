@@ -25,6 +25,10 @@ gem "devise", "~> 4.9"
 # Authorization
 gem "pundit", "~> 2.3"
 
+# Country/State/City selection
+gem "country_select", "~> 11.0"
+gem "city-state"
+
 # CSV support (needed in Ruby 3.4+)
 gem "csv"
 

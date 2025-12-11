@@ -5,7 +5,7 @@ class QualificationRemovalTest < ActiveSupport::TestCase
     @village = Village.create!(name: "Test Village", setup_complete: true)
     @conference = Conference.create!(
       name: "Test Conference",
-      location: "Test Location",
+      city: "Test City", state: "NV", country: "US",
       start_date: Date.today + 1.day,
       end_date: Date.today + 2.days,
       conference_hours_start: Time.zone.parse("2000-01-01 09:00"),
@@ -81,7 +81,7 @@ class QualificationRemovalTest < ActiveSupport::TestCase
   test "same user-qualification can be removed in different conferences" do
     another_conference = Conference.create!(
       name: "Another Conference",
-      location: "Another Location",
+      city: "Another City", state: "TX", country: "US",
       start_date: Date.today + 10.days,
       end_date: Date.today + 11.days,
       conference_hours_start: Time.zone.parse("2000-01-01 09:00"),

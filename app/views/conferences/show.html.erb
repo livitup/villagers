@@ -11,7 +11,7 @@
         <div class="card-body">
           <dl class="row">
             <dt class="col-sm-3">Location:</dt>
-            <dd class="col-sm-9"><%= @conference.location || "Not specified" %></dd>
+            <dd class="col-sm-9"><%= @conference.display_location %></dd>
 
             <dt class="col-sm-3">Start Date:</dt>
             <dd class="col-sm-9"><%= @conference.start_date.strftime("%B %d, %Y") %></dd>
