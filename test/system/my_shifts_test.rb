@@ -75,7 +75,9 @@ class MyShiftsTest < ApplicationSystemTestCase
     login_as @user
     visit conference_path(@conference)
 
-    click_link "My Shifts", class: "btn-success"
+    # Wait for the page to fully load before clicking
+    assert_text @conference.name
+    click_link "My Shifts"
 
     assert_text "My Shifts - #{@conference.name}"
   end
