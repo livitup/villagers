@@ -6,6 +6,7 @@ class ApplicationController < ActionController::Base
 
   # Make Devise helpers available in all views
   before_action :configure_permitted_parameters, if: :devise_controller?
+  before_action :load_past_unarchived_conferences
 
   # Pundit authorization
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
@@ -27,5 +28,23 @@ class ApplicationController < ActionController::Base
   def user_not_authorized
     flash[:alert] = "You are not authorized to perform this action."
     redirect_to(request.referer || root_path)
+  end
+
+  def load_past_unarchived_conferences
+    # Only show archive prompt on the root page to avoid interrupting other workflows
+    return unless user_signed_in?
+    return if request.xhr? || request.format.json?
+    return unless controller_name == "root" && action_name == "show"
+
+    # Only load for users who can archive conferences
+    if current_user.village_admin?
+      @past_unarchived_conferences = Conference.past_unarchived.order(end_date: :desc)
+    else
+      # For conference leads/admins, show only their assigned past conferences
+      managed_conference_ids = current_user.conference_roles.pluck(:conference_id)
+      @past_unarchived_conferences = Conference.past_unarchived
+                                               .where(id: managed_conference_ids)
+                                               .order(end_date: :desc)
+    end
   end
 end

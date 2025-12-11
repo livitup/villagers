@@ -1,11 +1,14 @@
 class ConferencesController < ApplicationController
-  before_action :set_conference, only: [ :show, :edit, :update, :destroy ]
+  before_action :set_conference, only: [ :show, :edit, :update, :destroy, :archive, :unarchive ]
   before_action :set_village
 
   def index
-    # For now, all authenticated users can see all conferences
-    # Using policy_scope causes issues, so we'll authorize at the action level if needed
-    @conferences = Conference.order(start_date: :desc)
+    @show_archived = params[:show_archived] == "true"
+    @conferences = if @show_archived
+                     Conference.order(start_date: :desc)
+    else
+                     Conference.active.order(start_date: :desc)
+    end
   end
 
   def show
@@ -75,6 +78,42 @@ class ConferencesController < ApplicationController
     authorize @conference, :destroy?, policy_class: ConferencePolicy
     @conference.destroy
     redirect_to conferences_path, notice: "Conference was successfully deleted."
+  end
+
+  def archive
+    authorize @conference, :archive?, policy_class: ConferencePolicy
+
+    if @conference.archivable?
+      @conference.archive!
+      redirect_to @conference, notice: "Conference was successfully archived."
+    else
+      redirect_to @conference, alert: "Cannot archive a conference that hasn't ended yet."
+    end
+  end
+
+  def unarchive
+    authorize @conference, :archive?, policy_class: ConferencePolicy
+    @conference.unarchive!
+    redirect_to @conference, notice: "Conference was successfully unarchived."
+  end
+
+  def bulk_archive
+    authorize Conference, :archive?, policy_class: ConferencePolicy
+    conference_ids = params[:conference_ids] || []
+
+    archived_count = 0
+    Conference.where(id: conference_ids).find_each do |conference|
+      if conference.archivable? && policy(conference).archive?
+        conference.archive!
+        archived_count += 1
+      end
+    end
+
+    if request.format.json?
+      render json: { success: true, archived_count: archived_count }
+    else
+      redirect_to conferences_path, notice: "#{archived_count} conference(s) archived."
+    end
   end
 
   private

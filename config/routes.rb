@@ -22,6 +22,13 @@ Rails.application.routes.draw do
 
   # Conference management
   resources :conferences do
+    member do
+      post :archive
+      post :unarchive
+    end
+    collection do
+      post :bulk_archive
+    end
     get "dashboard", to: "conference_dashboard#show", as: :dashboard
     get "calendar_export", to: "calendar_exports#show", as: :calendar_export
     get "programs/new", to: "conference_programs#new", as: :new_conference_program

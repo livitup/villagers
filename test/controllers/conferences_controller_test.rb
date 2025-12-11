@@ -175,4 +175,141 @@ class ConferencesControllerTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to root_path
   end
+
+  # Archive tests
+  test "index shows only active conferences by default" do
+    archived_conference = Conference.create!(
+      village: @village,
+      name: "Archived Conference",
+      start_date: Date.yesterday - 10.days,
+      end_date: Date.yesterday - 5.days,
+      archived_at: Time.current
+    )
+    sign_in @volunteer
+    get conferences_url
+
+    assert_response :success
+    assert_select "h5", text: /Test Conference/
+    assert_select "h5", text: /Archived Conference/, count: 0
+  end
+
+  test "index shows all conferences when show_archived is true" do
+    archived_conference = Conference.create!(
+      village: @village,
+      name: "Archived Conference",
+      start_date: Date.yesterday - 10.days,
+      end_date: Date.yesterday - 5.days,
+      archived_at: Time.current
+    )
+    sign_in @volunteer
+    get conferences_url(show_archived: true)
+
+    assert_response :success
+    assert_select "h5", text: /Test Conference/
+    assert_select "h5", text: /Archived Conference/
+  end
+
+  test "village admin can archive a past conference" do
+    past_conference = Conference.create!(
+      village: @village,
+      name: "Past Conference",
+      start_date: Date.yesterday - 10.days,
+      end_date: Date.yesterday - 5.days
+    )
+    sign_in @village_admin
+    post archive_conference_url(past_conference)
+
+    assert_redirected_to past_conference
+    past_conference.reload
+    assert past_conference.archived?
+  end
+
+  test "cannot archive a future conference" do
+    future_conference = Conference.create!(
+      village: @village,
+      name: "Future Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    sign_in @village_admin
+    post archive_conference_url(future_conference)
+
+    assert_redirected_to future_conference
+    future_conference.reload
+    assert_not future_conference.archived?
+  end
+
+  test "village admin can unarchive a conference" do
+    archived_conference = Conference.create!(
+      village: @village,
+      name: "Archived Conference",
+      start_date: Date.yesterday - 10.days,
+      end_date: Date.yesterday - 5.days,
+      archived_at: Time.current
+    )
+    sign_in @village_admin
+    post unarchive_conference_url(archived_conference)
+
+    assert_redirected_to archived_conference
+    archived_conference.reload
+    assert_not archived_conference.archived?
+  end
+
+  test "conference lead can archive their assigned conference" do
+    past_conference = Conference.create!(
+      village: @village,
+      name: "Past Conference",
+      start_date: Date.yesterday - 10.days,
+      end_date: Date.yesterday - 5.days
+    )
+    ConferenceRole.create!(
+      user: @conference_lead,
+      conference: past_conference,
+      role_name: ConferenceRole::CONFERENCE_LEAD
+    )
+    sign_in @conference_lead
+    post archive_conference_url(past_conference)
+
+    assert_redirected_to past_conference
+    past_conference.reload
+    assert past_conference.archived?
+  end
+
+  test "volunteer cannot archive a conference" do
+    past_conference = Conference.create!(
+      village: @village,
+      name: "Past Conference",
+      start_date: Date.yesterday - 10.days,
+      end_date: Date.yesterday - 5.days
+    )
+    sign_in @volunteer
+    post archive_conference_url(past_conference)
+
+    assert_redirected_to root_path
+    past_conference.reload
+    assert_not past_conference.archived?
+  end
+
+  test "bulk archive archives multiple conferences" do
+    past1 = Conference.create!(
+      village: @village,
+      name: "Past 1",
+      start_date: Date.yesterday - 10.days,
+      end_date: Date.yesterday - 5.days
+    )
+    past2 = Conference.create!(
+      village: @village,
+      name: "Past 2",
+      start_date: Date.yesterday - 20.days,
+      end_date: Date.yesterday - 15.days
+    )
+    sign_in @village_admin
+    post bulk_archive_conferences_url, params: { conference_ids: [ past1.id, past2.id ] }
+
+    assert_redirected_to conferences_path
+    past1.reload
+    past2.reload
+    assert past1.archived?
+    assert past2.archived?
+  end
 end

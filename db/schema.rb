@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_11_173455) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_11_180603) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -59,6 +59,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_11_173455) do
   end
 
   create_table "conferences", force: :cascade do |t|
+    t.datetime "archived_at"
     t.string "city"
     t.time "conference_hours_end"
     t.time "conference_hours_start"
