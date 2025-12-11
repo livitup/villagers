@@ -21,7 +21,10 @@
             </a>
             <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="conferenceDropdown">
               <li>
-                <%= link_to "All Conferences", conferences_path, class: "dropdown-item" %>
+                <%= link_to "Active Conferences", conferences_path, class: "dropdown-item" %>
+              </li>
+              <li>
+                <%= link_to "All Conferences", conferences_path(show_archived: true), class: "dropdown-item" %>
               </li>
               <% if policy(Conference).create? %>
                 <li><hr class="dropdown-divider"></li>

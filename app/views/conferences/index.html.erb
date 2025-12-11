@@ -1,6 +1,12 @@
 <div class="container mt-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Conferences</h1>
+    <div>
+      <h1><%= @show_archived ? "All Conferences" : "Active Conferences" %></h1>
+      <div class="btn-group btn-group-sm" role="group">
+        <%= link_to "Active", conferences_path, class: "btn #{@show_archived ? 'btn-outline-primary' : 'btn-primary'}" %>
+        <%= link_to "All", conferences_path(show_archived: true), class: "btn #{@show_archived ? 'btn-primary' : 'btn-outline-primary'}" %>
+      </div>
+    </div>
     <% if policy(Conference).create? %>
       <%= link_to "New Conference", new_conference_path, class: "btn btn-primary" %>
     <% end %>
@@ -10,10 +16,19 @@
     <div class="row">
       <% @conferences.each do |conference| %>
         <div class="col-md-6 col-lg-4 mb-4">
-          <div class="card shadow-sm h-100">
+          <div class="card shadow-sm h-100 <%= 'border-secondary opacity-75' if conference.archived? %>">
             <div class="card-body">
               <h5 class="card-title">
                 <%= link_to conference.name, conference_path(conference), class: "text-decoration-none" %>
+                <% if conference.archived? %>
+                  <span class="badge bg-secondary">Archived</span>
+                <% elsif conference.end_date < Date.today %>
+                  <span class="badge bg-warning text-dark">Past</span>
+                <% elsif conference.start_date <= Date.today && conference.end_date >= Date.today %>
+                  <span class="badge bg-success">Active</span>
+                <% else %>
+                  <span class="badge bg-info">Upcoming</span>
+                <% end %>
               </h5>
               <p class="card-text text-muted">
                 <strong>Location:</strong> <%= conference.display_location %><br>
@@ -37,10 +52,12 @@
     </div>
   <% else %>
     <div class="alert alert-info">
-      <h5 class="alert-heading">No Conferences Yet</h5>
+      <h5 class="alert-heading"><%= @show_archived ? "No Conferences" : "No Active Conferences" %></h5>
       <p class="mb-0">
         <% if policy(Conference).create? %>
           Get started by <%= link_to "creating your first conference", new_conference_path, class: "alert-link" %>.
+        <% elsif !@show_archived %>
+          No active conferences. <%= link_to "View all conferences", conferences_path(show_archived: true), class: "alert-link" %> to see archived ones.
         <% else %>
           No conferences have been created yet.
         <% end %>

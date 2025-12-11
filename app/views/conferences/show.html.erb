@@ -3,10 +3,24 @@
     <div class="col-md-8">
       <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <h2 class="h4 mb-0"><%= @conference.name %></h2>
-          <% if policy(@conference).update? %>
-            <%= link_to "Edit", edit_conference_path(@conference), class: "btn btn-light btn-sm" %>
-          <% end %>
+          <div>
+            <h2 class="h4 mb-0 d-inline"><%= @conference.name %></h2>
+            <% if @conference.archived? %>
+              <span class="badge bg-secondary ms-2">Archived</span>
+            <% end %>
+          </div>
+          <div>
+            <% if policy(@conference).update? %>
+              <%= link_to "Edit", edit_conference_path(@conference), class: "btn btn-light btn-sm me-1" %>
+            <% end %>
+            <% if policy(@conference).archive? %>
+              <% if @conference.archived? %>
+                <%= button_to "Unarchive", unarchive_conference_path(@conference), method: :post, class: "btn btn-warning btn-sm", form: { data: { turbo_confirm: "Are you sure you want to unarchive this conference?" } } %>
+              <% elsif @conference.archivable? %>
+                <%= button_to "Archive", archive_conference_path(@conference), method: :post, class: "btn btn-secondary btn-sm", form: { data: { turbo_confirm: "Are you sure you want to archive this conference?" } } %>
+              <% end %>
+            <% end %>
+          </div>
         </div>
         <div class="card-body">
           <dl class="row">

@@ -15,6 +15,28 @@ class Conference < ApplicationRecord
 
   after_update :regenerate_timeslots_if_schedule_changed
 
+  # Archive scopes
+  scope :active, -> { where(archived_at: nil) }
+  scope :archived, -> { where.not(archived_at: nil) }
+  scope :past_unarchived, -> { where("end_date < ?", Date.today).where(archived_at: nil) }
+
+  # Archive methods
+  def archived?
+    archived_at.present?
+  end
+
+  def archivable?
+    end_date < Date.today
+  end
+
+  def archive!
+    update!(archived_at: Time.current)
+  end
+
+  def unarchive!
+    update!(archived_at: nil)
+  end
+
   # Dashboard metrics
   def total_timeslots
     timeslots.count
