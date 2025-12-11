@@ -59,6 +59,18 @@ class Conference < ApplicationRecord
                    .limit(limit)
   end
 
+  # Location display methods
+  def display_location
+    return "Not specified" if city.blank?
+
+    if country == "US"
+      state.present? ? "#{city}, #{state}" : city
+    else
+      country_name = ISO3166::Country.new(country)&.common_name || country
+      "#{city}, #{country_name}"
+    end
+  end
+
   private
 
   def end_date_after_start_date

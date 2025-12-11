@@ -5,7 +5,7 @@ class UserVolunteerStatsTest < ActiveSupport::TestCase
     @village = Village.create!(name: "Test Village", setup_complete: true)
     @conference1 = Conference.create!(
       name: "Conference 2024",
-      location: "Test Location",
+      city: "Test City", state: "NV", country: "US",
       start_date: Date.today + 1.day,
       end_date: Date.today + 2.days,
       conference_hours_start: Time.zone.parse("2000-01-01 09:00"),
@@ -14,7 +14,7 @@ class UserVolunteerStatsTest < ActiveSupport::TestCase
     )
     @conference2 = Conference.create!(
       name: "Conference 2023",
-      location: "Test Location 2",
+      city: "Other City", state: "CA", country: "US",
       start_date: Date.today + 10.days,
       end_date: Date.today + 11.days,
       conference_hours_start: Time.zone.parse("2000-01-01 09:00"),

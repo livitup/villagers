@@ -6,7 +6,7 @@ class TimeslotGeneratorTest < ActiveSupport::TestCase
     # Use Time.zone.parse to create times in the application timezone
     @conference = Conference.create!(
       name: "Test Conference",
-      location: "Test Location",
+      city: "Test City", state: "NV", country: "US",
       start_date: Date.today + 1.day,
       end_date: Date.today + 2.days,
       conference_hours_start: Time.zone.parse("2000-01-01 09:00"),

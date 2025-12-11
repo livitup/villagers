@@ -20,7 +20,7 @@ class CalendarExportsController < ApplicationController
         event.dtend = Icalendar::Values::DateTime.new(timeslot.end_time)
         event.summary = "Volunteer: #{program.name}"
         event.description = "Volunteer shift for #{program.name} at #{@conference.name}"
-        event.location = @conference.location
+        event.location = @conference.display_location
         event.uid = "volunteer-signup-#{signup.id}@villagers"
       end
     end

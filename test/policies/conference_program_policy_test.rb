@@ -5,7 +5,7 @@ class ConferenceProgramPolicyTest < ActiveSupport::TestCase
     @village = Village.create!(name: "Test Village", setup_complete: true)
     @conference = Conference.create!(
       name: "Test Conference",
-      location: "Test Location",
+      city: "Test City", state: "NV", country: "US",
       start_date: Date.today + 1.day,
       end_date: Date.today + 3.days,
       conference_hours_start: Time.parse("09:00"),
@@ -61,7 +61,7 @@ class ConferenceProgramPolicyTest < ActiveSupport::TestCase
 
     @other_conference = Conference.create!(
       name: "Other Conference",
-      location: "Other Location",
+      city: "Other City", state: "CA", country: "US",
       start_date: Date.today + 10.days,
       end_date: Date.today + 12.days,
       conference_hours_start: Time.parse("09:00"),

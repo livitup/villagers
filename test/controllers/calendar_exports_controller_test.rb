@@ -5,7 +5,7 @@ class CalendarExportsControllerTest < ActionDispatch::IntegrationTest
     @village = Village.create!(name: "Test Village", setup_complete: true)
     @conference = Conference.create!(
       name: "Test Conference 2024",
-      location: "Las Vegas Convention Center",
+      city: "Las Vegas", state: "NV", country: "US",
       start_date: Date.today + 1.day,
       end_date: Date.today + 2.days,
       conference_hours_start: Time.zone.parse("2000-01-01 09:00"),
@@ -82,7 +82,7 @@ class CalendarExportsControllerTest < ActionDispatch::IntegrationTest
   test "should include conference location" do
     sign_in @user
     get conference_calendar_export_url(@conference)
-    assert_match "Las Vegas Convention Center", response.body
+    assert_match "Las Vegas", response.body
   end
 
   test "should only include user's own shifts" do

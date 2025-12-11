@@ -6,3 +6,6 @@ import { application } from "./application"
 
 import HelloController from "./hello_controller"
 application.register("hello", HelloController)
+
+import LocationFieldsController from "./location_fields_controller"
+application.register("location-fields", LocationFieldsController)

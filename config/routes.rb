@@ -14,6 +14,9 @@ Rails.application.routes.draw do
   get "setup", to: "setup#show", as: :setup
   post "setup", to: "setup#create"
 
+  # API endpoints for dynamic form fields
+  get "states", to: "states#index", as: :states
+
   # Village management
   resource :village, only: [ :show, :edit, :update ]
 

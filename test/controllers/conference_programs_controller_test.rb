@@ -30,7 +30,7 @@ class ConferenceProgramsControllerTest < ActionDispatch::IntegrationTest
     @conference = Conference.create!(
       village: @village,
       name: "Test Conference",
-      location: "Test Location",
+      city: "Test City", state: "NV", country: "US",
       start_date: Date.today + 1.day,
       end_date: Date.today + 3.days,
       conference_hours_start: Time.parse("09:00"),
