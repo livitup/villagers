@@ -91,14 +91,14 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // Program descriptions data
-    const programDescriptions = {
-      <% @available_programs.each do |program| %>
-      <%= program.id %>: <%= (program.description || '').to_json.html_safe %>,
-      <% end %>
-    };
+  // Program descriptions data (using string keys for consistent lookup)
+  const programDescriptions = {
+    <% @available_programs.each do |program| %>
+    "<%= program.id %>": <%= (program.description || '').to_json.html_safe %>,
+    <% end %>
+  };
 
+  function initConferenceProgramForm() {
     const programSelect = document.getElementById('program_select');
     const descriptionField = document.getElementById('public_description');
 
@@ -131,6 +131,10 @@
         }
       });
     });
-  });
+  }
+
+  // Support both regular page load and Turbo navigation
+  document.addEventListener('DOMContentLoaded', initConferenceProgramForm);
+  document.addEventListener('turbo:load', initConferenceProgramForm);
 </script>
 
