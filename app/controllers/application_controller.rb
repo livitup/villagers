@@ -31,8 +31,10 @@ class ApplicationController < ActionController::Base
   end
 
   def load_past_unarchived_conferences
+    # Only show archive prompt on the root page to avoid interrupting other workflows
     return unless user_signed_in?
     return if request.xhr? || request.format.json?
+    return unless controller_name == "root" && action_name == "show"
 
     # Only load for users who can archive conferences
     if current_user.village_admin?
