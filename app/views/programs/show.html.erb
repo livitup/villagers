@@ -17,9 +17,9 @@
           <% end %>
 
           <h5>Conferences</h5>
-          <% if @program.conferences.any? %>
+          <% if @program.enabled_conferences.any? %>
             <div class="mb-3">
-              <% @program.conferences.each do |conference| %>
+              <% @program.enabled_conferences.each do |conference| %>
                 <%= link_to conference.name, conference, class: "badge bg-primary text-decoration-none me-1" %>
               <% end %>
             </div>

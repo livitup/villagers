@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_11_063449) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_11_173455) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -83,12 +83,14 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_11_063449) do
   end
 
   create_table "programs", force: :cascade do |t|
+    t.bigint "conference_id"
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "max_volunteers", default: 1, null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.bigint "village_id", null: false
+    t.index ["conference_id"], name: "index_programs_on_conference_id"
     t.index ["village_id", "name"], name: "index_programs_on_village_id_and_name", unique: true
     t.index ["village_id"], name: "index_programs_on_village_id"
   end
@@ -200,6 +202,7 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_11_063449) do
   add_foreign_key "conferences", "villages"
   add_foreign_key "program_qualifications", "programs"
   add_foreign_key "program_qualifications", "qualifications"
+  add_foreign_key "programs", "conferences"
   add_foreign_key "programs", "villages"
   add_foreign_key "qualification_removals", "conferences"
   add_foreign_key "qualification_removals", "qualifications"
