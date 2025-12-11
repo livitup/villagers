@@ -1,4 +1,7 @@
-<div class="container mt-5">
+<div class="container mt-5" data-controller="bulk-capacity-update"
+     data-bulk-capacity-update-program-id-value="<%= @program.id %>"
+     data-bulk-capacity-update-affected-conferences-url-value="<%= affected_conferences_program_path(@program) %>"
+     data-bulk-capacity-update-bulk-update-url-value="<%= bulk_update_capacity_program_path(@program) %>">
   <div class="row justify-content-center">
     <div class="col-md-8">
       <div class="card shadow">
@@ -32,7 +35,8 @@
 
             <div class="mb-3">
               <%= form.label :max_volunteers, "Default Volunteers Per Shift", class: "form-label" %>
-              <%= form.number_field :max_volunteers, min: 1, class: "form-control", style: "max-width: 150px;" %>
+              <%= form.number_field :max_volunteers, min: 1, class: "form-control", style: "max-width: 150px;",
+                  data: { bulk_capacity_update_target: "maxVolunteers", action: "blur->bulk-capacity-update#checkForChanges" } %>
               <div class="form-text">Default number of volunteers needed per 15-minute shift. Can be overridden per conference.</div>
             </div>
 
@@ -41,6 +45,50 @@
               <%= form.submit "Update Program", class: "btn btn-primary btn-lg" %>
             </div>
           <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Update Modal -->
+  <div class="modal fade" tabindex="-1" data-bulk-capacity-update-target="modal" style="background-color: rgba(0,0,0,0.5);">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Update Existing Timeslots?</h5>
+          <button type="button" class="btn-close" data-action="bulk-capacity-update#hideModal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted">
+            The following open conferences use this program. Would you like to update their existing timeslot capacities to match the new default?
+          </p>
+          <div class="mb-3">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="selectAll"
+                     data-bulk-capacity-update-target="selectAll"
+                     data-action="bulk-capacity-update#toggleSelectAll">
+              <label class="form-check-label fw-bold" for="selectAll">Select All</label>
+            </div>
+          </div>
+          <div data-bulk-capacity-update-target="conferenceList">
+            <!-- Conference checkboxes will be dynamically inserted here -->
+          </div>
+          <div class="alert alert-info mt-3">
+            <small>
+              <strong>Note:</strong> Timeslots with existing signups that exceed the new capacity will not be reduced.
+              Conferences with a capacity override set will be unchecked by default.
+            </small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <span class="spinner-border spinner-border-sm me-2 d-none" data-bulk-capacity-update-target="loading"></span>
+          <button type="button" class="btn btn-secondary" data-action="bulk-capacity-update#skipUpdate">
+            Skip - Don't Update Existing
+          </button>
+          <button type="button" class="btn btn-primary" data-bulk-capacity-update-target="submitBtn"
+                  data-action="bulk-capacity-update#submitBulkUpdate">
+            Update Selected
+          </button>
         </div>
       </div>
     </div>

@@ -50,15 +50,18 @@ Rails.application.routes.draw do
   end
 
   # Program management
-  resources :programs
+  resources :programs do
+    member do
+      get :affected_conferences
+      post :bulk_update_capacity
+    end
+    resources :program_qualifications, only: [ :create, :destroy ]
+  end
 
   # Qualification management
   resources :qualifications
   resources :managed_users, controller: "users", path: "manage/users" do
     resources :user_qualifications, only: [ :create, :destroy ]
-  end
-  resources :programs do
-    resources :program_qualifications, only: [ :create, :destroy ]
   end
 
   # Leaderboard

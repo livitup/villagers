@@ -160,4 +160,92 @@ class ProgramsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_response :unprocessable_entity
   end
+
+  # Bulk capacity update tests
+  test "affected_conferences returns JSON with open conferences" do
+    sign_in @village_admin
+    conference = Conference.create!(
+      name: "Test Conference",
+      village: @village,
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 2.days,
+      conference_hours_start: Time.zone.parse("2000-01-01 09:00"),
+      conference_hours_end: Time.zone.parse("2000-01-01 12:00")
+    )
+    conference_program = ConferenceProgram.create!(
+      conference: conference,
+      program: @program,
+      day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" } }
+    )
+
+    get affected_conferences_program_url(@program, new_max_volunteers: 5), as: :json
+
+    assert_response :success
+    json_response = JSON.parse(response.body)
+    assert json_response["conferences"].any? { |c| c["conference_name"] == "Test Conference" }
+  end
+
+  test "affected_conferences excludes past conferences" do
+    sign_in @village_admin
+    past_conference = Conference.create!(
+      name: "Past Conference",
+      village: @village,
+      start_date: Date.yesterday - 5.days,
+      end_date: Date.yesterday,
+      conference_hours_start: Time.zone.parse("2000-01-01 09:00"),
+      conference_hours_end: Time.zone.parse("2000-01-01 12:00")
+    )
+    ConferenceProgram.create!(
+      conference: past_conference,
+      program: @program,
+      day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" } }
+    )
+
+    get affected_conferences_program_url(@program, new_max_volunteers: 5), as: :json
+
+    assert_response :success
+    json_response = JSON.parse(response.body)
+    assert_not json_response["conferences"].any? { |c| c["conference_name"] == "Past Conference" }
+  end
+
+  test "affected_conferences requires authorization" do
+    sign_in @volunteer
+    get affected_conferences_program_url(@program, new_max_volunteers: 5), as: :json
+    assert_redirected_to root_path
+  end
+
+  test "bulk_update_capacity enqueues jobs for selected conferences" do
+    sign_in @village_admin
+    conference = Conference.create!(
+      name: "Test Conference",
+      village: @village,
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 2.days,
+      conference_hours_start: Time.zone.parse("2000-01-01 09:00"),
+      conference_hours_end: Time.zone.parse("2000-01-01 12:00")
+    )
+    conference_program = ConferenceProgram.create!(
+      conference: conference,
+      program: @program,
+      day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" } }
+    )
+
+    assert_enqueued_with(job: UpdateTimeslotCapacityJob) do
+      post bulk_update_capacity_program_url(@program),
+           params: { new_max_volunteers: 5, conference_program_ids: [ conference_program.id ] },
+           as: :json
+    end
+
+    assert_response :success
+    json_response = JSON.parse(response.body)
+    assert json_response["success"]
+  end
+
+  test "bulk_update_capacity requires authorization" do
+    sign_in @volunteer
+    post bulk_update_capacity_program_url(@program),
+         params: { new_max_volunteers: 5, conference_program_ids: [] },
+         as: :json
+    assert_redirected_to root_path
+  end
 end
