@@ -10,5 +10,24 @@
     <h4 class="alert-heading">Welcome to <%= @village.name %>!</h4>
     <p>Dashboard coming soon.</p>
   </div>
+
+  <% if user_signed_in? && current_user.conference_lead_conferences.any? %>
+    <div class="card mt-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">My Conferences</h5>
+      </div>
+      <div class="card-body">
+        <p class="text-muted">Conferences you lead:</p>
+        <ul class="list-group list-group-flush">
+          <% current_user.conference_lead_conferences.each do |conference| %>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <%= link_to conference.name, conference_path(conference), class: "text-decoration-none" %>
+              <span class="badge bg-primary">Lead</span>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    </div>
+  <% end %>
 </div>
 
