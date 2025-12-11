@@ -4,9 +4,14 @@
       <h1>Programs for <%= @conference.name %></h1>
       <%= link_to "← Back to Conference", conference_path(@conference), class: "text-muted" %>
     </div>
-    <% if @available_programs.any? && policy(ConferenceProgram.new(conference: @conference)).create? %>
-      <%= link_to "Enable Program", conference_new_conference_program_path(@conference), class: "btn btn-primary" %>
-    <% end %>
+    <div>
+      <% if policy(ConferenceProgram.new(conference: @conference)).create? %>
+        <%= link_to "Create Conference Program", new_conference_custom_program_path(@conference), class: "btn btn-success me-2" %>
+        <% if @available_programs.any? %>
+          <%= link_to "Enable Existing Program", conference_new_conference_program_path(@conference), class: "btn btn-primary" %>
+        <% end %>
+      <% end %>
+    </div>
   </div>
 
   <% if @conference_programs.any? %>
@@ -17,6 +22,9 @@
             <div class="card-body">
               <h5 class="card-title">
                 <%= cp.program.name %>
+                <% if cp.program.conference_specific? %>
+                  <span class="badge bg-info">Conference Only</span>
+                <% end %>
               </h5>
               <% if cp.public_description.present? %>
                 <p class="card-text text-muted">
@@ -42,12 +50,20 @@
             </div>
             <div class="card-footer bg-transparent">
               <% if policy(cp).update? %>
-                <%= link_to "Edit", edit_conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
+                <%= link_to "Edit Schedule", edit_conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
+              <% end %>
+              <% if cp.program.conference_specific? && policy(cp.program).update? %>
+                <%= link_to "Edit Program", edit_conference_custom_program_path(@conference, cp.program), class: "btn btn-sm btn-outline-secondary" %>
               <% end %>
               <% if policy(cp).destroy? %>
-                <%= link_to "Disable", conference_conference_program_path(@conference, cp), 
-                    data: { turbo_method: :delete, confirm: "Are you sure you want to disable this program for this conference?" },
+                <%= link_to "Disable", conference_conference_program_path(@conference, cp),
+                    data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to disable this program for this conference?" },
                     class: "btn btn-sm btn-outline-danger" %>
+              <% end %>
+              <% if cp.program.conference_specific? && policy(cp.program).destroy? %>
+                <%= link_to "Delete Program", conference_custom_program_path(@conference, cp.program),
+                    data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to permanently delete this program? This will also remove all schedules and volunteer signups." },
+                    class: "btn btn-sm btn-danger" %>
               <% end %>
             </div>
           </div>
@@ -58,8 +74,12 @@
     <div class="alert alert-info">
       <h5 class="alert-heading">No Programs Enabled</h5>
       <p class="mb-0">
-        <% if @available_programs.any? && policy(ConferenceProgram.new(conference: @conference)).create? %>
-          Get started by <%= link_to "enabling a program", conference_new_conference_program_path(@conference), class: "alert-link" %> for this conference.
+        <% if policy(ConferenceProgram.new(conference: @conference)).create? %>
+          Get started by <%= link_to "creating a new program", new_conference_custom_program_path(@conference), class: "alert-link" %>
+          <% if @available_programs.any? %>
+            or <%= link_to "enabling an existing program", conference_new_conference_program_path(@conference), class: "alert-link" %>
+          <% end %>
+          for this conference.
         <% else %>
           No programs have been enabled for this conference yet.
         <% end %>
@@ -76,6 +96,11 @@
           <li class="list-group-item d-flex justify-content-between align-items-center">
             <div>
               <strong><%= program.name %></strong>
+              <% if program.conference_specific? %>
+                <span class="badge bg-info ms-1">Conference Only</span>
+              <% else %>
+                <span class="badge bg-secondary ms-1">Village-Wide</span>
+              <% end %>
               <% if program.description.present? %>
                 <br><small class="text-muted"><%= truncate(program.description, length: 150) %></small>
               <% end %>

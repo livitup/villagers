@@ -80,4 +80,88 @@ class ProgramTest < ActiveSupport::TestCase
     )
     assert program_in_other_village.valid?
   end
+
+  # Conference-specific program tests
+  test "program can be conference-specific" do
+    conference = Conference.create!(
+      name: "Test Conference",
+      village: @village,
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    program = Program.new(
+      name: "Conference Only Program",
+      village: @village,
+      conference: conference
+    )
+    assert program.valid?
+    assert_equal conference, program.conference
+    assert program.conference_specific?
+  end
+
+  test "program without conference is village-level" do
+    program = Program.new(
+      name: "Village Level Program",
+      village: @village
+    )
+    assert program.valid?
+    assert_nil program.conference
+    assert program.village_level?
+    assert_not program.conference_specific?
+  end
+
+  test "village_level scope returns only programs without conference" do
+    conference = Conference.create!(
+      name: "Test Conference",
+      village: @village,
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    village_program = Program.create!(name: "Village Program", village: @village)
+    conference_program = Program.create!(name: "Conference Program", village: @village, conference: conference)
+
+    village_programs = Program.village_level
+    assert_includes village_programs, village_program
+    assert_not_includes village_programs, conference_program
+  end
+
+  test "for_conference scope returns village-level and conference-specific programs" do
+    conference = Conference.create!(
+      name: "Test Conference",
+      village: @village,
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    other_conference = Conference.create!(
+      name: "Other Conference",
+      village: @village,
+      start_date: Date.tomorrow + 10.days,
+      end_date: Date.tomorrow + 13.days
+    )
+    village_program = Program.create!(name: "Village Program", village: @village)
+    conf_program = Program.create!(name: "Conference Program", village: @village, conference: conference)
+    other_conf_program = Program.create!(name: "Other Conference Program", village: @village, conference: other_conference)
+
+    available_programs = Program.for_conference(conference)
+    assert_includes available_programs, village_program
+    assert_includes available_programs, conf_program
+    assert_not_includes available_programs, other_conf_program
+  end
+
+  test "same name can exist in village-level and conference-specific programs" do
+    conference = Conference.create!(
+      name: "Test Conference",
+      village: @village,
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    Program.create!(name: "Ham Test", village: @village)
+
+    conference_program = Program.new(
+      name: "Ham Test",
+      village: @village,
+      conference: conference
+    )
+    assert conference_program.valid?
+  end
 end

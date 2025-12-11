@@ -8,15 +8,39 @@ class ProgramPolicy < ApplicationPolicy
   end
 
   def create?
-    user&.village_admin?
+    return true if user&.village_admin?
+
+    # Handle case when checking permission against the Program class (not an instance)
+    return false unless record.is_a?(Program)
+
+    # Conference leads/admins can create conference-specific programs for their conference
+    if record.conference_specific?
+      user&.can_manage_conference?(record.conference)
+    else
+      false
+    end
   end
 
   def update?
-    user&.village_admin?
+    return true if user&.village_admin?
+
+    # Conference leads/admins can update conference-specific programs for their conference
+    if record.conference_specific?
+      user&.can_manage_conference?(record.conference)
+    else
+      false
+    end
   end
 
   def destroy?
-    user&.village_admin?
+    return true if user&.village_admin?
+
+    # Conference leads/admins can destroy conference-specific programs for their conference
+    if record.conference_specific?
+      user&.can_manage_conference?(record.conference)
+    else
+      false
+    end
   end
 
   class Scope < ApplicationPolicy::Scope

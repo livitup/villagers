@@ -1,0 +1,45 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+          <h2 class="h4 mb-0">Edit Conference Program</h2>
+        </div>
+        <div class="card-body">
+          <%= form_with model: @program, url: conference_custom_program_path(@conference, @program), local: true do |form| %>
+            <% if @program.errors.any? %>
+              <div class="alert alert-danger">
+                <h5 class="alert-heading">Please fix the following errors:</h5>
+                <ul class="mb-0">
+                  <% @program.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <%= form.label :name, class: "form-label" %>
+              <%= form.text_field :name, class: "form-control", required: true, autofocus: true %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :description, class: "form-label" %>
+              <%= form.text_area :description, rows: 4, class: "form-control" %>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :max_volunteers, "Volunteers Needed Per Shift", class: "form-label" %>
+              <%= form.number_field :max_volunteers, min: 1, class: "form-control", style: "max-width: 150px;" %>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+              <%= link_to "Cancel", conference_conference_programs_path(@conference), class: "btn btn-outline-secondary" %>
+              <%= form.submit "Update Program", class: "btn btn-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

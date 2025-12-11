@@ -4,7 +4,8 @@ class ConferenceProgramsController < ApplicationController
 
   def index
     @conference_programs = @conference.conference_programs.includes(:program).order("programs.name")
-    @available_programs = Program.where(village: @conference.village)
+    @available_programs = Program.for_conference(@conference)
+                                  .where(village: @conference.village)
                                   .where.not(id: @conference.programs.pluck(:id))
                                   .order(:name)
   end
@@ -16,7 +17,8 @@ class ConferenceProgramsController < ApplicationController
   def new
     @conference_program = @conference.conference_programs.build
     @conference_program.program_id = params[:program_id] if params[:program_id].present?
-    @available_programs = Program.where(village: @conference.village)
+    @available_programs = Program.for_conference(@conference)
+                                 .where(village: @conference.village)
                                  .where.not(id: @conference.programs.pluck(:id))
                                  .order(:name)
     authorize @conference_program, :create?, policy_class: ConferenceProgramPolicy
@@ -31,7 +33,8 @@ class ConferenceProgramsController < ApplicationController
     if @conference_program.save
       redirect_to conference_conference_programs_path(@conference), notice: "Program was successfully enabled for this conference."
     else
-      @available_programs = Program.where(village: @conference.village)
+      @available_programs = Program.for_conference(@conference)
+                                   .where(village: @conference.village)
                                    .where.not(id: @conference.programs.pluck(:id))
                                    .order(:name)
       render :new, status: :unprocessable_entity
