@@ -1,18 +1,20 @@
 <div class="container mt-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Reports: <%= @conference.name %></h1>
-    <%= link_to "Back to Dashboard", conference_dashboard_path(@conference), class: "btn btn-outline-secondary" %>
+  <div class="d-flex align-items-center mb-4">
+    <%= link_to conference_dashboard_path(@conference), class: "btn btn-secondary btn-sm me-3" do %>
+      <span aria-hidden="true">&larr;</span> Dashboard
+    <% end %>
+    <h1 class="mb-0">Reports: <%= @conference.name %></h1>
   </div>
 
   <div class="row">
-    <div class="col-md-6 mb-4">
-      <div class="card shadow-sm h-100">
+    <div class="col-md-6 mb-4 d-flex">
+      <div class="card shadow-sm w-100 d-flex flex-column">
         <div class="card-header bg-primary text-white">
           <h5 class="mb-0">Shift Assignments</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body flex-grow-1">
           <p class="card-text">View who is assigned to which shifts. Shows all volunteers and their scheduled timeslots.</p>
-          <div class="d-flex gap-2">
+          <div class="d-flex flex-wrap gap-2">
             <%= link_to "View Report", shift_assignments_conference_reports_path(@conference), class: "btn btn-primary" %>
             <%= link_to "Export CSV", shift_assignments_conference_reports_path(@conference, format: :csv), class: "btn btn-outline-secondary" %>
           </div>
@@ -20,14 +22,14 @@
       </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-      <div class="card shadow-sm h-100">
+    <div class="col-md-6 mb-4 d-flex">
+      <div class="card shadow-sm w-100 d-flex flex-column">
         <div class="card-header bg-warning text-dark">
           <h5 class="mb-0">Unmanned Shifts</h5>
         </div>
-        <div class="card-body">
+        <div class="card-body flex-grow-1">
           <p class="card-text">View shifts that need more volunteers. Shows all timeslots with available spots.</p>
-          <div class="d-flex gap-2">
+          <div class="d-flex flex-wrap gap-2">
             <%= link_to "View Report", unmanned_shifts_conference_reports_path(@conference), class: "btn btn-warning" %>
             <%= link_to "Export CSV", unmanned_shifts_conference_reports_path(@conference, format: :csv), class: "btn btn-outline-secondary" %>
           </div>

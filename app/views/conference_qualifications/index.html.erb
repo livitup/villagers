@@ -30,7 +30,7 @@
                   <p class="text-muted small">
                     <%= pluralize(qualification.users.count, "user") %> with this qualification
                   </p>
-                  <div class="d-flex gap-2">
+                  <div class="d-flex flex-wrap gap-2">
                     <%= link_to "View", conference_conference_qualification_path(@conference, qualification), class: "btn btn-sm btn-outline-primary" %>
                     <%= link_to "Edit", edit_conference_conference_qualification_path(@conference, qualification), class: "btn btn-sm btn-outline-secondary" %>
                     <%= link_to "Delete", conference_conference_qualification_path(@conference, qualification), data: { turbo_method: :delete, turbo_confirm: "Are you sure?" }, class: "btn btn-sm btn-outline-danger" %>

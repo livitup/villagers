@@ -2,7 +2,10 @@
   <div class="row justify-content-center">
     <div class="col-md-8 col-lg-7">
       <div class="card shadow">
-        <div class="card-header bg-primary text-white">
+        <div class="card-header bg-primary text-white d-flex align-items-center">
+          <%= link_to :back, class: "btn btn-light btn-sm me-3" do %>
+            <span aria-hidden="true">&larr;</span> Back
+          <% end %>
           <h2 class="h4 mb-0">Edit Profile</h2>
         </div>
         <div class="card-body">
@@ -139,9 +142,6 @@
             </div>
           </div>
 
-          <div class="mt-3">
-            <%= link_to "← Back", :back, class: "btn btn-link" %>
-          </div>
         </div>
       </div>
     </div>

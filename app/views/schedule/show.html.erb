@@ -2,11 +2,13 @@
   <div class="row mb-4">
     <div class="col-12">
       <div class="d-flex justify-content-between align-items-center">
-        <h1><%= @conference.name %> - Schedule</h1>
-        <div>
-          <%= link_to "View Calendar", conference_calendar_path(@conference), class: "btn btn-info me-2" %>
-          <%= link_to "← Back to Conference", @conference, class: "btn btn-outline-secondary" %>
+        <div class="d-flex align-items-center">
+          <%= link_to @conference, class: "btn btn-secondary btn-sm me-3" do %>
+            <span aria-hidden="true">&larr;</span> Conference
+          <% end %>
+          <h1 class="mb-0"><%= @conference.name %> - Schedule</h1>
         </div>
+        <%= link_to "View Calendar", conference_calendar_path(@conference), class: "btn btn-info" %>
       </div>
       <p class="text-muted">
         <% if @can_see_all_volunteers %>

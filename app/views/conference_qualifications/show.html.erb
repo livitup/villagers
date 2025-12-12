@@ -10,9 +10,15 @@
       </nav>
 
       <div class="card">
-        <div class="card-header">
-          <h2><%= @qualification.name %></h2>
-          <span class="badge bg-info">Conference-Specific</span>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <%= link_to conference_conference_qualifications_path(@conference), class: "btn btn-secondary btn-sm me-3" do %>
+              <span aria-hidden="true">&larr;</span> Qualifications
+            <% end %>
+            <h2 class="h4 mb-0"><%= @qualification.name %></h2>
+            <span class="badge bg-info ms-2">Conference-Specific</span>
+          </div>
+          <%= link_to "Edit", edit_conference_conference_qualification_path(@conference, @qualification), class: "btn btn-primary btn-sm" %>
         </div>
         <div class="card-body">
           <p><strong>Description:</strong></p>
@@ -46,10 +52,6 @@
               </div>
             <% end %>
           </div>
-        </div>
-        <div class="card-footer">
-          <%= link_to "Back to Conference Qualifications", conference_conference_qualifications_path(@conference), class: "btn btn-link" %>
-          <%= link_to "Edit", edit_conference_conference_qualification_path(@conference, @qualification), class: "btn btn-primary" %>
         </div>
       </div>
     </div>

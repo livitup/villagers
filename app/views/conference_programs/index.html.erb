@@ -1,8 +1,10 @@
 <div class="container mt-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h1>Programs for <%= @conference.name %></h1>
-      <%= link_to "← Back to Conference", conference_path(@conference), class: "text-muted" %>
+    <div class="d-flex align-items-center">
+      <%= link_to conference_path(@conference), class: "btn btn-secondary btn-sm me-3" do %>
+        <span aria-hidden="true">&larr;</span> Conference
+      <% end %>
+      <h1 class="mb-0">Programs for <%= @conference.name %></h1>
     </div>
     <div>
       <% if policy(ConferenceProgram.new(conference: @conference)).create? %>
@@ -17,9 +19,9 @@
   <% if @conference_programs.any? %>
     <div class="row">
       <% @conference_programs.each do |cp| %>
-        <div class="col-md-6 col-lg-4 mb-4">
-          <div class="card shadow-sm h-100">
-            <div class="card-body">
+        <div class="col-md-6 col-lg-4 mb-4 d-flex">
+          <div class="card shadow-sm w-100 d-flex flex-column">
+            <div class="card-body flex-grow-1">
               <h5 class="card-title">
                 <%= cp.program.name %>
                 <% if cp.program.conference_specific? %>
@@ -49,22 +51,24 @@
               <% end %>
             </div>
             <div class="card-footer bg-transparent">
-              <% if policy(cp).update? %>
-                <%= link_to "Edit Schedule", edit_conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
-              <% end %>
-              <% if cp.program.conference_specific? && policy(cp.program).update? %>
-                <%= link_to "Edit Program", edit_conference_custom_program_path(@conference, cp.program), class: "btn btn-sm btn-outline-secondary" %>
-              <% end %>
-              <% if policy(cp).destroy? %>
-                <%= link_to "Disable", conference_conference_program_path(@conference, cp),
-                    data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to disable this program for this conference?" },
-                    class: "btn btn-sm btn-outline-danger" %>
-              <% end %>
-              <% if cp.program.conference_specific? && policy(cp.program).destroy? %>
-                <%= link_to "Delete Program", conference_custom_program_path(@conference, cp.program),
-                    data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to permanently delete this program? This will also remove all schedules and volunteer signups." },
-                    class: "btn btn-sm btn-danger" %>
-              <% end %>
+              <div class="d-flex flex-wrap gap-2">
+                <% if policy(cp).update? %>
+                  <%= link_to "Edit Schedule", edit_conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
+                <% end %>
+                <% if cp.program.conference_specific? && policy(cp.program).update? %>
+                  <%= link_to "Edit Program", edit_conference_custom_program_path(@conference, cp.program), class: "btn btn-sm btn-outline-secondary" %>
+                <% end %>
+                <% if policy(cp).destroy? %>
+                  <%= link_to "Disable", conference_conference_program_path(@conference, cp),
+                      data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to disable this program for this conference?" },
+                      class: "btn btn-sm btn-outline-danger" %>
+                <% end %>
+                <% if cp.program.conference_specific? && policy(cp.program).destroy? %>
+                  <%= link_to "Delete Program", conference_custom_program_path(@conference, cp.program),
+                      data: { turbo_method: :delete, turbo_confirm: "Are you sure you want to permanently delete this program? This will also remove all schedules and volunteer signups." },
+                      class: "btn btn-sm btn-danger" %>
+                <% end %>
+              </div>
             </div>
           </div>
         </div>

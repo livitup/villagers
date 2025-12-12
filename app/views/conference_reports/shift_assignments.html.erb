@@ -1,10 +1,12 @@
 <div class="container mt-5">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Shift Assignments: <%= @conference.name %></h1>
-    <div>
-      <%= link_to "Export CSV", shift_assignments_conference_reports_path(@conference, format: :csv, program_id: params[:program_id], date: params[:date]), class: "btn btn-success me-2" %>
-      <%= link_to "Back to Reports", conference_reports_path(@conference), class: "btn btn-outline-secondary" %>
+    <div class="d-flex align-items-center">
+      <%= link_to conference_reports_path(@conference), class: "btn btn-secondary btn-sm me-3" do %>
+        <span aria-hidden="true">&larr;</span> Reports
+      <% end %>
+      <h1 class="mb-0">Shift Assignments: <%= @conference.name %></h1>
     </div>
+    <%= link_to "Export CSV", shift_assignments_conference_reports_path(@conference, format: :csv, program_id: params[:program_id], date: params[:date]), class: "btn btn-success" %>
   </div>
 
   <div class="card shadow-sm mb-4">

@@ -16,7 +16,7 @@
                 <div class="card-body">
                   <h5 class="card-title"><%= qualification.name %></h5>
                   <p class="card-text"><%= qualification.description %></p>
-                  <div class="d-flex gap-2">
+                  <div class="d-flex flex-wrap gap-2">
                     <%= link_to "View", qualification, class: "btn btn-sm btn-outline-primary" %>
                     <% if policy(qualification).update? %>
                       <%= link_to "Edit", edit_qualification_path(qualification), class: "btn btn-sm btn-outline-secondary" %>

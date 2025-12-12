@@ -1,12 +1,24 @@
 <div class="container mt-5">
-  <div class="row">
-    <div class="col-md-8">
+  <div class="row justify-content-center">
+    <div class="col-lg-10 col-xl-8">
       <div class="card shadow">
         <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-          <h2 class="h4 mb-0"><%= @program.name %></h2>
-          <% if policy(@program).update? %>
-            <%= link_to "Edit", edit_program_path(@program), class: "btn btn-light btn-sm" %>
-          <% end %>
+          <div class="d-flex align-items-center">
+            <%= link_to programs_path, class: "btn btn-light btn-sm me-3" do %>
+              <span aria-hidden="true">&larr;</span> Programs
+            <% end %>
+            <h2 class="h4 mb-0"><%= @program.name %></h2>
+          </div>
+          <div class="d-flex flex-wrap gap-2">
+            <% if policy(@program).update? %>
+              <%= link_to "Edit", edit_program_path(@program), class: "btn btn-light btn-sm" %>
+            <% end %>
+            <% if policy(@program).destroy? %>
+              <%= link_to "Delete", program_path(@program), method: :delete,
+                  data: { confirm: "Are you sure you want to delete this program?" },
+                  class: "btn btn-danger btn-sm" %>
+            <% end %>
+          </div>
         </div>
         <div class="card-body">
           <% if @program.description.present? %>
@@ -65,14 +77,6 @@
               <% end %>
             </div>
           </div>
-        </div>
-        <div class="card-footer">
-          <%= link_to "← Back to Programs", programs_path, class: "btn btn-link" %>
-          <% if policy(@program).destroy? %>
-            <%= link_to "Delete", program_path(@program), method: :delete,
-                data: { confirm: "Are you sure you want to delete this program?" },
-                class: "btn btn-danger btn-sm float-end" %>
-          <% end %>
         </div>
       </div>
     </div>

@@ -2,8 +2,16 @@
   <div class="row">
     <div class="col-12">
       <div class="card">
-        <div class="card-header">
-          <h2><%= @qualification.name %></h2>
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center">
+            <%= link_to qualifications_path, class: "btn btn-secondary btn-sm me-3" do %>
+              <span aria-hidden="true">&larr;</span> Qualifications
+            <% end %>
+            <h2 class="h4 mb-0"><%= @qualification.name %></h2>
+          </div>
+          <% if policy(@qualification).update? %>
+            <%= link_to "Edit", edit_qualification_path(@qualification), class: "btn btn-primary btn-sm" %>
+          <% end %>
         </div>
         <div class="card-body">
           <p><strong>Description:</strong></p>
@@ -36,12 +44,6 @@
               <p class="text-muted">No programs currently require this qualification.</p>
             <% end %>
           </div>
-        </div>
-        <div class="card-footer">
-          <%= link_to "← Back to Qualifications", qualifications_path, class: "btn btn-link" %>
-          <% if policy(@qualification).update? %>
-            <%= link_to "Edit", edit_qualification_path(@qualification), class: "btn btn-primary" %>
-          <% end %>
         </div>
       </div>
     </div>
