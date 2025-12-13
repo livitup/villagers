@@ -81,6 +81,25 @@ class Conference < ApplicationRecord
                    .limit(limit)
   end
 
+  # Conference lead methods
+  def conference_leads
+    users.joins(:conference_roles)
+         .where(conference_roles: { role_name: ConferenceRole::CONFERENCE_LEAD })
+  end
+
+  def primary_lead
+    conference_roles.find_by(role_name: ConferenceRole::CONFERENCE_LEAD)&.user
+  end
+
+  def lead_display_name
+    lead = primary_lead
+    return "No lead assigned" unless lead
+
+    name = lead.name.presence || lead.email
+    additional_leads = conference_leads.count - 1
+    additional_leads > 0 ? "#{name} +#{additional_leads}" : name
+  end
+
   # Location display methods
   def display_location
     return "Not specified" if city.blank?

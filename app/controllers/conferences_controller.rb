@@ -5,9 +5,9 @@ class ConferencesController < ApplicationController
   def index
     @show_archived = params[:show_archived] == "true"
     @conferences = if @show_archived
-                     Conference.order(start_date: :desc)
+                     Conference.includes(conference_roles: :user).order(start_date: :desc)
     else
-                     Conference.active.order(start_date: :desc)
+                     Conference.active.includes(conference_roles: :user).order(start_date: :desc)
     end
   end
 
