@@ -7,6 +7,14 @@ class UserPolicy < ApplicationPolicy
     user&.village_admin?
   end
 
+  def edit?
+    user&.village_admin?
+  end
+
+  def update?
+    user&.village_admin?
+  end
+
   def grant_qualification?
     user&.village_admin?
   end

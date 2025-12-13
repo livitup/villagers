@@ -1,0 +1,66 @@
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h2>Edit User: <%= @user.email %></h2>
+        </div>
+        <div class="card-body">
+          <%= form_with(model: @user, url: managed_user_path(@user), method: :patch, local: true) do |f| %>
+            <% if @user.errors.any? %>
+              <div class="alert alert-danger">
+                <h5><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h5>
+                <ul class="mb-0">
+                  <% @user.errors.full_messages.each do |message| %>
+                    <li><%= message %></li>
+                  <% end %>
+                </ul>
+              </div>
+            <% end %>
+
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input type="text" class="form-control" value="<%= @user.email %>" disabled>
+              <div class="form-text">Email cannot be changed by administrators.</div>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :name, class: "form-label" %>
+              <%= f.text_field :name, class: "form-control", placeholder: "Full name" %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :handle, class: "form-label" %>
+              <%= f.text_field :handle, class: "form-control", placeholder: "Handle / nickname" %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :phone, class: "form-label" %>
+              <%= f.text_field :phone, class: "form-control", placeholder: "Phone number" %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :twitter, class: "form-label" %>
+              <%= f.text_field :twitter, class: "form-control", placeholder: "@username" %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :signal, class: "form-label" %>
+              <%= f.text_field :signal, class: "form-control", placeholder: "Signal username" %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :discord, class: "form-label" %>
+              <%= f.text_field :discord, class: "form-control", placeholder: "username#1234" %>
+            </div>
+
+            <div class="d-flex gap-2">
+              <%= f.submit "Update User", class: "btn btn-primary" %>
+              <%= link_to "Cancel", managed_user_path(@user), class: "btn btn-outline-secondary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

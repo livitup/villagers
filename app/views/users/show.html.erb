@@ -89,8 +89,9 @@
             </div>
           </div>
         </div>
-        <div class="card-footer">
+        <div class="card-footer d-flex justify-content-between">
           <%= link_to "← Back to Users", managed_users_path, class: "btn btn-link" %>
+          <%= link_to "Edit", edit_managed_user_path(@user), class: "btn btn-outline-primary" %>
         </div>
       </div>
     </div>
