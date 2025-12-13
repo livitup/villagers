@@ -225,4 +225,98 @@ class ConferenceTest < ActiveSupport::TestCase
     )
     assert_not ongoing_conference.archivable?
   end
+
+  # Conference lead tests
+  test "primary_lead returns the first conference lead" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    user = User.create!(email: "lead@example.com", password: "password123", password_confirmation: "password123")
+    ConferenceRole.create!(user: user, conference: conference, role_name: ConferenceRole::CONFERENCE_LEAD)
+
+    assert_equal user, conference.primary_lead
+  end
+
+  test "primary_lead returns nil when no lead assigned" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+
+    assert_nil conference.primary_lead
+  end
+
+  test "conference_leads returns all conference leads" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    lead1 = User.create!(email: "lead1@example.com", password: "password123", password_confirmation: "password123")
+    lead2 = User.create!(email: "lead2@example.com", password: "password123", password_confirmation: "password123")
+    ConferenceRole.create!(user: lead1, conference: conference, role_name: ConferenceRole::CONFERENCE_LEAD)
+    ConferenceRole.create!(user: lead2, conference: conference, role_name: ConferenceRole::CONFERENCE_LEAD)
+
+    assert_equal 2, conference.conference_leads.count
+    assert_includes conference.conference_leads, lead1
+    assert_includes conference.conference_leads, lead2
+  end
+
+  test "lead_display_name returns user name when available" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    user = User.create!(email: "lead@example.com", password: "password123", password_confirmation: "password123", name: "John Doe")
+    ConferenceRole.create!(user: user, conference: conference, role_name: ConferenceRole::CONFERENCE_LEAD)
+
+    assert_equal "John Doe", conference.lead_display_name
+  end
+
+  test "lead_display_name returns email when name not available" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    user = User.create!(email: "lead@example.com", password: "password123", password_confirmation: "password123")
+    ConferenceRole.create!(user: user, conference: conference, role_name: ConferenceRole::CONFERENCE_LEAD)
+
+    assert_equal "lead@example.com", conference.lead_display_name
+  end
+
+  test "lead_display_name shows count when multiple leads" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    lead1 = User.create!(email: "lead1@example.com", password: "password123", password_confirmation: "password123", name: "Jane Doe")
+    lead2 = User.create!(email: "lead2@example.com", password: "password123", password_confirmation: "password123")
+    ConferenceRole.create!(user: lead1, conference: conference, role_name: ConferenceRole::CONFERENCE_LEAD)
+    ConferenceRole.create!(user: lead2, conference: conference, role_name: ConferenceRole::CONFERENCE_LEAD)
+
+    assert_equal "Jane Doe +1", conference.lead_display_name
+  end
+
+  test "lead_display_name returns message when no lead assigned" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+
+    assert_equal "No lead assigned", conference.lead_display_name
+  end
 end

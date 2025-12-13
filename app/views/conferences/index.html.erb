@@ -31,6 +31,16 @@
                 <% end %>
               </h5>
               <p class="card-text text-muted">
+                <strong>Lead:</strong>
+                <% if (lead = conference.primary_lead) %>
+                  <%= link_to (lead.name.presence || lead.email), managed_user_path(lead), class: "text-decoration-none" %>
+                  <% if (additional = conference.conference_leads.count - 1) > 0 %>
+                    <span class="text-muted">+<%= additional %></span>
+                  <% end %>
+                <% else %>
+                  <span class="text-muted">No lead assigned</span>
+                <% end %>
+                <br>
                 <strong>Location:</strong> <%= conference.display_location %><br>
                 <strong>Dates:</strong> <%= conference.start_date.strftime("%B %d") %> - <%= conference.end_date.strftime("%B %d, %Y") %>
               </p>
