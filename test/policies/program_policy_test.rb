@@ -46,8 +46,17 @@ class ProgramPolicyTest < ActiveSupport::TestCase
       password_confirmation: "password123"
     )
 
+    @program_lead = User.create!(
+      email: "programlead@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
     @village_program = Program.create!(name: "Village Program", village: @village)
     @conference_program = Program.create!(name: "Conference Program", village: @village, conference: @conference)
+
+    # Assign program lead to village program
+    ProgramRole.create!(user: @program_lead, program: @village_program, role_name: ProgramRole::PROGRAM_LEAD)
   end
 
   # Village-level program tests
@@ -145,5 +154,34 @@ class ProgramPolicyTest < ActiveSupport::TestCase
   test "volunteer cannot create conference-specific programs" do
     policy = ProgramPolicy.new(@volunteer, Program.new(village: @village, conference: @conference))
     assert_not policy.create?
+  end
+
+  # Program lead tests
+  test "program lead can update their assigned program" do
+    policy = ProgramPolicy.new(@program_lead, @village_program)
+    assert policy.update?
+  end
+
+  test "program lead cannot update programs they don't lead" do
+    other_program = Program.create!(name: "Other Village Program", village: @village)
+    policy = ProgramPolicy.new(@program_lead, other_program)
+    assert_not policy.update?
+  end
+
+  test "program lead cannot destroy their assigned program" do
+    # Only village admins can destroy village-level programs
+    policy = ProgramPolicy.new(@program_lead, @village_program)
+    assert_not policy.destroy?
+  end
+
+  test "program lead cannot create new programs" do
+    policy = ProgramPolicy.new(@program_lead, Program.new(village: @village))
+    assert_not policy.create?
+  end
+
+  test "program lead can update conference-specific program they lead" do
+    ProgramRole.create!(user: @program_lead, program: @conference_program, role_name: ProgramRole::PROGRAM_LEAD)
+    policy = ProgramPolicy.new(@program_lead, @conference_program)
+    assert policy.update?
   end
 end

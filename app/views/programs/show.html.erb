@@ -29,6 +29,44 @@
 
           <hr>
 
+          <div class="card bg-light mb-3">
+            <div class="card-body">
+              <h5 class="card-title">Program Leads</h5>
+              <% if @program.program_leads.any? %>
+                <ul class="list-group list-group-flush mb-3">
+                  <% @program.program_roles.where(role_name: ProgramRole::PROGRAM_LEAD).includes(:user).each do |role| %>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                      <%= role.user.email %>
+                      <% if policy(@program).update? %>
+                        <%= link_to "Remove", program_program_role_path(@program, role),
+                            data: { turbo_method: :delete, turbo_confirm: "Remove this program lead?" },
+                            class: "btn btn-sm btn-danger" %>
+                      <% end %>
+                    </li>
+                  <% end %>
+                </ul>
+              <% else %>
+                <p class="text-muted">No program leads assigned.</p>
+              <% end %>
+
+              <% if policy(@program).update? %>
+                <% existing_lead_ids = @program.program_leads.pluck(:id) %>
+                <% available_users = User.where.not(id: existing_lead_ids).order(:email) %>
+                <% if available_users.any? %>
+                  <%= form_with url: program_program_roles_path(@program), method: :post, local: true, class: "d-flex gap-2" do |f| %>
+                    <select name="user_id" class="form-select form-select-sm" required>
+                      <option value="">Select user...</option>
+                      <% available_users.each do |user| %>
+                        <option value="<%= user.id %>"><%= user.email %></option>
+                      <% end %>
+                    </select>
+                    <%= f.submit "Add Lead", class: "btn btn-sm btn-primary" %>
+                  <% end %>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+
           <div class="card bg-light">
             <div class="card-body">
               <h5 class="card-title">Required Qualifications</h5>

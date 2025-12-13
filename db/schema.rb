@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2025_12_11_180603) do
+ActiveRecord::Schema[8.1].define(version: 2025_12_13_034924) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -81,6 +81,17 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_11_180603) do
     t.datetime "updated_at", null: false
     t.index ["program_id"], name: "index_program_qualifications_on_program_id"
     t.index ["qualification_id"], name: "index_program_qualifications_on_qualification_id"
+  end
+
+  create_table "program_roles", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "program_id", null: false
+    t.string "role_name", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["program_id"], name: "index_program_roles_on_program_id"
+    t.index ["user_id", "program_id", "role_name"], name: "index_program_roles_on_user_id_and_program_id_and_role_name", unique: true
+    t.index ["user_id"], name: "index_program_roles_on_user_id"
   end
 
   create_table "programs", force: :cascade do |t|
@@ -203,6 +214,8 @@ ActiveRecord::Schema[8.1].define(version: 2025_12_11_180603) do
   add_foreign_key "conferences", "villages"
   add_foreign_key "program_qualifications", "programs"
   add_foreign_key "program_qualifications", "qualifications"
+  add_foreign_key "program_roles", "programs"
+  add_foreign_key "program_roles", "users"
   add_foreign_key "programs", "conferences"
   add_foreign_key "programs", "villages"
   add_foreign_key "qualification_removals", "conferences"
