@@ -1,33 +1,351 @@
-<div class="container mt-5">
-  <% if notice %>
-    <div class="alert alert-success alert-dismissible fade show" role="alert">
-      <%= notice %>
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+<div class="container mt-4">
+  <h1 class="mb-4">Welcome to <%= @village.name %></h1>
+
+  <% unless user_signed_in? %>
+    <div class="alert alert-info">
+      <p class="mb-0"><%= link_to "Sign in", new_user_session_path %> or <%= link_to "create an account", new_user_registration_path %> to view your dashboard and sign up for volunteer shifts.</p>
     </div>
   <% end %>
 
-  <div class="alert alert-info">
-    <h4 class="alert-heading">Welcome to <%= @village.name %>!</h4>
-    <p>Dashboard coming soon.</p>
-  </div>
+  <% if user_signed_in? %>
+    <%# Village Admin Section %>
+    <% if current_user.village_admin? %>
+      <h2 class="h4 text-muted mb-3">Village Administration</h2>
 
-  <% if user_signed_in? && current_user.conference_lead_conferences.any? %>
-    <div class="card mt-4">
-      <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">My Conferences</h5>
+      <%# Stats Row %>
+      <div class="row mb-4">
+        <div class="col-6 col-md-3 mb-3">
+          <div class="card shadow-sm text-center h-100">
+            <div class="card-body">
+              <h2 class="display-6 text-primary"><%= @active_conferences.size %></h2>
+              <p class="text-muted mb-0 small">Active Conferences</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+          <div class="card shadow-sm text-center h-100">
+            <div class="card-body">
+              <h2 class="display-6 text-secondary"><%= @total_programs %></h2>
+              <p class="text-muted mb-0 small">Programs</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+          <div class="card shadow-sm text-center h-100">
+            <div class="card-body">
+              <h2 class="display-6 text-success"><%= @total_users %></h2>
+              <p class="text-muted mb-0 small">Registered Users</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 mb-3">
+          <div class="card shadow-sm text-center h-100">
+            <div class="card-body">
+              <h2 class="display-6 text-info"><%= number_with_precision(@total_volunteer_hours, precision: 1) %></h2>
+              <p class="text-muted mb-0 small">Volunteer Hours</p>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="card-body">
-        <p class="text-muted">Conferences you lead:</p>
-        <ul class="list-group list-group-flush">
-          <% current_user.conference_lead_conferences.each do |conference| %>
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-              <%= link_to conference.name, conference_path(conference), class: "text-decoration-none" %>
-              <span class="badge bg-primary">Lead</span>
-            </li>
-          <% end %>
-        </ul>
+
+      <div class="row mb-4">
+        <%# Upcoming Conferences Card %>
+        <div class="col-md-6 mb-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+              <h5 class="mb-0">Upcoming Conferences</h5>
+              <%= link_to "View All", conferences_path, class: "btn btn-light btn-sm" %>
+            </div>
+            <div class="card-body">
+              <% if @active_conferences.any? %>
+                <div class="list-group list-group-flush">
+                  <% @active_conferences.each do |conference| %>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                      <div>
+                        <%= link_to conference.name, conference_path(conference), class: "text-decoration-none fw-bold" %>
+                        <br>
+                        <small class="text-muted"><%= conference.start_date.strftime("%b %d") %> - <%= conference.end_date.strftime("%b %d, %Y") %></small>
+                      </div>
+                      <div class="text-end">
+                        <span class="badge bg-<%= conference.fill_rate >= 75 ? 'success' : conference.fill_rate >= 50 ? 'warning' : 'danger' %>">
+                          <%= number_with_precision(conference.fill_rate, precision: 0) %>% filled
+                        </span>
+                        <br>
+                        <small class="text-muted"><%= conference.volunteer_count %> volunteers</small>
+                      </div>
+                    </div>
+                  <% end %>
+                </div>
+              <% else %>
+                <p class="text-muted mb-0">No upcoming conferences.</p>
+              <% end %>
+            </div>
+          </div>
+        </div>
+
+        <%# Quick Actions Card %>
+        <div class="col-md-6 mb-3">
+          <div class="card shadow-sm h-100">
+            <div class="card-header bg-light">
+              <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+              <div class="list-group list-group-flush">
+                <%= link_to conferences_path, class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center px-0" do %>
+                  <span>Manage Conferences</span>
+                  <span class="badge bg-primary rounded-pill"><%= Conference.active.count %></span>
+                <% end %>
+                <%= link_to new_conference_path, class: "list-group-item list-group-item-action px-0" do %>
+                  <span>Create New Conference</span>
+                <% end %>
+                <%= link_to programs_path, class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center px-0" do %>
+                  <span>Manage Programs</span>
+                  <span class="badge bg-secondary rounded-pill"><%= @total_programs %></span>
+                <% end %>
+                <%= link_to qualifications_path, class: "list-group-item list-group-item-action px-0" do %>
+                  <span>Manage Qualifications</span>
+                <% end %>
+                <%= link_to managed_users_path, class: "list-group-item list-group-item-action d-flex justify-content-between align-items-center px-0" do %>
+                  <span>View All Volunteers</span>
+                  <span class="badge bg-success rounded-pill"><%= @total_users %></span>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <%# Recent Activity Card %>
+      <% if @recent_signups.any? %>
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Recent Activity (All Conferences)</h5>
+          </div>
+          <div class="card-body">
+            <div class="list-group list-group-flush">
+              <% @recent_signups.each do |signup| %>
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                  <div>
+                    <strong><%= signup.user.name || signup.user.email %></strong>
+                    signed up for <strong><%= signup.timeslot.conference_program.program.name %></strong>
+                    <br>
+                    <small class="text-muted">
+                      <%= signup.timeslot.conference_program.conference.name %> -
+                      <%= signup.timeslot.start_time.strftime("%b %d, %l:%M %p") %>
+                    </small>
+                  </div>
+                  <small class="text-muted"><%= time_ago_in_words(signup.created_at) %> ago</small>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <hr class="my-4">
+    <% end %>
+
+    <%# Conference Lead/Admin Section %>
+    <% if @managed_conferences&.any? %>
+      <h2 class="h4 text-muted mb-3">My Conferences</h2>
+
+      <div class="row mb-4">
+        <% @managed_conferences.each do |conference| %>
+          <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card shadow-sm h-100 <%= 'border-warning' if @conferences_needing_attention&.include?(conference) %>">
+              <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><%= conference.name %></h6>
+                <% if current_user.conference_lead?(conference) %>
+                  <span class="badge bg-light text-dark">Lead</span>
+                <% else %>
+                  <span class="badge bg-light text-dark">Admin</span>
+                <% end %>
+              </div>
+              <div class="card-body">
+                <div class="row text-center mb-3">
+                  <div class="col-4">
+                    <h4 class="mb-0 text-<%= conference.fill_rate >= 75 ? 'success' : conference.fill_rate >= 50 ? 'warning' : 'danger' %>">
+                      <%= number_with_precision(conference.fill_rate, precision: 0) %>%
+                    </h4>
+                    <small class="text-muted">Filled</small>
+                  </div>
+                  <div class="col-4">
+                    <h4 class="mb-0 text-primary"><%= conference.volunteer_count %></h4>
+                    <small class="text-muted">Volunteers</small>
+                  </div>
+                  <div class="col-4">
+                    <h4 class="mb-0 text-warning"><%= conference.unfilled_timeslots %></h4>
+                    <small class="text-muted">Unfilled</small>
+                  </div>
+                </div>
+                <% if conference.fill_rate < 50 %>
+                  <div class="alert alert-warning py-1 px-2 mb-2 small">
+                    <i class="bi bi-exclamation-triangle"></i> Low fill rate - needs attention
+                  </div>
+                <% end %>
+                <% if conference.programs_count == 0 %>
+                  <div class="alert alert-danger py-1 px-2 mb-2 small">
+                    <i class="bi bi-exclamation-circle"></i> No programs configured
+                  </div>
+                <% end %>
+                <div class="d-flex gap-2 flex-wrap">
+                  <%= link_to "Dashboard", conference_dashboard_path(conference), class: "btn btn-outline-primary btn-sm" %>
+                  <%= link_to "Schedule", conference_schedule_path(conference), class: "btn btn-outline-secondary btn-sm" %>
+                  <%= link_to "Programs", conference_conference_programs_path(conference), class: "btn btn-outline-secondary btn-sm" %>
+                </div>
+              </div>
+              <div class="card-footer text-muted small">
+                <%= conference.start_date.strftime("%b %d") %> - <%= conference.end_date.strftime("%b %d, %Y") %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Recent Activity for Managed Conferences %>
+      <% if @managed_recent_signups&.any? %>
+        <div class="card shadow-sm mb-4">
+          <div class="card-header bg-light">
+            <h5 class="mb-0">Recent Signups (My Conferences)</h5>
+          </div>
+          <div class="card-body">
+            <div class="list-group list-group-flush">
+              <% @managed_recent_signups.each do |signup| %>
+                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                  <div>
+                    <strong><%= signup.user.name || signup.user.email %></strong>
+                    signed up for <strong><%= signup.timeslot.conference_program.program.name %></strong>
+                    <br>
+                    <small class="text-muted">
+                      <%= signup.timeslot.conference_program.conference.name %> -
+                      <%= signup.timeslot.start_time.strftime("%b %d, %l:%M %p") %>
+                    </small>
+                  </div>
+                  <small class="text-muted"><%= time_ago_in_words(signup.created_at) %> ago</small>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
+      <hr class="my-4">
+    <% end %>
+
+    <%# Volunteer Section (All Users) %>
+    <h2 class="h4 text-muted mb-3">My Volunteering</h2>
+
+    <div class="row mb-4">
+      <%# My Stats Card %>
+      <div class="col-md-6 col-lg-3 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-success text-white">
+            <h5 class="mb-0">My Stats</h5>
+          </div>
+          <div class="card-body">
+            <div class="row text-center">
+              <div class="col-6 mb-3">
+                <h3 class="text-success mb-0"><%= @my_total_shifts %></h3>
+                <small class="text-muted">Shifts</small>
+              </div>
+              <div class="col-6 mb-3">
+                <h3 class="text-info mb-0"><%= number_with_precision(@my_total_hours, precision: 1) %></h3>
+                <small class="text-muted">Hours</small>
+              </div>
+              <div class="col-12">
+                <h3 class="text-primary mb-0"><%= @my_conferences_count %></h3>
+                <small class="text-muted">Conferences</small>
+              </div>
+            </div>
+          </div>
+          <div class="card-footer text-center">
+            <%= link_to "View Leaderboard", leaderboard_index_path, class: "btn btn-outline-success btn-sm" %>
+          </div>
+        </div>
+      </div>
+
+      <%# My Upcoming Shifts Card %>
+      <div class="col-md-6 col-lg-5 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">My Upcoming Shifts</h5>
+          </div>
+          <div class="card-body">
+            <% if @my_upcoming_shifts.any? %>
+              <div class="list-group list-group-flush">
+                <% @my_upcoming_shifts.each do |signup| %>
+                  <div class="list-group-item d-flex justify-content-between align-items-start px-0">
+                    <div>
+                      <strong><%= signup.timeslot.conference_program.program.name %></strong>
+                      <br>
+                      <small class="text-muted">
+                        <%= signup.timeslot.conference_program.conference.name %>
+                        <br>
+                        <%= signup.timeslot.start_time.strftime("%a, %b %d at %l:%M %p") %>
+                      </small>
+                    </div>
+                    <%= link_to "View", conference_volunteer_signups_path(signup.timeslot.conference_program.conference), class: "btn btn-outline-primary btn-sm" %>
+                  </div>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="text-muted mb-0">No upcoming shifts scheduled.</p>
+              <p class="mt-2 mb-0"><%= link_to "Browse conferences", conferences_path %> to sign up for shifts.</p>
+            <% end %>
+          </div>
+        </div>
+      </div>
+
+      <%# My Qualifications Card %>
+      <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card shadow-sm h-100">
+          <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">My Qualifications</h5>
+            <%= link_to "Profile", edit_user_registration_path, class: "btn btn-light btn-sm" %>
+          </div>
+          <div class="card-body">
+            <% if @my_qualifications.any? %>
+              <div class="d-flex flex-wrap gap-2">
+                <% @my_qualifications.each do |qual| %>
+                  <span class="badge bg-secondary"><%= qual.name %></span>
+                <% end %>
+              </div>
+            <% else %>
+              <p class="text-muted mb-0">No qualifications yet.</p>
+              <p class="mt-2 mb-0 small text-muted">Qualifications are assigned by conference administrators.</p>
+            <% end %>
+          </div>
+        </div>
       </div>
     </div>
+
+    <%# Open Opportunities Card %>
+    <% if @open_conferences&.any? %>
+      <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">Open Opportunities</h5>
+        </div>
+        <div class="card-body">
+          <p class="text-muted small">Conferences with available volunteer shifts:</p>
+          <div class="row">
+            <% @open_conferences.each do |conference| %>
+              <div class="col-md-4 mb-2">
+                <div class="card h-100">
+                  <div class="card-body">
+                    <h6 class="card-title"><%= conference.name %></h6>
+                    <p class="card-text small text-muted mb-2">
+                      <%= conference.start_date.strftime("%b %d") %> - <%= conference.end_date.strftime("%b %d") %>
+                      <br>
+                      <span class="text-warning"><%= conference.unfilled_timeslots %> shifts available</span>
+                    </p>
+                    <%= link_to "View Schedule", conference_schedule_path(conference), class: "btn btn-info btn-sm" %>
+                  </div>
+                </div>
+              </div>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
   <% end %>
 </div>
-

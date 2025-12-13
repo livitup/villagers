@@ -49,8 +49,8 @@ class RootControllerTest < ActionDispatch::IntegrationTest
     get root_url
 
     assert_response :success
-    assert_select ".card-header", text: /My Conferences/
-    assert_select ".card-body", text: /Test Conference/
+    assert_select "h2", text: /My Conferences/
+    assert_select ".card-header", text: /Test Conference/
   end
 
   test "should not show conference lead dashboard card when user is not a conference lead" do
@@ -92,8 +92,8 @@ class RootControllerTest < ActionDispatch::IntegrationTest
     get root_url
 
     assert_response :success
-    assert_select ".card-body", text: /Conference Alpha/
-    assert_select ".card-body", text: /Conference Beta/
+    assert_select ".card-header", text: /Conference Alpha/
+    assert_select ".card-header", text: /Conference Beta/
   end
 
   test "should not show conference lead card for unauthenticated users" do
@@ -101,5 +101,97 @@ class RootControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select ".card-header", text: /My Conferences/, count: 0
+  end
+
+  # Village Admin Dashboard Tests
+  test "village admin sees admin dashboard section" do
+    user = User.create!(
+      email: "admin@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    admin_role = Role.find_or_create_by!(name: Role::VILLAGE_ADMIN)
+    UserRole.create!(user: user, role: admin_role)
+
+    sign_in user
+    get root_url
+
+    assert_response :success
+    assert_select "h2", text: /Village Administration/
+    assert_select ".card-header", text: /Quick Actions/
+  end
+
+  test "village admin sees upcoming conferences card" do
+    Conference.create!(
+      name: "Upcoming Con",
+      village: @village,
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+    user = User.create!(
+      email: "admin@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+    admin_role = Role.find_or_create_by!(name: Role::VILLAGE_ADMIN)
+    UserRole.create!(user: user, role: admin_role)
+
+    sign_in user
+    get root_url
+
+    assert_response :success
+    assert_select ".card-header", text: /Upcoming Conferences/
+    assert_select ".card-body", text: /Upcoming Con/
+  end
+
+  # Volunteer Dashboard Tests
+  test "volunteer sees my stats card" do
+    user = User.create!(
+      email: "volunteer@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    sign_in user
+    get root_url
+
+    assert_response :success
+    assert_select "h2", text: /My Volunteering/
+    assert_select ".card-header", text: /My Stats/
+  end
+
+  test "volunteer sees my upcoming shifts card" do
+    user = User.create!(
+      email: "volunteer@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    sign_in user
+    get root_url
+
+    assert_response :success
+    assert_select ".card-header", text: /My Upcoming Shifts/
+  end
+
+  test "volunteer sees my qualifications card" do
+    user = User.create!(
+      email: "volunteer@example.com",
+      password: "password123",
+      password_confirmation: "password123"
+    )
+
+    sign_in user
+    get root_url
+
+    assert_response :success
+    assert_select ".card-header", text: /My Qualifications/
+  end
+
+  test "unauthenticated user sees sign in prompt" do
+    get root_url
+
+    assert_response :success
+    assert_select ".alert-info", text: /Sign in/
   end
 end
