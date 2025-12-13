@@ -6,6 +6,9 @@ class Program < ApplicationRecord
   has_many :timeslots, through: :conference_programs
   has_many :program_qualifications, dependent: :destroy
   has_many :qualifications, through: :program_qualifications
+  has_many :program_roles, dependent: :destroy
+  has_many :program_leads, -> { where(program_roles: { role_name: ProgramRole::PROGRAM_LEAD }) },
+           through: :program_roles, source: :user
 
   validates :name, presence: true
   validates :name, uniqueness: { scope: [ :village_id, :conference_id ], message: "must be unique within the village" }

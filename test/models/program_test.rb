@@ -164,4 +164,36 @@ class ProgramTest < ActiveSupport::TestCase
     )
     assert conference_program.valid?
   end
+
+  # Program lead tests
+  test "program can have program roles" do
+    program = Program.create!(name: "Test Program", village: @village)
+    user = User.create!(email: "lead@example.com", password: "password123", password_confirmation: "password123")
+    role = ProgramRole.create!(user: user, program: program, role_name: ProgramRole::PROGRAM_LEAD)
+
+    assert_includes program.program_roles, role
+  end
+
+  test "program can have multiple leads" do
+    program = Program.create!(name: "Test Program", village: @village)
+    user1 = User.create!(email: "lead1@example.com", password: "password123", password_confirmation: "password123")
+    user2 = User.create!(email: "lead2@example.com", password: "password123", password_confirmation: "password123")
+
+    ProgramRole.create!(user: user1, program: program, role_name: ProgramRole::PROGRAM_LEAD)
+    ProgramRole.create!(user: user2, program: program, role_name: ProgramRole::PROGRAM_LEAD)
+
+    assert_equal 2, program.program_leads.count
+    assert_includes program.program_leads, user1
+    assert_includes program.program_leads, user2
+  end
+
+  test "deleting program deletes associated program roles" do
+    program = Program.create!(name: "Test Program", village: @village)
+    user = User.create!(email: "lead@example.com", password: "password123", password_confirmation: "password123")
+    ProgramRole.create!(user: user, program: program, role_name: ProgramRole::PROGRAM_LEAD)
+
+    assert_difference "ProgramRole.count", -1 do
+      program.destroy
+    end
+  end
 end

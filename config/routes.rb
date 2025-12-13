@@ -63,6 +63,7 @@ Rails.application.routes.draw do
       post :bulk_update_capacity
     end
     resources :program_qualifications, only: [ :create, :destroy ]
+    resources :program_roles, only: [ :create, :destroy ]
   end
 
   # Qualification management

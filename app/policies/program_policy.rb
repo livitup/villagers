@@ -23,6 +23,7 @@ class ProgramPolicy < ApplicationPolicy
 
   def update?
     return true if user&.village_admin?
+    return true if user&.program_lead?(record)
 
     # Conference leads/admins can update conference-specific programs for their conference
     if record.conference_specific?
