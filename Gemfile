@@ -31,7 +31,7 @@ gem "pundit", "~> 2.3"
 # OAuth2 authentication (via Devise omniauthable)
 gem "omniauth-oauth2", "~> 1.8"
 # Protects the OmniAuth request phase from CSRF (required for OmniAuth 2.x)
-gem "omniauth-rails_csrf_protection", "~> 1.0"
+gem "omniauth-rails_csrf_protection", "~> 2.0"
 
 # Country/State/City selection
 gem "country_select", "~> 11.0"
