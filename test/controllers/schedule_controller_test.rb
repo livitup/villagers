@@ -72,6 +72,14 @@ class ScheduleControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "schedule shows programs for conference" do
+    # A program only renders a column on days where it has timeslots.
+    Timeslot.create!(
+      conference_program: @conference_program,
+      start_time: @conference.start_date.to_datetime + 9.hours,
+      max_volunteers: 2,
+      current_volunteers_count: 0
+    )
+
     sign_in @volunteer
     get conference_schedule_url(@conference)
     assert_response :success
@@ -98,6 +106,26 @@ class ScheduleControllerTest < ActionDispatch::IntegrationTest
     get conference_schedule_url(@conference)
     assert_response :success
     # Schedule should show each day of the conference
+  end
+
+  test "hides program column on days with no timeslots" do
+    # Enable the program only on the first day of the multi-day conference,
+    # which generates timeslots for day 1 but none for days 2 and 3.
+    @conference_program.update!(
+      day_schedules: {
+        "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" }
+      }
+    )
+
+    sign_in @volunteer
+    get conference_schedule_url(@conference)
+    assert_response :success
+
+    # The program column header should render exactly once (only on day 1),
+    # not once per conference day.
+    assert_equal 1, response.body.scan('class="program-column text-center"').count
+    # Days with no scheduled program fall back to the empty-day message.
+    assert_match "No programs scheduled", response.body
   end
 
   test "schedule shows qualification required pill for unqualified user" do

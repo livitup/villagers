@@ -47,13 +47,10 @@ class ScheduleController < ApplicationController
       # Get timeslots for this day grouped by program
       @conference.conference_programs.includes(:program).each do |cp|
         program = cp.program
-        schedule[date][:programs][program.id] = {
-          name: program.name,
-          timeslots: {}
-        }
+        timeslots = {}
 
         cp.timeslots.where("DATE(start_time) = ?", date).includes(:volunteer_signups, :users).each do |timeslot|
-          schedule[date][:programs][program.id][:timeslots][timeslot.start_time.strftime("%H:%M")] = {
+          timeslots[timeslot.start_time.strftime("%H:%M")] = {
             timeslot: timeslot,
             volunteers: timeslot.users,
             signed_up_count: timeslot.current_volunteers_count,
@@ -61,6 +58,15 @@ class ScheduleController < ApplicationController
             full: timeslot.full?
           }
         end
+
+        # Skip programs that have no timeslots on this day so empty columns are
+        # not rendered (issue #181).
+        next if timeslots.empty?
+
+        schedule[date][:programs][program.id] = {
+          name: program.name,
+          timeslots: timeslots
+        }
       end
     end
 

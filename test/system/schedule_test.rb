@@ -136,6 +136,20 @@ class ScheduleTest < ApplicationSystemTestCase
            "Qualification pill (#{pill.native.size.width}px) overflowed the program column (#{column.native.size.width}px)"
   end
 
+  test "hides program column on days with no timeslots" do
+    login_as @volunteer
+    visit conference_schedule_path(@conference)
+
+    # Program is enabled only on day 0, so day 1's card shows the program header
+    # while day 2's card omits it and shows the empty-day fallback.
+    day_one = find(".card", text: Date.today.strftime("%A, %B %d"))
+    assert day_one.has_selector?("th.program-column", text: @program.name)
+
+    day_two = find(".card", text: (Date.today + 1.day).strftime("%A, %B %d"))
+    assert_not day_two.has_selector?("th.program-column", text: @program.name)
+    assert day_two.has_text?("No programs scheduled")
+  end
+
   test "schedule has signup buttons with modal trigger" do
     login_as @volunteer
     visit conference_schedule_path(@conference)
