@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_02_234319) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_02_235305) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -131,6 +131,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_234319) do
     t.index ["conference_id"], name: "index_programs_on_conference_id"
     t.index ["village_id", "name"], name: "index_programs_on_village_id_and_name", unique: true
     t.index ["village_id"], name: "index_programs_on_village_id"
+  end
+
+  create_table "qualification_assignment_delegations", force: :cascade do |t|
+    t.bigint "conference_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "qualification_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["conference_id"], name: "index_qualification_assignment_delegations_on_conference_id"
+    t.index ["qualification_id"], name: "index_qualification_assignment_delegations_on_qualification_id"
+    t.index ["user_id", "qualification_id", "conference_id"], name: "index_qualification_delegations_unique", unique: true
+    t.index ["user_id"], name: "index_qualification_assignment_delegations_on_user_id"
   end
 
   create_table "qualification_removals", force: :cascade do |t|
@@ -263,6 +275,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_234319) do
   add_foreign_key "program_roles", "users"
   add_foreign_key "programs", "conferences"
   add_foreign_key "programs", "villages"
+  add_foreign_key "qualification_assignment_delegations", "conferences"
+  add_foreign_key "qualification_assignment_delegations", "qualifications"
+  add_foreign_key "qualification_assignment_delegations", "users"
   add_foreign_key "qualification_removals", "conferences"
   add_foreign_key "qualification_removals", "qualifications"
   add_foreign_key "qualification_removals", "users"

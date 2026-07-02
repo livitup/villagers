@@ -1,0 +1,64 @@
+<div class="container mt-5">
+  <div class="d-flex align-items-center mb-4">
+    <%= link_to conference_path(@conference), class: "btn btn-secondary btn-sm me-3" do %>
+      <span aria-hidden="true">&larr;</span> Conference
+    <% end %>
+    <h1 class="mb-0">Qualification Delegations</h1>
+  </div>
+
+  <p class="text-muted">
+    Delegate the ability to assign a specific qualification to another user. A delegate can grant
+    (and revoke) only the qualifications delegated to them, and only within this conference.
+  </p>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Current Delegations</h5>
+      <% if @delegations.any? %>
+        <table class="table table-sm align-middle mb-0">
+          <thead><tr><th>User</th><th>Qualification</th><th class="text-end">Actions</th></tr></thead>
+          <tbody>
+            <% @delegations.each do |delegation| %>
+              <tr>
+                <td><%= delegation.user.email %></td>
+                <td><%= delegation.qualification.name %></td>
+                <td class="text-end">
+                  <%= link_to "Remove", conference_qualification_delegation_path(@conference, delegation),
+                      data: { turbo_method: :delete, turbo_confirm: "Remove this delegation?" },
+                      class: "btn btn-sm btn-outline-danger" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-muted mb-0">No delegations yet.</p>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Delegate a Qualification</h5>
+      <% if @qualifications.any? %>
+        <%= form_with url: conference_qualification_delegations_path(@conference), method: :post, local: true, class: "row g-2" do %>
+          <div class="col-md-5">
+            <%= select_tag :user_id,
+                options_from_collection_for_select(@users, :id, :email),
+                include_blank: "Select user...", class: "form-select", required: true %>
+          </div>
+          <div class="col-md-5">
+            <%= select_tag :qualification_id,
+                options_from_collection_for_select(@qualifications, :id, :name),
+                include_blank: "Select qualification...", class: "form-select", required: true %>
+          </div>
+          <div class="col-md-2 d-grid">
+            <%= submit_tag "Delegate", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      <% else %>
+        <p class="text-muted mb-0">No qualifications exist in this village yet.</p>
+      <% end %>
+    </div>
+  </div>
+</div>

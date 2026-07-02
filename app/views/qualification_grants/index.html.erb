@@ -1,0 +1,58 @@
+<div class="container mt-5">
+  <div class="d-flex align-items-center mb-4">
+    <%= link_to conference_path(@conference), class: "btn btn-secondary btn-sm me-3" do %>
+      <span aria-hidden="true">&larr;</span> Conference
+    <% end %>
+    <h1 class="mb-0">Assign Qualifications</h1>
+  </div>
+
+  <p class="text-muted">
+    Grant a qualification to a volunteer. You can assign only the qualifications you are permitted
+    to manage for this conference.
+  </p>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h5 class="card-title">Grant a Qualification</h5>
+      <%= form_with url: conference_qualification_grants_path(@conference), method: :post, local: true, class: "row g-2" do %>
+        <div class="col-md-5">
+          <%= select_tag :user_id,
+              options_from_collection_for_select(@users, :id, :email),
+              include_blank: "Select user...", class: "form-select", required: true %>
+        </div>
+        <div class="col-md-5">
+          <%= select_tag :qualification_id,
+              options_from_collection_for_select(@assignable_qualifications, :id, :name),
+              include_blank: "Select qualification...", class: "form-select", required: true %>
+        </div>
+        <div class="col-md-2 d-grid">
+          <%= submit_tag "Grant", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <% @assignable_qualifications.each do |qualification| %>
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6 class="card-title"><%= qualification.name %></h6>
+        <% holders = qualification.users.order(:email) %>
+        <% if holders.any? %>
+          <ul class="list-group list-group-flush">
+            <% holders.each do |holder| %>
+              <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                <%= holder.email %>
+                <%= link_to "Revoke",
+                    conference_qualification_grant_path(@conference, UserQualification.find_by(user: holder, qualification: qualification)),
+                    data: { turbo_method: :delete, turbo_confirm: "Revoke #{qualification.name} from #{holder.email}?" },
+                    class: "btn btn-sm btn-outline-danger" %>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-muted mb-0">No one holds this qualification yet.</p>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

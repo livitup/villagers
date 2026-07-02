@@ -126,6 +126,10 @@
             <% if policy(@conference).update? %>
               <%= link_to "Dashboard", conference_dashboard_path(@conference), class: "btn btn-warning" %>
               <%= link_to "Manage Programs", conference_conference_programs_path(@conference), class: "btn btn-success" %>
+              <%= link_to "Delegate Qualifications", conference_qualification_delegations_path(@conference), class: "btn btn-outline-secondary" %>
+            <% end %>
+            <% if current_user.assignable_qualifications(@conference).exists? %>
+              <%= link_to "Assign Qualifications", conference_qualification_grants_path(@conference), class: "btn btn-outline-success" %>
             <% end %>
           </div>
         </div>

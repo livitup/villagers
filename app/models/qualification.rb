@@ -4,6 +4,7 @@ class Qualification < ApplicationRecord
   has_many :users, through: :user_qualifications
   has_many :program_qualifications, dependent: :destroy
   has_many :programs, through: :program_qualifications
+  has_many :qualification_assignment_delegations, dependent: :destroy
 
   validates :name, presence: true, uniqueness: { scope: :village_id }
   validates :description, presence: true

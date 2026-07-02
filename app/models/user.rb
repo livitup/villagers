@@ -72,6 +72,7 @@ class User < ApplicationRecord
   has_many :conference_user_qualifications, dependent: :destroy
   has_many :conference_qualifications, through: :conference_user_qualifications
   has_many :qualification_removals, dependent: :destroy
+  has_many :qualification_assignment_delegations, dependent: :destroy
   # Volunteer signup associations
   has_many :volunteer_signups, dependent: :destroy
   has_many :timeslots, through: :volunteer_signups
@@ -167,6 +168,24 @@ class User < ApplicationRecord
   def effective_qualification_for_conference?(qualification, conference)
     return false unless has_qualification?(qualification)
     !qualification_removed_for_conference?(qualification, conference)
+  end
+
+  # Qualification-assignment delegation (issue #186). A conference manager can
+  # always assign any qualification; a delegate may assign only the specific
+  # qualifications delegated to them within that conference.
+  def can_assign_qualification?(qualification, conference)
+    return true if can_manage_conference?(conference)
+
+    qualification_assignment_delegations.exists?(qualification: qualification, conference: conference)
+  end
+
+  # Qualifications this user is allowed to assign within the given conference.
+  def assignable_qualifications(conference)
+    return conference.village.qualifications.order(:name) if can_manage_conference?(conference)
+
+    Qualification.where(
+      id: qualification_assignment_delegations.where(conference: conference).select(:qualification_id)
+    ).order(:name)
   end
 
   # Volunteer statistics methods

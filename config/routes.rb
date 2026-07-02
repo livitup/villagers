@@ -67,6 +67,10 @@ Rails.application.routes.draw do
     resources :conference_qualifications, path: "qualifications"
     resources :conference_user_qualifications, only: [ :create, :destroy ]
     resources :qualification_removals, only: [ :index, :create, :destroy ]
+    # Delegate the right to assign a qualification (managed by conference leads/admins)
+    resources :qualification_delegations, only: [ :index, :create, :destroy ]
+    # Assign qualifications to users (open to conference managers and delegates)
+    resources :qualification_grants, only: [ :index, :create, :destroy ]
   end
 
   # Program management
