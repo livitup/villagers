@@ -143,6 +143,34 @@ class ConferencesControllerTest < ActionDispatch::IntegrationTest
     assert_equal "US", @conference.country
   end
 
+  test "should permit and persist minimum_shift_duration on create" do
+    sign_in @village_admin
+    assert_difference("Conference.count") do
+      post conferences_url, params: {
+        conference: {
+          name: "Min Duration Conference",
+          start_date: Date.today,
+          end_date: Date.tomorrow,
+          minimum_shift_duration: 30
+        }
+      }
+    end
+    assert_equal 30, Conference.last.minimum_shift_duration
+  end
+
+  test "should permit and persist minimum_shift_duration on update" do
+    sign_in @village_admin
+    patch conference_url(@conference), params: {
+      conference: {
+        name: @conference.name,
+        minimum_shift_duration: 60
+      }
+    }
+    assert_redirected_to @conference
+    @conference.reload
+    assert_equal 60, @conference.minimum_shift_duration
+  end
+
   test "should update conference lead" do
     sign_in @village_admin
     new_lead = User.create!(

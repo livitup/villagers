@@ -88,13 +88,16 @@ export default class extends Controller {
       ? data.available_end_times[data.available_end_times.length - 1].duration_minutes
       : 0
 
+    // Conference minimum shift duration (defaults to 15 if not provided)
+    const minDuration = data.minimum_shift_duration || 15
+
     // Create option group for durations
     const durationGroup = document.createElement("optgroup")
     durationGroup.label = "Select Duration"
 
     let defaultSelected = false
     durations.forEach(d => {
-      if (d.minutes <= maxDuration) {
+      if (d.minutes >= minDuration && d.minutes <= maxDuration) {
         const option = document.createElement("option")
         option.value = d.minutes
         option.dataset.type = "duration"
@@ -125,6 +128,8 @@ export default class extends Controller {
     endTimeGroup.label = "Or Select End Time"
 
     data.available_end_times.forEach(et => {
+      if (et.duration_minutes < minDuration) return
+
       const option = document.createElement("option")
       option.value = et.end_time
       option.dataset.type = "end_time"

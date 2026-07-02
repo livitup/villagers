@@ -31,9 +31,19 @@ class VolunteerSignupsController < ApplicationController
 
     # Calculate end time from duration or use provided end_time
     if params[:duration_minutes].present?
-      end_time = start_timeslot.start_time + params[:duration_minutes].to_i.minutes
+      requested_minutes = params[:duration_minutes].to_i
+      end_time = start_timeslot.start_time + requested_minutes.minutes
     else
       end_time = Time.zone.parse(params[:end_time])
+      requested_minutes = ((end_time - start_timeslot.start_time) / 60).to_i
+    end
+
+    # Enforce the conference minimum shift duration
+    minimum_minutes = @conference.effective_minimum_shift_duration
+    if requested_minutes < minimum_minutes
+      redirect_to conference_schedule_path(@conference),
+                  alert: "Shifts must be at least #{minimum_minutes} minutes (the minimum for this conference)."
+      return
     end
 
     # Find all timeslots in the range for this program
@@ -119,6 +129,7 @@ class VolunteerSignupsController < ApplicationController
       start_time: start_timeslot.start_time.iso8601,
       start_time_display: start_timeslot.start_time.strftime("%l:%M %p").strip,
       program_name: conference_program.program.name,
+      minimum_shift_duration: @conference.effective_minimum_shift_duration,
       available_end_times: available_end_times
     }
   end

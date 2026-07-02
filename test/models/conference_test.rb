@@ -356,4 +356,29 @@ class ConferenceTest < ActiveSupport::TestCase
 
     assert_equal 24, conference.effective_reminder_hours
   end
+
+  # Minimum shift duration tests
+  test "effective_minimum_shift_duration returns conference value when set" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days,
+      minimum_shift_duration: 30
+    )
+
+    assert_equal 30, conference.effective_minimum_shift_duration
+  end
+
+  test "effective_minimum_shift_duration returns 15 when not set" do
+    conference = Conference.create!(
+      village: @village,
+      name: "Test Conference",
+      start_date: Date.tomorrow,
+      end_date: Date.tomorrow + 3.days
+    )
+
+    assert_nil conference.minimum_shift_duration
+    assert_equal 15, conference.effective_minimum_shift_duration
+  end
 end

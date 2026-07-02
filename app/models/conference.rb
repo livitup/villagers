@@ -129,6 +129,12 @@ class Conference < ApplicationRecord
     reminder_hours_before || village.reminder_hours_before || 24
   end
 
+  # Returns the effective minimum shift duration (in minutes) for this conference
+  # Uses conference-specific value if set, otherwise falls back to 15 minutes
+  def effective_minimum_shift_duration
+    minimum_shift_duration || 15
+  end
+
   private
 
   def end_date_after_start_date

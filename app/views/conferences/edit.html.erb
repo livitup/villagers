@@ -48,6 +48,18 @@
             </div>
 
             <div class="mb-3">
+              <%= form.label :minimum_shift_duration, "Minimum Shift Duration", class: "form-label" %>
+              <%= form.select :minimum_shift_duration,
+                  options_for_select([ [ "15 minutes", 15 ], [ "30 minutes", 30 ], [ "45 minutes", 45 ], [ "1 hour", 60 ], [ "2 hours", 120 ] ], @conference.minimum_shift_duration),
+                  { include_blank: "No minimum (15 min)" },
+                  { class: "form-select" } %>
+              <div class="form-text">
+                Volunteers cannot sign up for a shift shorter than this.
+                Leave blank to allow the default 15-minute minimum.
+              </div>
+            </div>
+
+            <div class="mb-3">
               <%= label_tag :conference_lead_id, "Conference Lead", class: "form-label" %>
               <%= select_tag :conference_lead_id,
                   options_from_collection_for_select(@users, :id, :email, @current_lead&.id),

@@ -206,6 +206,51 @@ class VolunteerSignupsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to conference_volunteer_signups_path(@conference)
   end
 
+  test "bulk create rejects duration below conference minimum_shift_duration" do
+    @conference.update!(minimum_shift_duration: 60)
+
+    timeslots = []
+    4.times do |i|
+      timeslots << Timeslot.create!(
+        conference_program: @conference_program,
+        start_time: Date.tomorrow.to_datetime + 11.hours + (i * 15).minutes,
+        max_volunteers: 2
+      )
+    end
+
+    sign_in @volunteer
+    assert_no_difference("VolunteerSignup.count") do
+      post bulk_create_conference_volunteer_signups_url(@conference), params: {
+        timeslot_id: timeslots.first.id,
+        duration_minutes: 30
+      }
+    end
+    assert_redirected_to conference_schedule_path(@conference)
+    assert_match(/minimum/i, flash[:alert])
+  end
+
+  test "bulk create allows duration at conference minimum_shift_duration" do
+    @conference.update!(minimum_shift_duration: 60)
+
+    timeslots = []
+    4.times do |i|
+      timeslots << Timeslot.create!(
+        conference_program: @conference_program,
+        start_time: Date.tomorrow.to_datetime + 11.hours + (i * 15).minutes,
+        max_volunteers: 2
+      )
+    end
+
+    sign_in @volunteer
+    assert_difference("VolunteerSignup.count", 4) do
+      post bulk_create_conference_volunteer_signups_url(@conference), params: {
+        timeslot_id: timeslots.first.id,
+        duration_minutes: 60
+      }
+    end
+    assert_redirected_to conference_volunteer_signups_path(@conference)
+  end
+
   test "bulk create fails if any timeslot is full" do
     timeslots = []
     4.times do |i|
