@@ -65,6 +65,7 @@ class User < ApplicationRecord
   has_many :roles, through: :user_roles
   has_many :conference_roles, dependent: :destroy
   has_many :program_roles, dependent: :destroy
+  has_many :conference_program_roles, dependent: :destroy
   # Qualification associations
   has_many :user_qualifications, dependent: :destroy
   has_many :qualifications, through: :user_qualifications
@@ -114,6 +115,17 @@ class User < ApplicationRecord
 
   def led_programs
     Program.joins(:program_roles).where(program_roles: { user_id: id, role_name: ProgramRole::PROGRAM_LEAD })
+  end
+
+  def activity_lead?(conference_program)
+    conference_program_roles.exists?(
+      conference_program: conference_program,
+      role_name: ConferenceProgramRole::ACTIVITY_LEAD
+    )
+  end
+
+  def can_manage_conference_program?(conference_program)
+    can_manage_conference?(conference_program.conference) || activity_lead?(conference_program)
   end
 
   def volunteer?

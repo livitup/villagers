@@ -12,6 +12,8 @@
       <p class="text-muted">
         <% if @can_see_all_volunteers %>
           <span class="badge bg-primary">Admin View</span> Showing all volunteers across all programs
+        <% elsif @manageable_program_ids.any? %>
+          <span class="badge bg-info">Activity Lead View</span> Showing all volunteers for the activities you lead
         <% else %>
           <span class="badge bg-secondary">Volunteer View</span> Your shifts are highlighted
         <% end %>
@@ -109,7 +111,7 @@
                             </div>
                           </div>
 
-                          <% if @can_see_all_volunteers %>
+                          <% if @manageable_program_ids.include?(program_id) %>
                             <%# Volunteer list - fills available space %>
                             <div class="volunteer-list flex-grow-1 mt-1">
                               <% slot_data[:volunteers].each do |volunteer| %>

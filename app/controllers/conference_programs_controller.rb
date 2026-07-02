@@ -1,6 +1,7 @@
 class ConferenceProgramsController < ApplicationController
   before_action :set_conference
   before_action :set_conference_program, only: [ :show, :edit, :update, :destroy ]
+  before_action :authorize_conference_management, except: [ :show ]
 
   def index
     @conference_programs = @conference.conference_programs.includes(:program).order("programs.name")
@@ -67,6 +68,13 @@ class ConferenceProgramsController < ApplicationController
 
   def set_conference
     @conference = Conference.find(params[:conference_id])
+  end
+
+  # Managing the conference's activities (listing, creating, editing, deleting)
+  # requires conference-level management rights. The #show action is exempt: it
+  # authorizes at the activity level so an activity lead can view their own
+  # activity (and manage its leads).
+  def authorize_conference_management
     authorize @conference, :update?, policy_class: ConferencePolicy
   end
 

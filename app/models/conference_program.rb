@@ -10,6 +10,10 @@ class ConferenceProgram < ApplicationRecord
   belongs_to :conference
   belongs_to :program
   has_many :timeslots, dependent: :destroy
+  has_many :conference_program_roles, dependent: :destroy
+  has_many :activity_leads,
+           -> { where(conference_program_roles: { role_name: ConferenceProgramRole::ACTIVITY_LEAD }) },
+           through: :conference_program_roles, source: :user
 
   validates :conference, presence: true
   validates :program, presence: true, uniqueness: { scope: :conference_id }

@@ -5,6 +5,12 @@ class ScheduleController < ApplicationController
   def show
     authorize @conference, :show?, policy_class: ConferencePolicy
 
+    # Conference managers manage every activity; an activity lead manages only
+    # their own. @manageable_program_ids is the set of Program ids whose columns
+    # the current user may administer (see full volunteer names, add/remove
+    # volunteers, edit capacity). @can_see_all_volunteers stays true only for
+    # full conference managers (used for the page-level view badge).
+    @manageable_program_ids = manageable_program_ids
     @can_see_all_volunteers = current_user.can_manage_conference?(@conference)
 
     # Build time slots for each day (15-minute increments)
@@ -25,14 +31,33 @@ class ScheduleController < ApplicationController
     # Build user's effective qualifications for this conference
     @user_qualification_ids = build_user_qualification_ids
 
-    # Get all users for admin dropdown
-    @users = User.order(:email) if @can_see_all_volunteers
+    # Get all users for admin dropdown (needed whenever the user can manage at
+    # least one activity, so activity leads get the add-volunteer picker too)
+    @users = User.order(:email) if @manageable_program_ids.any?
   end
 
   private
 
   def set_conference
     @conference = Conference.find(params[:conference_id])
+  end
+
+  # Set of Program ids the current user may administer on this schedule.
+  # Conference managers get all of them; activity leads get only the programs
+  # they lead at this conference.
+  def manageable_program_ids
+    if current_user.can_manage_conference?(@conference)
+      return @conference.conference_programs.pluck(:program_id).to_set
+    end
+
+    ConferenceProgram.where(conference: @conference)
+                     .joins(:conference_program_roles)
+                     .where(conference_program_roles: {
+                              user_id: current_user.id,
+                              role_name: ConferenceProgramRole::ACTIVITY_LEAD
+                            })
+                     .pluck(:program_id)
+                     .to_set
   end
 
   def build_schedule_data

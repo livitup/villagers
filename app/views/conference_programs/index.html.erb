@@ -52,6 +52,9 @@
             </div>
             <div class="card-footer bg-transparent">
               <div class="d-flex flex-wrap gap-2">
+                <% if policy(cp).show? %>
+                  <%= link_to "Manage Leads", conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
+                <% end %>
                 <% if policy(cp).update? %>
                   <%= link_to "Edit Schedule", edit_conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
                 <% end %>

@@ -4,7 +4,7 @@ class TimeslotsController < ApplicationController
   before_action :set_timeslot
 
   def update
-    authorize @conference, :update?, policy_class: ConferencePolicy
+    authorize @timeslot.conference_program, :update?, policy_class: ConferenceProgramPolicy
 
     if @timeslot.update(timeslot_params)
       redirect_to conference_schedule_path(@conference), notice: "Timeslot updated successfully."
@@ -14,7 +14,7 @@ class TimeslotsController < ApplicationController
   end
 
   def add_volunteer
-    authorize @conference, :update?, policy_class: ConferencePolicy
+    authorize @timeslot.conference_program, :update?, policy_class: ConferenceProgramPolicy
 
     user = User.find(params[:user_id])
     signup = VolunteerSignup.new(user: user, timeslot: @timeslot)
@@ -27,7 +27,7 @@ class TimeslotsController < ApplicationController
   end
 
   def remove_volunteer
-    authorize @conference, :update?, policy_class: ConferencePolicy
+    authorize @timeslot.conference_program, :update?, policy_class: ConferenceProgramPolicy
 
     signup = @timeslot.volunteer_signups.find_by!(user_id: params[:user_id])
     user_email = signup.user.email

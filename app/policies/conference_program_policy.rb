@@ -4,15 +4,18 @@ class ConferenceProgramPolicy < ApplicationPolicy
   end
 
   def show?
-    user&.can_manage_conference?(record.conference)
+    user&.can_manage_conference_program?(record)
   end
 
   def create?
     user&.can_manage_conference?(record.conference)
   end
 
+  # Permits conference managers AND the activity lead of this specific program.
+  # This is the chokepoint for managing an activity's timeslots (add/remove
+  # volunteers, edit capacity) and for appointing/removing its activity leads.
   def update?
-    user&.can_manage_conference?(record.conference)
+    user&.can_manage_conference_program?(record)
   end
 
   def destroy?

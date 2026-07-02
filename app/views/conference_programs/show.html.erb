@@ -1,0 +1,92 @@
+<div class="container mt-5">
+  <div class="d-flex align-items-center mb-4">
+    <%= link_to conference_conference_programs_path(@conference), class: "btn btn-secondary btn-sm me-3" do %>
+      <span aria-hidden="true">&larr;</span> Programs
+    <% end %>
+    <h1 class="mb-0">
+      <%= @conference_program.program.name %>
+      <% if @conference_program.program.conference_specific? %>
+        <span class="badge bg-info">Conference Only</span>
+      <% end %>
+    </h1>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-7">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Details</h5>
+          <% description = @conference_program.public_description.presence || @conference_program.program.description %>
+          <% if description.present? %>
+            <p class="card-text text-muted"><%= description %></p>
+          <% else %>
+            <p class="text-muted">No description.</p>
+          <% end %>
+
+          <% if @conference_program.day_schedules.any? %>
+            <h6 class="mt-3">Schedule</h6>
+            <ul class="list-unstyled mb-0">
+              <% @conference_program.day_schedules.each do |day, schedule| %>
+                <% if schedule["enabled"] %>
+                  <li><small class="text-muted">Day <%= day.to_i + 1 %>: <%= schedule["start"] %> &ndash; <%= schedule["end"] %></small></li>
+                <% end %>
+              <% end %>
+            </ul>
+          <% end %>
+
+          <% if policy(@conference_program).update? %>
+            <div class="mt-3">
+              <%= link_to "Edit Schedule", edit_conference_conference_program_path(@conference, @conference_program), class: "btn btn-sm btn-outline-primary" %>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card bg-light">
+        <div class="card-body">
+          <h5 class="card-title">Activity Leads</h5>
+          <p class="text-muted small">
+            Activity leads have admin rights for this activity only &mdash; they can manage
+            volunteers and shifts here, but nothing else in the conference.
+          </p>
+
+          <% leads = @conference_program.conference_program_roles.includes(:user).where(role_name: ConferenceProgramRole::ACTIVITY_LEAD) %>
+          <% if leads.any? %>
+            <ul class="list-group list-group-flush mb-3">
+              <% leads.each do |role| %>
+                <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                  <%= role.user.email %>
+                  <% if policy(@conference_program).update? %>
+                    <%= link_to "Remove", conference_conference_program_conference_program_role_path(@conference, @conference_program, role),
+                        data: { turbo_method: :delete, turbo_confirm: "Remove this activity lead?" },
+                        class: "btn btn-sm btn-danger" %>
+                  <% end %>
+                </li>
+              <% end %>
+            </ul>
+          <% else %>
+            <p class="text-muted">No activity leads assigned.</p>
+          <% end %>
+
+          <% if policy(@conference_program).update? %>
+            <% existing_lead_ids = @conference_program.activity_leads.pluck(:id) %>
+            <% available_users = User.where.not(id: existing_lead_ids).order(:email) %>
+            <% if available_users.any? %>
+              <%= form_with url: conference_conference_program_conference_program_roles_path(@conference, @conference_program), method: :post, local: true, class: "d-flex gap-2" do |f| %>
+                <select name="user_id" class="form-select form-select-sm" required>
+                  <option value="">Select user...</option>
+                  <% available_users.each do |user| %>
+                    <option value="<%= user.id %>"><%= user.email %></option>
+                  <% end %>
+                </select>
+                <%= f.submit "Add Lead", class: "btn btn-sm btn-primary" %>
+              <% end %>
+            <% end %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

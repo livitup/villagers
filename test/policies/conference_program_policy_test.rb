@@ -130,6 +130,32 @@ class ConferenceProgramPolicyTest < ActiveSupport::TestCase
     assert_not policy.destroy?
   end
 
+  test "activity lead can show and update their own activity but not create or destroy it" do
+    ConferenceProgramRole.create!(
+      user: @volunteer,
+      conference_program: @conference_program,
+      role_name: ConferenceProgramRole::ACTIVITY_LEAD
+    )
+    policy = ConferenceProgramPolicy.new(@volunteer, @conference_program)
+    assert policy.show?
+    assert policy.update?
+    assert_not policy.create?
+    assert_not policy.destroy?
+  end
+
+  test "activity lead cannot manage a different activity in the same conference" do
+    other_program = Program.create!(name: "Other Program", description: "other", village: @village)
+    other_cp = ConferenceProgram.create!(conference: @conference, program: other_program)
+    ConferenceProgramRole.create!(
+      user: @volunteer,
+      conference_program: @conference_program,
+      role_name: ConferenceProgramRole::ACTIVITY_LEAD
+    )
+    policy = ConferenceProgramPolicy.new(@volunteer, other_cp)
+    assert_not policy.show?
+    assert_not policy.update?
+  end
+
   test "anonymous user cannot manage conference programs" do
     policy = ConferenceProgramPolicy.new(nil, @conference_program)
     assert_not policy.index?

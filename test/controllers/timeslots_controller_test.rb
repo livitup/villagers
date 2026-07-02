@@ -173,4 +173,52 @@ class TimeslotsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to root_path
   end
+
+  # Activity lead tests: an activity lead may manage timeslots for THEIR activity
+  # only, not other activities or the conference at large.
+  test "activity lead can update, add, and remove on their own activity's timeslot" do
+    activity_lead = @volunteer2
+    ConferenceProgramRole.create!(
+      user: activity_lead,
+      conference_program: @conference_program,
+      role_name: ConferenceProgramRole::ACTIVITY_LEAD
+    )
+    sign_in activity_lead
+
+    patch conference_timeslot_url(@conference, @timeslot), params: { timeslot: { max_volunteers: 4 } }
+    assert_redirected_to conference_schedule_path(@conference)
+    assert_equal 4, @timeslot.reload.max_volunteers
+
+    assert_difference("VolunteerSignup.count", 1) do
+      post add_volunteer_conference_timeslot_url(@conference, @timeslot), params: { user_id: @volunteer.id }
+    end
+    assert_difference("VolunteerSignup.count", -1) do
+      delete remove_volunteer_conference_timeslot_url(@conference, @timeslot), params: { user_id: @volunteer.id }
+    end
+  end
+
+  test "activity lead cannot manage a different activity's timeslot" do
+    other_program = Program.create!(name: "Other Program", village: @village)
+    other_cp = ConferenceProgram.create!(conference: @conference, program: other_program)
+    other_timeslot = Timeslot.create!(
+      conference_program: other_cp,
+      start_time: Date.tomorrow.to_datetime + 10.hours,
+      max_volunteers: 2
+    )
+    # Lead of @conference_program only
+    ConferenceProgramRole.create!(
+      user: @volunteer2,
+      conference_program: @conference_program,
+      role_name: ConferenceProgramRole::ACTIVITY_LEAD
+    )
+    sign_in @volunteer2
+
+    patch conference_timeslot_url(@conference, other_timeslot), params: { timeslot: { max_volunteers: 9 } }
+    assert_redirected_to root_path
+    assert_equal 2, other_timeslot.reload.max_volunteers
+
+    assert_no_difference("VolunteerSignup.count") do
+      post add_volunteer_conference_timeslot_url(@conference, other_timeslot), params: { user_id: @volunteer.id }
+    end
+  end
 end
