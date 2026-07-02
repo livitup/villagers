@@ -150,6 +150,23 @@ class ScheduleTest < ApplicationSystemTestCase
     assert day_two.has_text?("No programs scheduled")
   end
 
+  test "schedule header row is sticky" do
+    login_as @volunteer
+    visit conference_schedule_path(@conference)
+
+    # The program-name header cells should use position: sticky so they stay
+    # pinned to the top of the viewport while scrolling a day's table.
+    position = page.evaluate_script(
+      "getComputedStyle(document.querySelector('.schedule-table thead th')).position"
+    )
+    assert_equal "sticky", position
+
+    top = page.evaluate_script(
+      "getComputedStyle(document.querySelector('.schedule-table thead th')).top"
+    )
+    assert_equal "0px", top
+  end
+
   test "schedule has signup buttons with modal trigger" do
     login_as @volunteer
     visit conference_schedule_path(@conference)
