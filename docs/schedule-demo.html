@@ -1,0 +1,530 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Villagers — Schedule Redesign</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --ground:#F4F7F8; --surface:#FFFFFF; --ink:#111A1E; --muted:#566670; --faint:#8A98A0;
+    --line:#E1E7EA; --line-strong:#CBD4D8;
+    --sig:#0C8DA4; --sig-ink:#076073; --sig-tint:#E4F3F6;
+    --crit:#C23A2B; --crit-tint:#FBEAE7; --warn:#B4791A; --warn-tint:#FAF2DF; --good:#2E7D57; --good-tint:#E6F2EB;
+    --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+    --sh:0 1px 2px rgba(16,32,40,.05),0 6px 18px -10px rgba(16,32,40,.18);
+    --r:10px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;font-size:15px}
+  .wrap{max-width:1440px;margin:0 auto;padding:28px 26px 72px}
+  .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--sig-ink)}
+  h1{font-size:clamp(24px,3.4vw,34px);line-height:1.08;letter-spacing:-.02em;margin:.28em 0 .1em;text-wrap:balance;font-weight:800}
+  .lede{color:var(--muted);max-width:66ch;margin:0}
+  .tnum{font-variant-numeric:tabular-nums}
+  b{font-weight:600}
+
+  .frame{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);padding:20px 22px;margin:22px 0 18px}
+  .diagnosis{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .diagnosis .col{border-left:3px solid var(--line-strong);padding:2px 0 2px 14px}
+  .diagnosis .col.now{border-left-color:var(--crit)}.diagnosis .col.next{border-left-color:var(--good)}
+  .diagnosis h3{margin:0 0 6px;font-size:12px;font-family:var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .diagnosis ul{margin:0;padding-left:18px;color:var(--muted);font-size:14px}
+  .diagnosis li{margin:4px 0}.diagnosis li b{color:var(--ink)}
+  @media(max-width:720px){.diagnosis{grid-template-columns:1fr}}
+
+  .toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin:6px 0 18px}
+  .seg{display:inline-flex;background:#EAF0F1;border:1px solid var(--line);border-radius:999px;padding:4px;gap:2px}
+  .seg button{appearance:none;border:0;background:transparent;font:inherit;font-weight:600;color:var(--muted);padding:8px 16px;border-radius:999px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;font-size:14px}
+  .seg button .k{font-family:var(--mono);font-size:11px;color:var(--faint)}
+  .seg button[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(16,32,40,.12)}
+  .seg button[aria-selected="true"] .k{color:var(--sig)}
+  .role-note{color:var(--faint);font-size:13px}
+
+  .view{display:none}.view.on{display:block;animation:fade .22s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){.view.on{animation:none}}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh);overflow:hidden}
+  .panel + .panel{margin-top:16px}
+  .panel-h{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+  .panel-h h2{margin:0;font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .panel-h .sub{color:var(--faint);font-size:13px}
+  .hctrls{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+  .pill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+  .pill .dot{width:7px;height:7px;border-radius:50%}
+  .p-crit{background:var(--crit-tint);color:#8f2a1e;border-color:#f0cec8}.p-crit .dot{background:var(--crit)}
+  .p-warn{background:var(--warn-tint);color:#8a5c11;border-color:#eddcb3}.p-warn .dot{background:var(--warn)}
+  .p-good{background:var(--good-tint);color:#1f5a3e;border-color:#cbe4d6}.p-good .dot{background:var(--good)}
+  .p-mine{background:var(--sig-tint);color:var(--sig-ink);border-color:#bfe2e9}.p-mine .dot{background:var(--sig)}
+  .qual{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-family:var(--mono);color:var(--muted);background:#F0F3F4;border:1px solid var(--line);padding:2px 7px;border-radius:6px}
+  .qual.lock{color:#8a5c11;background:var(--warn-tint);border-color:#eddcb3}
+  .daychip{font-family:var(--mono);font-size:11px;color:var(--sig-ink);background:var(--sig-tint);border:1px solid #bfe2e9;padding:2px 8px;border-radius:6px}
+
+  .btn{appearance:none;font:inherit;font-weight:600;border-radius:8px;cursor:pointer;border:1px solid var(--line-strong);background:#fff;color:var(--ink);padding:8px 14px;font-size:13.5px;transition:.12s}
+  .btn:hover{border-color:var(--faint)}
+  .btn.primary{background:var(--sig);border-color:var(--sig);color:#fff}.btn.primary:hover{background:#0a7c90}
+  .btn.ghostdanger{color:var(--crit);border-color:#eccfca}.btn.ghostdanger:hover{background:var(--crit-tint)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+  .chip{appearance:none;font:inherit;font-size:13px;border:1px solid var(--line-strong);background:#fff;color:var(--muted);padding:6px 12px;border-radius:999px;cursor:pointer;display:inline-flex;gap:7px;align-items:center}
+  .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}.chip[aria-pressed="true"] .x{color:#9fb0b6}
+  .chip .rsub{opacity:.6;font-size:11px;font-family:var(--mono)}
+  .btn:focus-visible,.seg button:focus-visible,.chip:focus-visible,.tickbtn:focus-visible,select:focus-visible{outline:2px solid var(--sig);outline-offset:2px}
+  .drail{display:inline-flex;gap:6px;flex-wrap:wrap}
+  select,input[type=number]{font:inherit;font-size:14px;padding:8px 10px;border:1px solid var(--line-strong);border-radius:8px;background:#fff;color:var(--ink)}
+  .tickbtn{appearance:none;font:inherit;font-size:13px;border:1px solid var(--line-strong);background:#fff;color:var(--muted);padding:7px 12px;border-radius:8px;cursor:pointer}
+  .tickbtn[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+  .lenbtns{display:inline-flex;gap:6px}
+
+  /* ribbon */
+  .axis{display:flex;font-family:var(--mono);font-size:10.5px;color:var(--faint);letter-spacing:.03em;padding:0 0 3px}
+  .axis span{flex:1;text-align:left}
+  .rib{display:flex;gap:1.5px;border-radius:6px;overflow:hidden;background:#fff}
+  .rib.tall .tk{height:26px}
+  .tk{flex:1;height:18px;background:#EEF2F3}
+  .tk.crit{background:var(--crit)}.tk.warn{background:var(--warn)}.tk.good{background:var(--good)}
+  .tk.sel{box-shadow:inset 0 0 0 2px var(--sig-ink)}
+  .rib.click .tk{cursor:pointer;transition:.08s}.rib.click .tk:hover{transform:scaleY(1.16)}
+  .covkey{display:flex;flex-wrap:wrap;gap:14px;color:var(--muted);font-size:12px;align-items:center}
+  .covkey .k{display:inline-flex;align-items:center;gap:6px}.covkey .sw{width:12px;height:12px;border-radius:3px}
+
+  /* volunteer */
+  .mine{display:grid;gap:10px;padding:16px 18px}
+  .mine-row{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--sig);border-radius:var(--r);background:linear-gradient(0deg,#fff,var(--sig-tint) 340%)}
+  .mine-row .when{font-family:var(--mono);font-size:13px;color:var(--sig-ink);min-width:150px}
+  .mine-row .what{font-weight:600}.mine-row .what small{display:block;color:var(--faint);font-weight:400;font-size:12.5px}
+  .mine-row .sp{flex:1}
+  .needlist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;padding:16px 18px}
+  .need{border:1px solid var(--line);border-left:4px solid var(--crit);border-radius:var(--r);padding:13px 14px;display:grid;gap:10px;background:#fff}
+  .need.warn{border-left-color:var(--warn)}
+  .need .top{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+  .need .nm{font-weight:650}.need .nm small{display:block;color:var(--faint);font-weight:400;font-size:12px;font-family:var(--mono);margin-top:1px}
+  .need .gap{font-family:var(--mono);font-size:13px;color:#8f2a1e}.need.warn .gap{color:#8a5c11}
+  .need .foot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .need.locked{border-left-color:var(--line-strong);background:#FbFcFc}
+  .need .pick{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .linklike{appearance:none;border:0;background:transparent;color:var(--sig-ink);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;padding:2px 0 0;text-align:left}
+  .linklike:hover{text-decoration:underline}
+  .acard.flash{animation:flashbg 1.3s ease}
+  @keyframes flashbg{0%{background:var(--sig-tint)}100%{background:transparent}}
+  @media(prefers-reduced-motion:reduce){.acard.flash{animation:none}}
+  .need .qline{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+  .need .gapstrip{display:grid;gap:3px}
+  .need .gapstrip .tk{height:16px}
+  .need .ends{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--faint)}
+  .need .win2{font-family:var(--mono);font-weight:700;font-size:12.5px}
+  .hintmuted{color:var(--faint);font-size:12px}
+  .need .cover{width:100%;white-space:nowrap}
+  .need .lenbtns{flex-wrap:wrap}
+  .needlist{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+
+  .allacts-axis{padding:14px 18px 4px}
+  .acard{padding:15px 18px;border-bottom:1px solid var(--line);display:grid;gap:10px}
+  .acard:last-child{border-bottom:0}
+  .acard .head{display:flex;align-items:center;gap:12px}
+  .acard .head .nm{font-weight:650;letter-spacing:-.01em}
+  .acard .head .nm small{display:block;color:var(--faint);font-weight:400;font-size:12px;font-family:var(--mono);margin-top:1px}
+  .acard .head .sp{flex:1}
+  .acard .ctrls{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+  .acard .ctrls .win{font-family:var(--mono);font-weight:700;font-size:13.5px;min-width:130px}
+  .acard .ctrls .win .g{color:#1f5a3e;font-weight:600}
+  .acard .ctrls .sp{flex:1}
+  .acard.locked{background:#FbFcFc}
+
+  /* admin board */
+  .summary{display:flex;flex-wrap:wrap;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);align-items:center}
+  .stat{display:flex;align-items:center;gap:9px;padding:8px 13px;border:1px solid var(--line);border-radius:10px;background:#fff}
+  .stat .n{font-family:var(--mono);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums}
+  .stat .t{font-size:12.5px;color:var(--muted);line-height:1.15}
+  .stat.crit{border-color:#f0cec8;background:var(--crit-tint)}.stat.crit .n{color:#8f2a1e}
+  .stat.warn{border-color:#eddcb3;background:var(--warn-tint)}.stat.warn .n{color:#8a5c11}
+  .stat.good{border-color:#cbe4d6;background:var(--good-tint)}.stat.good .n{color:#1f5a3e}
+  .summary .sp{flex:1}
+  .board{padding:6px 0 4px}
+  .board-axis{display:grid;grid-template-columns:190px 1fr;gap:14px;padding:8px 18px 2px}
+  .brow{display:grid;grid-template-columns:190px 1fr;gap:14px;align-items:center;padding:9px 18px;border-bottom:1px solid var(--line)}
+  .brow:last-child{border-bottom:0}
+  .brow .lab{font-weight:600;font-size:13.5px}
+  .brow .lab small{display:block;color:var(--faint);font-weight:400;font-size:11px;font-family:var(--mono);margin-top:1px}
+  .brow .lab .need{color:var(--muted)}
+  body.gaps .brow.ok{opacity:.3}
+  @media(max-width:640px){.brow,.board-axis{grid-template-columns:118px 1fr;gap:10px}}
+
+  /* every-day view */
+  .edhead{padding:12px 18px;color:var(--muted);font-size:13.5px;border-bottom:1px solid var(--line)}
+  .edhead b{color:var(--ink)}
+  .edrow,.edaxis{display:grid;grid-template-columns:118px 1fr 118px;gap:14px;align-items:center;padding:11px 18px}
+  .edrow{border-bottom:1px solid var(--line)}.edrow:last-child{border-bottom:0}
+  .edaxis{padding-bottom:2px}
+  .edlab{font-weight:600;font-size:13.5px}.edlab small{display:block;color:var(--faint);font-family:var(--mono);font-size:11px;font-weight:400;margin-top:1px}
+  @media(max-width:640px){.edrow,.edaxis{grid-template-columns:80px 1fr 84px;gap:8px}}
+
+  /* drawer */
+  .scrim{position:fixed;inset:0;background:rgba(16,26,30,.38);opacity:0;pointer-events:none;transition:.2s;z-index:40}
+  .scrim.on{opacity:1;pointer-events:auto}
+  .drawer{position:fixed;top:0;right:0;height:100%;width:min(430px,94vw);background:var(--surface);z-index:50;box-shadow:-14px 0 40px -18px rgba(16,32,40,.4);transform:translateX(102%);transition:transform .24s ease;display:flex;flex-direction:column}
+  .drawer.on{transform:none}
+  @media(prefers-reduced-motion:reduce){.drawer,.scrim{transition:none}}
+  .drawer-h{padding:18px 20px;border-bottom:1px solid var(--line)}
+  .drawer-h .x{float:right;border:0;background:#EAF0F1;width:30px;height:30px;border-radius:8px;cursor:pointer;font-size:16px;color:var(--muted)}
+  .drawer-h .a{font-weight:700;font-size:17px;letter-spacing:-.01em}
+  .drawer-h .meta{font-family:var(--mono);color:var(--sig-ink);font-size:13px;margin-top:2px}
+  .drawer-b{padding:16px 20px;overflow:auto;display:grid;gap:16px}
+  .flabel{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-bottom:8px}
+  .seg-list{display:grid;gap:7px}
+  .who{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:9px;padding:8px 11px}
+  .who .av{width:26px;height:26px;border-radius:50%;background:var(--sig-tint);color:var(--sig-ink);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:700}
+  .who .em{flex:1;font-size:13px}.who .em b{font-family:var(--mono);font-weight:600;color:var(--ink)}
+  .who .rm{border:0;background:transparent;color:var(--crit);cursor:pointer;font-size:12.5px;font-weight:600}
+  .addrow{display:flex;gap:8px;flex-wrap:wrap}.addrow select{flex:1;min-width:120px}
+  .cap{display:flex;align-items:center;gap:10px}.cap input{width:70px}
+  .foot-note{color:var(--muted);font-size:13.5px;border-top:1px solid var(--line);padding-top:14px}
+  footer{margin-top:26px;color:var(--faint);font-size:12.5px;text-align:center}
+  #toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;opacity:0;pointer-events:none;transition:.2s;z-index:60}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <span class="eyebrow">Villagers · schedule redesign · v5 · multi-day</span>
+  <h1>Keep every table manned — across every day of the con</h1>
+  <p class="lede">Each activity is a <b>position staffed continuously</b> while the village is open, covered by a rotating
+  mix of volunteers who each claim <b>any window they choose</b>. Browsing and staffing happen <b>one day at a time</b>
+  (a shared time axis lets you compare positions), while "where you're needed" and "your shifts" span the whole event.</p>
+
+  <div class="frame">
+    <div class="diagnosis">
+      <div class="col now">
+        <h3>Why one day at a time</h3>
+        <ul>
+          <li><b>Volunteers filter by availability first</b> — "I'm here Fri &amp; Sat." Day is the primary axis, so it's a switcher, not a wall of stacks.</li>
+          <li><b>A shared time axis only works within a day</b> — lining all positions up on 10–4 is how you read "who's bare at 2pm."</li>
+          <li><b>Each day differs</b> — setup Friday, peak Saturday, teardown Sunday have different hours and needs.</li>
+        </ul>
+      </div>
+      <div class="col next">
+        <h3>What spans all days</h3>
+        <ul>
+          <li><b>Where you're needed</b> — the worst gaps across the event, each tagged with its day.</li>
+          <li><b>Your shifts</b> — your personal agenda, every day at once.</li>
+          <li><b>Covered every day?</b> — an admin drill-in: one position stacked across Fri / Sat / Sun.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <div class="seg" role="tablist" aria-label="Choose a view">
+      <button role="tab" id="tab-vol" aria-selected="true" onclick="showView('vol')">Volunteer <span class="k">cover a window</span></button>
+      <button role="tab" id="tab-adm" aria-selected="false" onclick="showView('adm')">Admin <span class="k">coverage board</span></button>
+    </div>
+    <span class="role-note" id="roleNote">Your shifts &amp; where you're needed span the event; the claim stack is one day at a time.</span>
+  </div>
+
+  <!-- ============ VOLUNTEER ============ -->
+  <section class="view on" id="view-vol" aria-labelledby="tab-vol">
+    <div class="panel">
+      <div class="panel-h"><h2>Your shifts</h2><span class="sub">Every day at a glance</span></div>
+      <div class="mine">
+        <div class="mine-row"><span class="daychip">SAT</span><span class="when tnum">10:00 AM–12:00 PM</span>
+          <span class="what">Contest Lead <small>Contest tent · 2 hours</small></span>
+          <span class="pill p-mine"><span class="dot"></span>You're on</span><span class="sp"></span>
+          <button class="btn ghostdanger" onclick="toast('Shift released')">Release</button></div>
+        <div class="mine-row"><span class="daychip">SAT</span><span class="when tnum">2:30–3:30 PM</span>
+          <span class="what">GOTA Station <small>Operating desk · 1 hour</small></span>
+          <span class="pill p-mine"><span class="dot"></span>You're on</span><span class="sp"></span>
+          <button class="btn ghostdanger" onclick="toast('Shift released')">Release</button></div>
+        <div class="mine-row"><span class="daychip">SUN</span><span class="when tnum">12:00–2:00 PM</span>
+          <span class="what">Load Out <small>Dock · 2 hours</small></span>
+          <span class="pill p-mine"><span class="dot"></span>You're on</span><span class="sp"></span>
+          <button class="btn ghostdanger" onclick="toast('Shift released')">Release</button></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">
+        <div><h2>Where you're needed</h2><span class="sub">Thinnest coverage across the days you're around · tap a strip to set your start, then a length</span></div>
+        <div class="hctrls"><span class="hintmuted">I'm around:</span><div class="drail" id="need-days"></div></div>
+      </div>
+      <div class="needlist" id="needlist"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">
+        <div><h2>Every activity · claim a window</h2><span class="sub">Coverage for each position — tap a ribbon to set your start</span></div>
+        <div class="hctrls">
+          <button class="chip" id="f-hidefull" aria-pressed="false" onclick="toggleHideFull()">Hide fully covered <span class="x">×</span></button>
+          <div class="drail" id="vol-rail"></div>
+        </div>
+      </div>
+      <div class="allacts-axis">
+        <div class="axis" id="all-axis"></div>
+        <div class="covkey" style="padding-top:7px">
+          <span class="k"><span class="sw" style="background:var(--crit)"></span>Bare</span>
+          <span class="k"><span class="sw" style="background:var(--warn)"></span>Short-handed</span>
+          <span class="k"><span class="sw" style="background:var(--good)"></span>Covered</span>
+          <span class="k"><span class="sw" style="box-shadow:inset 0 0 0 2px var(--sig-ink);background:#fff"></span>Your window</span>
+        </div>
+      </div>
+      <div id="allacts"></div>
+    </div>
+  </section>
+
+  <!-- ============ ADMIN ============ -->
+  <section class="view" id="view-adm" aria-labelledby="tab-adm">
+    <div class="panel">
+      <div class="panel-h">
+        <div><h2>Coverage board</h2><span class="sub">Every position's staffing over the selected day · click a stretch to manage it</span></div>
+        <div class="drail" id="adm-rail"></div>
+      </div>
+      <div class="summary">
+        <div class="stat crit"><span class="n tnum" id="st-bare">0</span><span class="t">positions bare<br>somewhere</span></div>
+        <div class="stat warn"><span class="n tnum" id="st-short">0</span><span class="t">short-handed<br>somewhere</span></div>
+        <div class="stat good"><span class="n tnum" id="st-full">0</span><span class="t">covered<br>all day</span></div>
+        <span class="sp"></span>
+        <button class="chip" id="f-gaps" aria-pressed="false" onclick="toggleGaps()">Show only gaps <span class="x">×</span></button>
+      </div>
+      <div class="board-axis"><span></span><div class="axis" id="board-axis"></div></div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-h">
+        <div><h2>Covered every day?</h2><span class="sub">One position, stacked across the whole event</span></div>
+        <select id="ed-act" onchange="renderEveryDay()" aria-label="Choose a position"></select>
+      </div>
+      <div id="everyday"></div>
+    </div>
+  </section>
+
+  <footer>Interactive concept — real activity names, illustrative coverage. One shared ribbon component powers every view.</footer>
+</div>
+
+<div class="scrim" id="scrim" onclick="closeDrawer()"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dr-title">
+  <div class="drawer-h">
+    <button class="x" onclick="closeDrawer()" aria-label="Close">×</button>
+    <div class="a" id="dr-title">Activity</div>
+    <div class="meta" id="dr-meta">—</div>
+  </div>
+  <div class="drawer-b">
+    <div><div class="flabel">Coverage · <span id="dr-day"></span></div><div class="axis" id="dr-axis"></div><div class="rib tall" id="dr-rib"></div></div>
+    <div><div class="flabel">On the schedule <span id="dr-count" class="tnum"></span></div><div class="seg-list" id="dr-roster"></div></div>
+    <div><div class="flabel">Add a volunteer for a window</div>
+      <div class="addrow">
+        <select aria-label="Volunteer"><option>Qualified volunteers…</option><option>ke7abc@hamvillage</option><option>w1xyz@hamvillage</option><option>n0dev@hamvillage</option></select>
+        <select aria-label="From"><option>from 2:00</option><option>from 2:30</option><option>from 3:00</option></select>
+        <select aria-label="Length"><option>1 hr</option><option>2 hr</option><option>to close</option></select>
+        <button class="btn primary" onclick="toast('Volunteer added to that window')">Add</button>
+      </div></div>
+    <div><div class="flabel">People needed at all times</div>
+      <div class="cap"><input type="number" id="dr-cap" min="1" value="2"><span style="color:var(--muted);font-size:13.5px">on this position whenever the village is open</span></div></div>
+    <p class="foot-note">Coverage, roster and capacity describe the <b>whole open→close band</b> for this day — no more editing two dozen cells to change one table.</p>
+  </div>
+</aside>
+<div id="toast"></div>
+
+<script>
+  const STEP=15;
+  const DAYS=[
+    {id:"Fri",label:"Fri",sub:"Setup",open:600,close:900},
+    {id:"Sat",label:"Sat",sub:"Peak",open:600,close:960},
+    {id:"Sun",label:"Sun",sub:"Teardown",open:600,close:900},
+  ];
+  let CUR="Sat";
+  const dayById=id=>DAYS.find(d=>d.id===id);
+  const curDay=()=>dayById(CUR);
+  const MINOPEN=Math.min(...DAYS.map(d=>d.open)), MAXCLOSE=Math.max(...DAYS.map(d=>d.close)), MAXSPAN=MAXCLOSE-MINOPEN;
+  const ticksFor=d=>{const t=[];for(let x=d.open;x<d.close;x+=STEP)t.push(x);return t;};
+  const fmt=m=>{let h=Math.floor(m/60),mm=m%60,ap=h<12?'AM':'PM',hh=h%12||12;return `${hh}:${String(mm).padStart(2,'0')} ${ap}`};
+  const fmtR=(a,b)=>{const ap=m=>Math.floor(m/60)<12?'AM':'PM',hm=m=>{let h=Math.floor(m/60)%12||12,mm=m%60;return mm?`${h}:${String(mm).padStart(2,'0')}`:`${h}`};return ap(a)===ap(b)?`${hm(a)}–${hm(b)} ${ap(b)}`:`${hm(a)} ${ap(a)}–${hm(b)} ${ap(b)}`;};
+  const pill=(t,txt)=>`<span class="pill p-${t}"><span class="dot"></span>${txt}</span>`;
+  const clean=s=>s.replace(/["']/g,"");
+  const fmtDur=m=>{const h=Math.floor(m/60),mm=m%60;return h&&mm?`${h}h ${mm}m`:h?`${h}h`:`${mm} min`;};
+
+  // position: needed = people required at all times; days[id] = claimed windows {w,s,e}
+  const ACT=[
+    {n:"VE Lead",loc:"Testing tent",qual:"DC34 Lead",needed:1,days:{
+      Fri:[], Sat:[{w:"ke7abc",s:600,e:780}], Sun:[{w:"ke7abc",s:600,e:750}]}},
+    {n:"Village Lead",loc:"Main booth",qual:"DC34 Lead",needed:1,days:{
+      Fri:[{w:"nv0o",s:600,e:900}], Sat:[{w:"nv0o",s:600,e:960}], Sun:[{w:"nv0o",s:600,e:780}]}},
+    {n:"A/V Ops",loc:"Stage",qual:null,needed:1,days:{
+      Fri:[{w:"w1xyz",s:660,e:900}], Sat:[{w:"w1xyz",s:600,e:720},{w:"n0dev",s:840,e:960}], Sun:[]}},
+    {n:"Village Demo Stations",loc:"Demo row",qual:null,needed:3,days:{
+      Fri:[{w:"a",s:660,e:840}], Sat:[{w:"a",s:600,e:960},{w:"b",s:600,e:840},{w:"c",s:660,e:900}], Sun:[{w:"a",s:600,e:780},{w:"b",s:600,e:720}]}},
+    {n:"Load-In",loc:"Dock",qual:null,needed:2,days:{
+      Fri:[{w:"d",s:600,e:780},{w:"e",s:600,e:750},{w:"x",s:600,e:900}], Sat:[{w:"d",s:600,e:720},{w:"e",s:600,e:690}], Sun:[]}},
+    {n:"Load Out",loc:"Dock",qual:null,needed:2,days:{
+      Fri:[], Sat:[{w:"f",s:900,e:960}], Sun:[{w:"nv0o",s:720,e:840}]}},
+    {n:"Contest Lead",loc:"Contest tent",qual:"DC34 Lead",needed:2,days:{
+      Fri:[], Sat:[{w:"nv0o",s:600,e:720},{w:"g",s:600,e:840}], Sun:[{w:"g",s:600,e:780}]}},
+    {n:"GOTA Station",loc:"Operating desk",qual:null,needed:1,days:{
+      Fri:[{w:"h",s:660,e:840}], Sat:[{w:"h",s:600,e:810},{w:"nv0o",s:870,e:930}], Sun:[{w:"h",s:600,e:750}]}},
+    {n:"Volunteer Examiner",loc:"Testing tent",qual:null,needed:2,days:{
+      Fri:[], Sat:[{w:"i",s:660,e:960},{w:"j",s:720,e:900}], Sun:[{w:"i",s:600,e:780}]}},
+    {n:"Fox Hunt",loc:"Field",qual:"Lockpicking",needed:1,days:{
+      Fri:[], Sat:[{w:"k",s:600,e:780},{w:"l",s:870,e:960}], Sun:[{w:"k",s:600,e:750}]}},
+    {n:'"Can It Ham"',loc:"Workshop",qual:null,needed:1,days:{
+      Fri:[{w:"m",s:660,e:900}], Sat:[{w:"m",s:600,e:960}], Sun:[{w:"m",s:600,e:900}]}},
+    {n:"Contest Floater",loc:"Contest tent",qual:null,needed:1,days:{
+      Fri:[], Sat:[], Sun:[{w:"g",s:780,e:900}]}},
+  ];
+  const MYQUALS=new Set(["DC34 Lead"]);
+  const segsOf=(a,id)=>a.days[id]||[];
+  const cov=(a,id,t)=>segsOf(a,id).filter(s=>s.s<=t&&t<s.e).length;
+  const stTick=(a,id,t)=>{const c=cov(a,id,t);return c>=a.needed?'good':c===0?'crit':'warn';};
+  function gaps(a,id){const d=dayById(id),g=[];let st=null;ticksFor(d).forEach(t=>{const short=cov(a,id,t)<a.needed;if(short&&st===null)st=t;if(!short&&st!==null){g.push([st,t]);st=null;}});if(st!==null)g.push([st,d.close]);return g;}
+  function worstGap(a,id){let w=null;gaps(a,id).forEach(([s,e])=>{if(!w||(e-s)>(w[1]-w[0]))w=[s,e];});return w;}
+  function dayState(a,id){let bare=false,short=false;ticksFor(dayById(id)).forEach(t=>{const c=cov(a,id,t);if(c===0)bare=true;else if(c<a.needed)short=true;});return bare?'crit':short?'warn':'good';}
+  const axisHTML=d=>ticksFor(d).map(t=>`<span>${t%60===0?fmt(t).replace(':00',''):''}</span>`).join("");
+  const railHTML=()=>DAYS.map(d=>`<button class="chip" aria-pressed="${d.id===CUR}" onclick="setDay('${d.id}')">${d.label} <span class="rsub">${d.sub}</span></button>`).join("");
+
+  /* ---------- WHERE YOU'RE NEEDED (all days) ---------- */
+  const NEEDLEN={}, NEEDSTART={}; // per "day:actIdx": chosen length & chosen start within the gap
+  const NEEDDAYS=new Set();        // days the volunteer is around; empty = all days
+  function renderNeedDays(){document.getElementById('need-days').innerHTML=DAYS.map(d=>`<button class="chip" aria-pressed="${NEEDDAYS.has(d.id)}" onclick="toggleNeedDay('${d.id}')">${d.label}</button>`).join("");}
+  function toggleNeedDay(id){NEEDDAYS.has(id)?NEEDDAYS.delete(id):NEEDDAYS.add(id);renderNeedDays();renderNeed();}
+  function renderNeed(){
+    const days=NEEDDAYS.size?DAYS.filter(d=>NEEDDAYS.has(d.id)):DAYS;
+    const rows=[];days.forEach(d=>ACT.forEach((a,ai)=>{const g=worstGap(a,d.id);if(g)rows.push({a,ai,d,g});}));
+    rows.sort((x,y)=>(y.g[1]-y.g[0])-(x.g[1]-x.g[0]));
+    const nl=document.getElementById('needlist');
+    if(!rows.length){nl.innerHTML=`<div style="padding:6px 2px;color:var(--faint);font-size:13.5px">Nothing open ${NEEDDAYS.size?'on '+[...NEEDDAYS].join(' & '):'right now'} — nicely covered. 🎉</div>`;return;}
+    nl.innerHTML=rows.slice(0,6).map(({a,ai,d,g})=>{
+      const gs=g[0], ge=g[1], bare=cov(a,d.id,gs)===0, locked=a.qual&&!MYQUALS.has(a.qual), key=d.id+':'+ai;
+      const q=a.qual?`<span class="qual ${locked?'lock':''}">${locked?'🔒 ':''}${a.qual}</span>`:`<span class="qual">Open to all</span>`;
+      // start ANYWHERE within the open zone; length fits the remaining open time from that start (max 4h)
+      let start=(key in NEEDSTART)?NEEDSTART[key]:gs; start=Math.min(Math.max(start,gs),ge-STEP);
+      const rem=ge-start;
+      if(!(key in NEEDLEN)) NEEDLEN[key]=Math.min(rem,120);
+      const len=Math.min(NEEDLEN[key],rem), end=start+len;
+      let opts=[60,120,180,240].filter(m=>m<=rem); if(!opts.length)opts=[rem]; else if(rem<240&&!opts.includes(rem))opts.push(rem); opts=[...new Set(opts)].sort((x,y)=>x-y);
+      const chips=opts.map(m=>`<button class="tickbtn" aria-pressed="${m===len}" onclick="setNeedLen('${key}',${m})">${fmtDur(m)}</button>`).join("");
+      let mini="";for(let t=gs;t<ge;t+=STEP){const on=t>=start&&t<end;mini+=`<span class="tk ${stTick(a,d.id,t)} ${on?'sel':''}" onclick="setNeedStart('${key}',${t})" title="${fmt(t)}"></span>`;}
+      const body=locked
+        ? `<button class="btn cover" disabled>Requires ${a.qual}</button>`
+        : `<div class="gapstrip"><div class="rib click">${mini}</div><div class="ends"><span>${fmt(gs)}</span><span>${fmt(ge)}</span></div></div>
+           <div class="pick"><span class="lenbtns">${chips}</span></div>
+           <button class="btn primary cover" onclick="toast('Signed up ${d.label} ${fmtR(start,end)} on ${clean(a.n)} — thanks!')">Cover ${fmtR(start,end)}</button>`;
+      return `<div class="need ${bare?'':'warn'} ${locked?'locked':''}">
+        <div class="top"><div class="nm">${a.n}<small>${a.loc}</small></div><span class="daychip">${d.label.toUpperCase()}</span></div>
+        <div class="qline"><span class="gap">${bare?'Bare':'Short'} · <b>${fmtR(gs,ge)}</b></span>${q}</div>
+        ${body}</div>`;
+    }).join("");
+  }
+  function setNeedLen(key,m){NEEDLEN[key]=m;renderNeed();}
+  function setNeedStart(key,t){NEEDSTART[key]=t;renderNeed();}
+
+  /* ---------- EVERY ACTIVITY · CLAIM (current day) ---------- */
+  const LENS=[[60,"1 hr"],[120,"2 hr"],[180,"3 hr"]];
+  let SEL=[], hideFull=false;
+  function resetSel(){SEL=ACT.map(a=>{const g=worstGap(a,CUR);return{start:g?g[0]:curDay().open,len:120};});}
+  function toggleHideFull(){hideFull=!hideFull;document.getElementById('f-hidefull').setAttribute('aria-pressed',hideFull);renderAll();}
+  function renderAll(){
+    const d=curDay();
+    document.getElementById('all-axis').innerHTML=axisHTML(d);
+    const items=ACT.map((a,i)=>({a,i})).filter(({a})=>!(hideFull && !worstGap(a,CUR)));
+    document.getElementById('allacts').innerHTML=items.length
+      ? items.map(({a,i})=>cardHTML(a,i)).join("")
+      : `<div style="padding:22px 18px;color:var(--faint);font-size:13.5px">Every position is covered for ${d.label}. 🎉 <button class="btn" style="padding:4px 10px;margin-left:6px" onclick="toggleHideFull()">Show all</button></div>`;
+  }
+  const MAXSHIFT=240; // no single shift longer than 4 hours
+  // length of the contiguous under-covered stretch starting at t (bounded by close)
+  function holeFrom(a,t){const d=curDay();let n=0;for(let x=t;x<d.close&&cov(a,CUR,x)<a.needed;x+=STEP)n+=STEP;return n;}
+  function cardHTML(a,i){
+    const d=curDay(), locked=a.qual&&!MYQUALS.has(a.qual), g=worstGap(a,CUR);
+    const status=g?(cov(a,CUR,g[0])===0?pill('crit',`Bare ${fmtR(g[0],g[1])}`):pill('warn',`Short ${fmtR(g[0],g[1])}`)):pill('good','Covered all day');
+    const q=a.qual?`<span class="qual ${locked?'lock':''}">${locked?'🔒 ':''}${a.qual}</span>`:`<span class="qual">Open to all</span>`;
+    const sel=SEL[i], hole=holeFrom(a,sel.start), len=Math.min(sel.len,hole), end=sel.start+len;
+    const rib=ticksFor(d).map(t=>{const on=!locked&&len>0&&t>=sel.start&&t<end;return `<span class="tk ${stTick(a,CUR,t)} ${on?'sel':''}" title="${fmt(t)} · ${cov(a,CUR,t)}/${a.needed} on" ${locked?'':`onclick="setCardStart(${i},${t})"`}></span>`;}).join("");
+    // length options generated to match the hole (capped at 4h); short holes offer an exact-fit
+    let opts=[60,120,180,240].filter(m=>m<=hole);
+    if(hole>0&&!opts.length) opts=[hole];
+    else if(hole>0&&hole<MAXSHIFT&&!opts.includes(hole)) opts.push(hole);
+    opts=[...new Set(opts)].sort((x,y)=>x-y);
+    const chips=opts.map(m=>`<button class="tickbtn" aria-pressed="${m===len}" onclick="setCardLen(${i},${m})">${fmtDur(m)}</button>`).join("");
+    let ctrls;
+    if(locked) ctrls=`${q}<span class="sp"></span><button class="btn" disabled>Requires ${a.qual}</button>`;
+    else if(hole===0) ctrls=`${q}<span class="sp"></span><span style="color:var(--faint);font-size:12.5px">${g?'Covered here — tap a red or amber spot to help':'Fully staffed all day 🎉'}</span>`;
+    else ctrls=`${q}<span class="lenbtns">${chips}</span><span class="sp"></span><span class="win tnum">${fmtR(sel.start,end)}</span><button class="btn primary" onclick="toast('Signed up ${fmtR(sel.start,end)} on ${clean(a.n)} · ${d.label}')">Sign up</button>`;
+    return `<div class="acard ${locked?'locked':''}" id="acard-${i}"><div class="head"><div class="nm">${a.n}<small>${a.loc} · needs ${a.needed}</small></div><span class="sp"></span>${status}</div><div class="rib tall click">${rib}</div><div class="ctrls">${ctrls}</div></div>`;
+  }
+  function setCardStart(i,t){SEL[i].start=t;renderAll();}
+  function setCardLen(i,m){SEL[i].len=m;renderAll();}
+  // jump from a "where you're needed" card into the full claim stack, prefilled to that gap
+  function claimFromNeed(ai,dayId){
+    if(CUR!==dayId){CUR=dayId;resetSel();document.getElementById('vol-rail').innerHTML=railHTML();document.getElementById('adm-rail').innerHTML=railHTML();renderBoard();}
+    const a=ACT[ai],g=worstGap(a,CUR);if(g)SEL[ai]={start:g[0],len:Math.min(g[1]-g[0],120)};
+    if(hideFull){hideFull=false;document.getElementById('f-hidefull').setAttribute('aria-pressed',false);}
+    renderAll();
+    const el=document.getElementById('acard-'+ai);
+    if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1300);}
+  }
+
+  /* ---------- ADMIN BOARD (current day) ---------- */
+  function toggleGaps(){document.body.classList.toggle('gaps');document.getElementById('f-gaps').setAttribute('aria-pressed',document.body.classList.contains('gaps'));}
+  function renderBoard(){
+    const d=curDay();document.getElementById('board-axis').innerHTML=axisHTML(d);
+    let bare=0,short=0,full=0;
+    document.getElementById('board').innerHTML=ACT.map((a,i)=>{
+      const st=dayState(a,CUR);st==='crit'?bare++:st==='warn'?short++:full++;
+      const rib=ticksFor(d).map(t=>`<span class="tk ${stTick(a,CUR,t)}" title="${fmt(t)} · ${cov(a,CUR,t)}/${a.needed}"></span>`).join("");
+      return `<div class="brow ${st==='good'?'ok':''}"><div class="lab">${a.n}<small>${a.qual?('🔑 '+a.qual+' · '):''}<span class="need">needs ${a.needed}</span></small></div><div onclick="openDrawer(${i})" style="cursor:pointer"><div class="rib click">${rib}</div></div></div>`;
+    }).join("");
+    document.getElementById('st-bare').textContent=bare;document.getElementById('st-short').textContent=short;document.getElementById('st-full').textContent=full;
+  }
+
+  /* ---------- COVERED EVERY DAY? ---------- */
+  let edIdx=10;
+  function renderEveryDay(){
+    const sel=document.getElementById('ed-act');
+    if(!sel.options.length){ACT.forEach((a,i)=>{const o=document.createElement('option');o.value=i;o.textContent=a.n;sel.appendChild(o);});sel.value=edIdx;}
+    edIdx=+sel.value;const a=ACT[edIdx];
+    const bad=DAYS.filter(d=>dayState(a,d.id)!=='good');
+    const head=bad.length===0?`<b>Covered every day.</b> 🎉`
+      :bad.length===DAYS.length?`<b>Thin every day</b> — this position needs more hands across the event.`
+      :`<b>Needs attention</b> on ${bad.map(d=>d.label).join(', ')} — covered the rest.`;
+    const axisD={open:MINOPEN,close:MAXCLOSE};
+    const rows=DAYS.map(d=>{
+      const st=dayState(a,d.id),g=worstGap(a,d.id),w=((d.close-d.open)/MAXSPAN*100).toFixed(1);
+      const status=st==='good'?pill('good','Covered'):st==='crit'?pill('crit',`Bare ${g?fmtR(g[0],g[1]):''}`):pill('warn',`Short ${g?fmtR(g[0],g[1]):''}`);
+      const rib=`<div class="rib tall" style="width:${w}%">`+ticksFor(d).map(t=>`<span class="tk ${stTick(a,d.id,t)}" title="${fmt(t)} · ${cov(a,d.id,t)}/${a.needed}"></span>`).join("")+`</div>`;
+      return `<div class="edrow"><div class="edlab">${d.label}<small>${fmt(d.open).replace(':00','')}–${fmt(d.close).replace(':00','')} · ${d.sub}</small></div><div>${rib}</div>${status}</div>`;
+    }).join("");
+    document.getElementById('everyday').innerHTML=`<div class="edhead">${head}</div><div class="edaxis"><span></span><div class="axis">${axisHTML(axisD)}</div><span></span></div>${rows}`;
+  }
+
+  /* ---------- DRAWER (current day) ---------- */
+  const NAMES={ke7abc:"ke7abc@hamvillage",nv0o:"nv0o@hamvillage",w1xyz:"w1xyz@hamvillage",n0dev:"n0dev@hamvillage"};
+  function openDrawer(i){
+    const a=ACT[i],d=curDay();
+    document.getElementById('dr-title').textContent=a.n;
+    const g=worstGap(a,CUR);
+    document.getElementById('dr-meta').textContent=(a.qual?`🔑 ${a.qual} · `:'')+(g?`bare/short ${fmtR(g[0],g[1])}`:'covered all day');
+    document.getElementById('dr-day').textContent=d.label;
+    document.getElementById('dr-axis').innerHTML=axisHTML(d);
+    document.getElementById('dr-rib').innerHTML=`<div class="rib tall">`+ticksFor(d).map(t=>`<span class="tk ${stTick(a,CUR,t)}" title="${fmt(t)} · ${cov(a,CUR,t)}/${a.needed}"></span>`).join("")+`</div>`;
+    document.getElementById('dr-cap').value=a.needed;
+    const segs=segsOf(a,CUR);document.getElementById('dr-count').textContent=`${segs.length} window${segs.length===1?'':'s'}`;
+    const r=document.getElementById('dr-roster');
+    r.innerHTML=segs.length?segs.slice().sort((x,y)=>x.s-y.s).map(s=>{const nm=NAMES[s.w]||`${s.w}@hamvillage`;return `<div class="who"><span class="av">${nm.slice(0,2).toUpperCase()}</span><span class="em">${nm}<br><b>${fmtR(s.s,s.e)}</b></span><button class="rm" onclick="toast('Removed ${nm}')">Remove</button></div>`;}).join("")
+      :`<div class="who" style="border-style:dashed;color:var(--faint);justify-content:center">No one signed up — this table is bare all day on ${d.label}.</div>`;
+    document.getElementById('scrim').classList.add('on');document.getElementById('drawer').classList.add('on');
+  }
+  function closeDrawer(){document.getElementById('scrim').classList.remove('on');document.getElementById('drawer').classList.remove('on');}
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
+  /* ---------- day switch + misc ---------- */
+  function setDay(id){CUR=id;resetSel();document.getElementById('vol-rail').innerHTML=railHTML();document.getElementById('adm-rail').innerHTML=railHTML();renderAll();renderBoard();}
+  let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.opacity=1;t.style.transform="translateX(-50%) translateY(0)";clearTimeout(tt);tt=setTimeout(()=>{t.style.opacity=0;t.style.transform="translateX(-50%) translateY(20px)";},1900);}
+  function showView(v){const vol=v==='vol';
+    document.getElementById('view-vol').classList.toggle('on',vol);document.getElementById('view-adm').classList.toggle('on',!vol);
+    document.getElementById('tab-vol').setAttribute('aria-selected',vol);document.getElementById('tab-adm').setAttribute('aria-selected',!vol);
+    document.getElementById('roleNote').textContent=vol?"Your shifts & where you're needed span the event; the claim stack is one day at a time.":"Pick a day for the board, or use “Covered every day?” to check one position across the whole event.";
+  }
+  document.getElementById('vol-rail').innerHTML=railHTML();
+  document.getElementById('adm-rail').innerHTML=railHTML();
+  resetSel(); renderNeedDays(); renderNeed(); renderAll(); renderBoard(); renderEveryDay();
+</script>
+</body>
+</html>
