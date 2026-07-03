@@ -20,6 +20,7 @@ class ConferencesController < ApplicationController
   def show
     authorize @conference, :show?, policy_class: ConferencePolicy
     @conference_roles = @conference.conference_roles.includes(:user)
+    @led_conference_programs = current_user.led_conference_programs(@conference)
   end
 
   def new

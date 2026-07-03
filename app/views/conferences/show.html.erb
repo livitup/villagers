@@ -117,6 +117,20 @@
               </div>
             </div>
           <% end %>
+
+          <% if @led_conference_programs.any? %>
+            <hr>
+            <h5>Activities You Lead</h5>
+            <p class="text-muted small">You have activity-lead rights for these activities. Manage their volunteers and shifts from the schedule, or their leads here.</p>
+            <ul class="list-group mt-2">
+              <% @led_conference_programs.each do |cp| %>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                  <%= cp.program.name %>
+                  <%= link_to "Manage", conference_conference_program_path(@conference, cp), class: "btn btn-sm btn-outline-primary" %>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
         </div>
         <div class="card-footer">
           <div class="d-flex flex-wrap gap-2">

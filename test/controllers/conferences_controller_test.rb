@@ -49,6 +49,26 @@ class ConferencesControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "conference show lists activities the current user leads with a manage link" do
+    program = Program.create!(name: "Foo Barring", village: @village)
+    cp = ConferenceProgram.create!(conference: @conference, program: program)
+    ConferenceProgramRole.create!(user: @volunteer, conference_program: cp, role_name: ConferenceProgramRole::ACTIVITY_LEAD)
+
+    sign_in @volunteer
+    get conference_url(@conference)
+    assert_match(/Activities You Lead/, response.body)
+    assert_select "a[href=?]", conference_conference_program_path(@conference, cp), text: "Manage"
+  end
+
+  test "conference show hides the activities-you-lead section for non-leads" do
+    program = Program.create!(name: "Foo Barring", village: @village)
+    ConferenceProgram.create!(conference: @conference, program: program)
+
+    sign_in @volunteer
+    get conference_url(@conference)
+    assert_no_match(/Activities You Lead/, response.body)
+  end
+
   test "should get new as village admin" do
     sign_in @village_admin
     get new_conference_url

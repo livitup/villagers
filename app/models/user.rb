@@ -129,6 +129,15 @@ class User < ApplicationRecord
     can_manage_conference?(conference_program.conference) || activity_lead?(conference_program)
   end
 
+  # The activities (conference programs) this user leads within a conference.
+  def led_conference_programs(conference)
+    conference.conference_programs
+              .joins(:conference_program_roles)
+              .where(conference_program_roles: { user_id: id, role_name: ConferenceProgramRole::ACTIVITY_LEAD })
+              .includes(:program)
+              .order("programs.name")
+  end
+
   def volunteer?
     # Any registered user is a volunteer
     persisted?
