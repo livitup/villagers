@@ -236,19 +236,16 @@
   }
 
   /*
-   * Sticky header: keep each day's program-name header row pinned while
-   * scrolling that day's (tall) table.
-   *
-   * Bootstrap's .table-responsive sets overflow-x: auto. Per the CSS spec, when
-   * one overflow axis is auto the other cannot be `visible` (it computes to
-   * auto), so we can't make vertical sticky resolve against the viewport here.
-   * Instead we make the wrapper a bounded scroll region (max-height + overflow),
-   * so position: sticky pins the header to the top of that scrolling area while
-   * horizontal scroll is preserved.
+   * Sticky header: the program-name header row stays pinned to the top of the
+   * viewport while scrolling a day's (tall) table. The columns are laid out
+   * with table-layout: fixed and size to fit the viewport, so there is no
+   * horizontal scroll to preserve. We drop .table-responsive's overflow so no
+   * scroll-container ancestor sits between the header and the viewport, letting
+   * the whole page scroll naturally and the header pin against it. The navbar is
+   * not fixed, so top: 0 pins to the very top.
    */
   .table-responsive {
-    max-height: 75vh;
-    overflow: auto;
+    overflow: visible;
   }
 
   .schedule-table thead th {
@@ -256,19 +253,6 @@
     top: 0;
     z-index: 2;
     background-color: #f8f9fa; /* opaque bg (matches .table-light) so scrolled rows don't show through */
-  }
-
-  /* Keep the Time label column visible on horizontal scroll (top + left). */
-  .schedule-table .time-column {
-    position: sticky;
-    left: 0;
-    z-index: 1;
-    background-color: #fff;
-  }
-
-  .schedule-table thead th.time-column {
-    z-index: 3; /* top-left corner sits above both sticky row and sticky column */
-    background-color: #f8f9fa;
   }
 
   .time-column {
