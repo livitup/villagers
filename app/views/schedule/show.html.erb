@@ -237,15 +237,19 @@
 
   /*
    * Sticky header: the program-name header row stays pinned to the top of the
-   * viewport while scrolling a day's (tall) table. The columns are laid out
-   * with table-layout: fixed and size to fit the viewport, so there is no
-   * horizontal scroll to preserve. We drop .table-responsive's overflow so no
-   * scroll-container ancestor sits between the header and the viewport, letting
-   * the whole page scroll naturally and the header pin against it. The navbar is
-   * not fixed, so top: 0 pins to the very top.
+   * viewport while scrolling a day's (tall) table. The columns use table-layout:
+   * fixed and size to fit the viewport, so there is no horizontal scroll to keep.
+   *
+   * overflow-y must stay visible so no scroll-container ancestor sits between the
+   * header and the viewport (that's what lets the whole page scroll and the
+   * header pin against it). overflow-x: clip contains any stray horizontal
+   * overflow (e.g. a wide cell) without adding a page scrollbar and — unlike
+   * auto/hidden — does NOT create a scroll container, so sticky keeps working.
+   * The navbar is not fixed, so top: 0 pins to the very top.
    */
   .table-responsive {
-    overflow: visible;
+    overflow-x: clip;
+    overflow-y: visible;
   }
 
   .schedule-table thead th {
