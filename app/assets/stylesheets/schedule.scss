@@ -1,0 +1,124 @@
+// Styles for the conference schedule page (app/views/schedule/show.html.erb).
+// Extracted from an inline <style> block so it compiles through the asset
+// pipeline like the rest of the app's CSS.
+
+.schedule-table {
+  table-layout: fixed;
+}
+
+/*
+ * Sticky header: the program-name header row stays pinned to the top of the
+ * viewport while scrolling a day's (tall) table. The columns use table-layout:
+ * fixed and size to fit the viewport, so there is no horizontal scroll to keep.
+ *
+ * overflow-y must stay visible so no scroll-container ancestor sits between the
+ * header and the viewport (that's what lets the whole page scroll and the
+ * header pin against it). overflow-x: clip contains any stray horizontal
+ * overflow (e.g. a wide cell) without adding a page scrollbar and — unlike
+ * auto/hidden — does NOT create a scroll container, so sticky keeps working.
+ * The navbar is not fixed, so top: 0 pins to the very top.
+ */
+.table-responsive {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.schedule-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background-color: #f8f9fa; /* opaque bg (matches .table-light) so scrolled rows don't show through */
+}
+
+.time-column {
+  width: 100px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.program-column {
+  min-width: 200px;
+}
+
+.schedule-cell {
+  vertical-align: top;
+  padding: 0.5rem !important;
+  border: 4px solid #fff !important;
+  height: 1px; /* Trick to make td respect height for flexbox children */
+}
+
+.schedule-cell.user-signed-up {
+  background-color: #cfe2ff;
+}
+
+.schedule-cell.slot-full {
+  background-color: #d1e7dd;
+}
+
+.schedule-cell.slot-empty {
+  background-color: #f8d7da;
+}
+
+.schedule-cell.slot-partial {
+  background-color: #fff3cd;
+}
+
+.schedule-cell.slot-unqualified {
+  background-color: #dee2e6;
+}
+
+.qualification-pill {
+  font-size: 0.7rem;
+  font-weight: normal;
+  white-space: normal;
+  word-break: break-word;
+  text-align: left;
+  min-width: 0;
+}
+
+.schedule-slot {
+  padding: 0;
+  min-height: 100%;
+}
+
+.volunteer-list {
+  font-size: 0.75rem;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.slot-actions {
+  flex-shrink: 0;
+}
+
+.btn-xs {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.3rem;
+}
+
+.admin-controls {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .schedule-table {
+    font-size: 0.75rem;
+  }
+
+  .time-column {
+    width: 70px;
+  }
+
+  .program-column {
+    min-width: 150px;
+  }
+
+  .schedule-slot {
+    padding: 0.25rem;
+  }
+
+  .btn-sm {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.4rem;
+  }
+}
