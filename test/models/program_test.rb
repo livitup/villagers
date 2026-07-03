@@ -157,12 +157,33 @@ class ProgramTest < ActiveSupport::TestCase
     )
     Program.create!(name: "Ham Test", village: @village)
 
-    conference_program = Program.new(
+    # Must persist without raising RecordNotUnique (issue #189): the DB unique
+    # index is scoped by conference_id, matching the model.
+    conference_program = Program.create!(
       name: "Ham Test",
       village: @village,
       conference: conference
     )
-    assert conference_program.valid?
+    assert conference_program.persisted?
+  end
+
+  test "same name can exist in two different conferences" do
+    conf_a = Conference.create!(name: "Conf A", village: @village, start_date: Date.tomorrow, end_date: Date.tomorrow + 1)
+    conf_b = Conference.create!(name: "Conf B", village: @village, start_date: Date.tomorrow, end_date: Date.tomorrow + 1)
+    Program.create!(name: "Setup Crew", village: @village, conference: conf_a)
+
+    dup = Program.new(name: "Setup Crew", village: @village, conference: conf_b)
+    assert dup.valid?
+    assert dup.save
+  end
+
+  test "duplicate name within the same conference is invalid" do
+    conference = Conference.create!(name: "Test Conference", village: @village, start_date: Date.tomorrow, end_date: Date.tomorrow + 1)
+    Program.create!(name: "Setup Crew", village: @village, conference: conference)
+
+    dup = Program.new(name: "Setup Crew", village: @village, conference: conference)
+    assert_not dup.valid?
+    assert_includes dup.errors[:name], "must be unique within the village"
   end
 
   # Program lead tests
