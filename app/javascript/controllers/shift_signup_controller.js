@@ -65,14 +65,14 @@ export default class extends Controller {
     // Set program name
     this.programNameTarget.textContent = data.program_name
 
-    // Conference minimum shift duration (defaults to 15 if not provided).
-    // Stored so submit() can guard against a too-short shift.
+    // Conference shift block size (defaults to 15 if not provided). Durations
+    // must be a whole number of blocks. Stored so submit() can guard too.
     this.minDuration = data.minimum_shift_duration || 15
 
-    // Tell the user the minimum block for this conference (only when > 15 min)
+    // Tell the user the block size for this conference (only when > 15 min)
     if (this.hasMinimumNoteTarget) {
       if (this.minDuration > 15) {
-        this.minimumNoteTarget.textContent = `Minimum shift for this conference: ${this.formatDuration(this.minDuration)}.`
+        this.minimumNoteTarget.textContent = `Shifts are booked in ${this.formatDuration(this.minDuration)} blocks.`
         this.minimumNoteTarget.classList.remove("d-none")
       } else {
         this.minimumNoteTarget.classList.add("d-none")
@@ -113,7 +113,7 @@ export default class extends Controller {
 
     let defaultSelected = false
     durations.forEach(d => {
-      if (d.minutes >= minDuration && d.minutes <= maxDuration) {
+      if (d.minutes >= minDuration && d.minutes <= maxDuration && d.minutes % minDuration === 0) {
         const option = document.createElement("option")
         option.value = d.minutes
         option.dataset.type = "duration"
@@ -144,7 +144,7 @@ export default class extends Controller {
     endTimeGroup.label = "Or Select End Time"
 
     data.available_end_times.forEach(et => {
-      if (et.duration_minutes < minDuration) return
+      if (et.duration_minutes < minDuration || et.duration_minutes % minDuration !== 0) return
 
       const option = document.createElement("option")
       option.value = et.end_time
@@ -216,12 +216,12 @@ export default class extends Controller {
     const selected = this.endTimeSelectTarget.selectedOptions[0]
     if (!selected) return
 
-    // Guard against a shift shorter than the conference minimum, in case a
-    // too-short option is submitted anyway. The server also enforces this.
+    // Guard against a shift that isn't a whole number of blocks, in case such
+    // an option is submitted anyway. The server also enforces this.
     const durationMinutes = this.selectedDurationMinutes()
-    const minDuration = this.minDuration || 15
-    if (durationMinutes < minDuration) {
-      this.showError(`Shifts must be at least ${this.formatDuration(minDuration)} for this conference.`)
+    const block = this.minDuration || 15
+    if (durationMinutes < block || durationMinutes % block !== 0) {
+      this.showError(`Shifts must be booked in ${this.formatDuration(block)} blocks for this conference.`)
       return
     }
 

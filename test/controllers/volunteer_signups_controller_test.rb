@@ -226,7 +226,31 @@ class VolunteerSignupsControllerTest < ActionDispatch::IntegrationTest
       }
     end
     assert_redirected_to conference_schedule_path(@conference)
-    assert_match(/minimum/i, flash[:alert])
+    assert_match(/block/i, flash[:alert])
+  end
+
+  test "bulk create rejects a duration that is not a whole number of blocks" do
+    @conference.update!(minimum_shift_duration: 30)
+
+    timeslots = []
+    4.times do |i|
+      timeslots << Timeslot.create!(
+        conference_program: @conference_program,
+        start_time: Date.tomorrow.to_datetime + 11.hours + (i * 15).minutes,
+        max_volunteers: 2
+      )
+    end
+
+    sign_in @volunteer
+    # 45 minutes is >= the 30-min minimum but is not a multiple of 30
+    assert_no_difference("VolunteerSignup.count") do
+      post bulk_create_conference_volunteer_signups_url(@conference), params: {
+        timeslot_id: timeslots.first.id,
+        duration_minutes: 45
+      }
+    end
+    assert_redirected_to conference_schedule_path(@conference)
+    assert_match(/block/i, flash[:alert])
   end
 
   test "bulk create allows duration at conference minimum_shift_duration" do

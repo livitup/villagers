@@ -38,11 +38,12 @@ class VolunteerSignupsController < ApplicationController
       requested_minutes = ((end_time - start_timeslot.start_time) / 60).to_i
     end
 
-    # Enforce the conference minimum shift duration
-    minimum_minutes = @conference.effective_minimum_shift_duration
-    if requested_minutes < minimum_minutes
+    # Enforce the conference shift block: durations must be at least one block
+    # and a whole number of blocks (e.g. 30-min blocks => 30, 60, 90, ...).
+    block_minutes = @conference.effective_minimum_shift_duration
+    if requested_minutes < block_minutes || (requested_minutes % block_minutes).nonzero?
       redirect_to conference_schedule_path(@conference),
-                  alert: "Shifts must be at least #{minimum_minutes} minutes (the minimum for this conference)."
+                  alert: "Shifts must be booked in #{block_minutes}-minute blocks for this conference."
       return
     end
 
