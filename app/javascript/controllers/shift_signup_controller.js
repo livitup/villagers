@@ -3,7 +3,7 @@ import * as bootstrap from "bootstrap"
 
 // Connects to data-controller="shift-signup"
 export default class extends Controller {
-  static targets = ["modal", "startTime", "endTimeSelect", "durationDisplay", "submitBtn", "programName", "loading"]
+  static targets = ["modal", "startTime", "endTimeSelect", "durationDisplay", "submitBtn", "programName", "loading", "minimumNote", "error"]
   static values = {
     availableTimeslotsUrl: String,
     bulkCreateUrl: String,
@@ -55,12 +55,29 @@ export default class extends Controller {
   }
 
   populateModal(data) {
+    // Clear any prior validation error
+    this.hideError()
+
     // Set start time display
     this.startTimeTarget.textContent = data.start_time_display
     this.startTimeTarget.dataset.isoTime = data.start_time
 
     // Set program name
     this.programNameTarget.textContent = data.program_name
+
+    // Conference minimum shift duration (defaults to 15 if not provided).
+    // Stored so submit() can guard against a too-short shift.
+    this.minDuration = data.minimum_shift_duration || 15
+
+    // Tell the user the minimum block for this conference (only when > 15 min)
+    if (this.hasMinimumNoteTarget) {
+      if (this.minDuration > 15) {
+        this.minimumNoteTarget.textContent = `Minimum shift for this conference: ${this.formatDuration(this.minDuration)}.`
+        this.minimumNoteTarget.classList.remove("d-none")
+      } else {
+        this.minimumNoteTarget.classList.add("d-none")
+      }
+    }
 
     // Populate end time options
     this.endTimeSelectTarget.innerHTML = ""
@@ -88,8 +105,7 @@ export default class extends Controller {
       ? data.available_end_times[data.available_end_times.length - 1].duration_minutes
       : 0
 
-    // Conference minimum shift duration (defaults to 15 if not provided)
-    const minDuration = data.minimum_shift_duration || 15
+    const minDuration = this.minDuration
 
     // Create option group for durations
     const durationGroup = document.createElement("optgroup")
@@ -172,11 +188,42 @@ export default class extends Controller {
     this.updateDurationDisplay()
   }
 
+  selectedDurationMinutes() {
+    const selected = this.endTimeSelectTarget.selectedOptions[0]
+    if (!selected) return null
+
+    return selected.dataset.type === "duration"
+      ? parseInt(selected.value)
+      : parseInt(selected.dataset.durationMinutes)
+  }
+
+  showError(message) {
+    if (!this.hasErrorTarget) return
+    this.errorTarget.textContent = message
+    this.errorTarget.classList.remove("d-none")
+  }
+
+  hideError() {
+    if (!this.hasErrorTarget) return
+    this.errorTarget.textContent = ""
+    this.errorTarget.classList.add("d-none")
+  }
+
   async submit(event) {
     event.preventDefault()
+    this.hideError()
 
     const selected = this.endTimeSelectTarget.selectedOptions[0]
     if (!selected) return
+
+    // Guard against a shift shorter than the conference minimum, in case a
+    // too-short option is submitted anyway. The server also enforces this.
+    const durationMinutes = this.selectedDurationMinutes()
+    const minDuration = this.minDuration || 15
+    if (durationMinutes < minDuration) {
+      this.showError(`Shifts must be at least ${this.formatDuration(minDuration)} for this conference.`)
+      return
+    }
 
     this.submitBtnTarget.disabled = true
     this.submitBtnTarget.textContent = "Signing up..."
