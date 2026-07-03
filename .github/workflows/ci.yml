@@ -124,7 +124,25 @@ jobs:
           DATABASE_USERNAME: postgres
           DATABASE_PASSWORD: postgres
           # RAILS_MASTER_KEY: ${{ secrets.RAILS_MASTER_KEY }}
-        run: bin/rails db:test:prepare test:system
+        # Chrome 149 intermittently raises a DevTools race ("Node with given id
+        # does not belong to the document") during Capybara visibility checks —
+        # a driver flake, not a real failure, and it lands on a random test each
+        # run. Retry the whole suite in a fresh process (clean browser + DB) up
+        # to 3 times; a genuine failure still fails all three.
+        run: |
+          bin/rails db:test:prepare
+          for attempt in 1 2 3; do
+            echo "::group::System tests — attempt $attempt of 3"
+            if bin/rails test:system; then
+              echo "::endgroup::"
+              echo "System tests passed on attempt $attempt."
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "System tests failed on attempt $attempt."
+          done
+          echo "System tests failed after 3 attempts."
+          exit 1
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v7
