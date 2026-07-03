@@ -236,18 +236,19 @@
   }
 
   /*
-   * Sticky header: keep each day's program-name header row pinned to the top
-   * of the viewport while scrolling that day's (tall) table. The navbar is not
-   * fixed/sticky, so it scrolls away and top: 0 pins the header to the viewport.
+   * Sticky header: keep each day's program-name header row pinned while
+   * scrolling that day's (tall) table.
    *
-   * Bootstrap's .table-responsive wrapper sets overflow-x: auto, which makes the
-   * browser compute overflow-y as auto too, creating a scroll container that
-   * breaks vertical position: sticky. We override overflow-y: visible on this
-   * page so vertical sticky works against the viewport while horizontal scroll
-   * is preserved.
+   * Bootstrap's .table-responsive sets overflow-x: auto. Per the CSS spec, when
+   * one overflow axis is auto the other cannot be `visible` (it computes to
+   * auto), so we can't make vertical sticky resolve against the viewport here.
+   * Instead we make the wrapper a bounded scroll region (max-height + overflow),
+   * so position: sticky pins the header to the top of that scrolling area while
+   * horizontal scroll is preserved.
    */
   .table-responsive {
-    overflow-y: visible;
+    max-height: 75vh;
+    overflow: auto;
   }
 
   .schedule-table thead th {
