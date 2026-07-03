@@ -94,28 +94,36 @@
     </div>
   <% end %>
 
-  <% if @available_programs.any? && policy(ConferenceProgram.new(conference: @conference)).create? %>
+  <% if policy(ConferenceProgram.new(conference: @conference)).create? %>
     <div class="mt-4">
       <h3>Available Programs</h3>
-      <p class="text-muted">The following programs are available but not yet enabled for this conference:</p>
-      <ul class="list-group">
-        <% @available_programs.each do |program| %>
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <div>
-              <strong><%= program.name %></strong>
-              <% if program.conference_specific? %>
-                <span class="badge bg-info ms-1">Conference Only</span>
-              <% else %>
-                <span class="badge bg-secondary ms-1">Village-Wide</span>
-              <% end %>
-              <% if program.description.present? %>
-                <br><small class="text-muted"><%= truncate(program.description, length: 150) %></small>
-              <% end %>
-            </div>
-            <%= link_to "Enable", conference_new_conference_program_path(@conference, program_id: program.id), class: "btn btn-sm btn-primary" %>
-          </li>
-        <% end %>
-      </ul>
+      <% if @available_programs.any? %>
+        <p class="text-muted">Enable an existing village or conference program instead of creating a new one:</p>
+        <ul class="list-group">
+          <% @available_programs.each do |program| %>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong><%= program.name %></strong>
+                <% if program.conference_specific? %>
+                  <span class="badge bg-info ms-1">Conference Only</span>
+                <% else %>
+                  <span class="badge bg-secondary ms-1">Village-Wide</span>
+                <% end %>
+                <% if program.description.present? %>
+                  <br><small class="text-muted"><%= truncate(program.description, length: 150) %></small>
+                <% end %>
+              </div>
+              <%= link_to "Enable", conference_new_conference_program_path(@conference, program_id: program.id), class: "btn btn-sm btn-primary" %>
+            </li>
+          <% end %>
+        </ul>
+      <% else %>
+        <p class="text-muted mb-0">
+          No more programs are available to enable.
+          <%= link_to "Create a new program", new_conference_custom_program_path(@conference), class: "alert-link" %>
+          to add one to this conference.
+        </p>
+      <% end %>
     </div>
   <% end %>
 </div>

@@ -86,6 +86,23 @@ class ConferenceProgramsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
   end
 
+  test "index shows an empty available-programs state when all village programs are enabled" do
+    # The only village program is already enabled in setup, so none are available.
+    sign_in @village_admin
+    get conference_conference_programs_path(@conference)
+    assert_select "h3", text: "Available Programs"
+    assert_match(/No more programs are available to enable/, response.body)
+  end
+
+  test "index lists village programs available to enable" do
+    Program.create!(name: "Not Yet Enabled", description: "x", village: @village)
+    sign_in @village_admin
+    get conference_conference_programs_path(@conference)
+    assert_select "h3", text: "Available Programs"
+    assert_match(/Not Yet Enabled/, response.body)
+    assert_select "a", text: "Enable"
+  end
+
   test "should get new as village admin" do
     sign_in @village_admin
     get conference_new_conference_program_path(@conference)
