@@ -107,7 +107,7 @@ class Conference < ApplicationRecord
     lead = primary_lead
     return "No lead assigned" unless lead
 
-    name = lead.name.presence || lead.email
+    name = lead.display_name
     additional_leads = conference_leads.count - 1
     additional_leads > 0 ? "#{name} +#{additional_leads}" : name
   end

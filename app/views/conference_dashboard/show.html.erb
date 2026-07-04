@@ -96,7 +96,7 @@
               <% @recent_signups.each do |signup| %>
                 <li class="list-group-item d-flex justify-content-between align-items-center">
                   <div>
-                    <strong><%= signup.user.name || signup.user.email %></strong>
+                    <strong><%= signup.user.display_name %></strong>
                     <br>
                     <small class="text-muted">
                       <%= signup.timeslot.conference_program.program.name %> -

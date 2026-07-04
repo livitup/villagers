@@ -44,7 +44,7 @@ class VolunteerHistoryControllerTest < ActionDispatch::IntegrationTest
       email: "volunteer@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Test Volunteer"
+      handle: "Test Volunteer"
     )
     # Create signups
     VolunteerSignup.create!(user: @user, timeslot: @cp1.timeslots.first)

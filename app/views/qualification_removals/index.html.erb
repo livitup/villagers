@@ -52,14 +52,14 @@
                   <% @removals.each do |removal| %>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                       <div>
-                        <strong><%= removal.user.name || removal.user.email %></strong>
+                        <strong><%= removal.user.display_name %></strong>
                         <br>
                         <small class="text-muted">
                           <span class="badge bg-secondary"><%= removal.qualification.name %></span>
                           removed for this conference
                         </small>
                       </div>
-                      <%= link_to "Restore", conference_qualification_removal_path(@conference, removal), data: { turbo_method: :delete, turbo_confirm: "Restore #{removal.qualification.name} for #{removal.user.name || removal.user.email}?" }, class: "btn btn-sm btn-outline-success" %>
+                      <%= link_to "Restore", conference_qualification_removal_path(@conference, removal), data: { turbo_method: :delete, turbo_confirm: "Restore #{removal.qualification.name} for #{removal.user.display_name}?" }, class: "btn btn-sm btn-outline-success" %>
                     </li>
                   <% end %>
                 </ul>

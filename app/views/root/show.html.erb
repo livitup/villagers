@@ -128,7 +128,7 @@
               <% @recent_signups.each do |signup| %>
                 <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                   <div>
-                    <strong><%= signup.user.name || signup.user.email %></strong>
+                    <strong><%= signup.user.display_name %></strong>
                     signed up for <strong><%= signup.timeslot.conference_program.program.name %></strong>
                     <br>
                     <small class="text-muted">
@@ -218,7 +218,7 @@
                     <% @managed_recent_signups.each do |signup| %>
                       <div class="list-group-item d-flex justify-content-between align-items-center px-0">
                         <div>
-                          <strong><%= signup[:user].name || signup[:user].email %></strong>
+                          <strong><%= signup[:user].display_name %></strong>
                           signed up for <strong><%= signup[:program].name %></strong>
                           <br>
                           <small class="text-muted">

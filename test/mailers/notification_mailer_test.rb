@@ -16,7 +16,7 @@ class NotificationMailerTest < ActionMailer::TestCase
       email: "user@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Test User"
+      handle: "Test User"
     )
   end
 
@@ -108,12 +108,12 @@ class NotificationMailerTest < ActionMailer::TestCase
       notification_type: Notification::SYSTEM
     )
 
-    assert_match @user.name, email.html_part.body.to_s
-    assert_match @user.name, email.text_part.body.to_s
+    assert_match @user.display_name, email.html_part.body.to_s
+    assert_match @user.display_name, email.text_part.body.to_s
   end
 
-  test "notification_email uses email when user has no name" do
-    @user.update!(name: nil)
+  test "notification_email uses email when user has no handle" do
+    @user.update!(handle: "")
     email = NotificationMailer.notification_email(
       user: @user,
       title: "Test Title",

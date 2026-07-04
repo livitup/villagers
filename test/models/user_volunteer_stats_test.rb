@@ -44,7 +44,7 @@ class UserVolunteerStatsTest < ActiveSupport::TestCase
       email: "volunteer@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Test Volunteer"
+      handle: "Test Volunteer"
     )
   end
 
@@ -149,7 +149,7 @@ class UserVolunteerStatsTest < ActiveSupport::TestCase
       email: "volunteer2@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Top Volunteer"
+      handle: "Top Volunteer"
     )
 
     # user2 has 3 shifts, @user has 1 shift

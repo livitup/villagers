@@ -16,7 +16,7 @@ class UserOmniauthTest < ActiveSupport::TestCase
       assert_equal "villager_oauth", user.provider
       assert_equal "uid-1", user.uid
       assert_equal "newcomer@example.com", user.email
-      assert_equal "New Comer", user.name
+      assert_equal "New Comer", user.handle
       assert user.confirmed?, "OAuth users should be auto-confirmed"
     end
   end

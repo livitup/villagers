@@ -34,7 +34,7 @@
                   <% end %>
                 </td>
                 <td>
-                  <strong><%= volunteer.name.presence || volunteer.email %></strong>
+                  <strong><%= volunteer.display_name %></strong>
                   <% if volunteer.handle.present? %>
                     <br><small class="text-muted">@<%= volunteer.handle %></small>
                   <% end %>

@@ -16,7 +16,7 @@ class ShiftReminderJobTest < ActiveJob::TestCase
       email: "volunteer@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Test Volunteer"
+      handle: "Test Volunteer"
     )
     @conference = Conference.create!(
       village: @village,

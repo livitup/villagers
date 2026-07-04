@@ -36,7 +36,7 @@
               <p class="card-text text-muted">
                 <strong>Lead:</strong>
                 <% if (lead = conference.primary_lead) %>
-                  <%= link_to (lead.name.presence || lead.email), managed_user_path(lead), class: "text-decoration-none" %>
+                  <%= link_to (lead.display_name), managed_user_path(lead), class: "text-decoration-none" %>
                   <% if (additional = conference.conference_leads.count - 1) > 0 %>
                     <span class="text-muted">+<%= additional %></span>
                   <% end %>

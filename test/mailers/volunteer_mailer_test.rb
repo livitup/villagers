@@ -7,7 +7,7 @@ class VolunteerMailerTest < ActionMailer::TestCase
       email: "volunteer@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Test Volunteer"
+      handle: "Test Volunteer"
     )
     @conference = Conference.create!(
       village: @village,
@@ -127,19 +127,19 @@ class VolunteerMailerTest < ActionMailer::TestCase
     assert_match "15 minute", email.text_part.body.to_s
   end
 
-  test "shift_signup_confirmation uses user name when available" do
+  test "shift_signup_confirmation uses display name when available" do
     email = VolunteerMailer.shift_signup_confirmation(
       user: @user,
       signups: [ @signup ],
       conference: @conference
     )
 
-    assert_match @user.name, email.html_part.body.to_s
-    assert_match @user.name, email.text_part.body.to_s
+    assert_match @user.display_name, email.html_part.body.to_s
+    assert_match @user.display_name, email.text_part.body.to_s
   end
 
-  test "shift_signup_confirmation uses email when name not available" do
-    @user.update!(name: nil)
+  test "shift_signup_confirmation uses email when handle not available" do
+    @user.update!(handle: "")
     email = VolunteerMailer.shift_signup_confirmation(
       user: @user,
       signups: [ @signup ],
@@ -222,7 +222,7 @@ class VolunteerMailerTest < ActionMailer::TestCase
       email: "admin@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Admin User"
+      handle: "Admin User"
     )
 
     email = VolunteerMailer.admin_signup_notification(

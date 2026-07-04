@@ -21,8 +21,8 @@ class VolunteerMailerPreview < ActionMailer::Preview
 
   # Preview: http://localhost:3000/rails/mailers/volunteer_mailer/admin_signup_notification
   def admin_signup_notification
-    admin = User.first || User.new(email: "admin@example.com", name: "Conference Admin")
-    volunteer = User.second || User.new(email: "volunteer@example.com", name: "New Volunteer")
+    admin = User.first || User.new(email: "admin@example.com", handle: "Conference Admin")
+    volunteer = User.second || User.new(email: "volunteer@example.com", handle: "New Volunteer")
     conference = Conference.first || Conference.new(
       name: "Preview Conference",
       city: "Las Vegas",
@@ -50,7 +50,7 @@ class VolunteerMailerPreview < ActionMailer::Preview
   private
 
   def build_preview_data
-    user = User.first || User.new(email: "preview@example.com", name: "Preview User")
+    user = User.first || User.new(email: "preview@example.com", handle: "Preview User")
     conference = Conference.first || Conference.new(
       name: "Preview Conference",
       city: "Las Vegas",
