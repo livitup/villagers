@@ -60,6 +60,21 @@ class ScheduleControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "grid identifies signed-up volunteers by Display Name and callsign, not email" do
+    @volunteer.update!(handle: "Radio Ray", callsign: "W1AW")
+    @conference_program.update!(day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "12:00" } })
+    timeslot = @conference_program.timeslots.reload.first
+    assert timeslot, "expected timeslots to be generated from the day schedule"
+    VolunteerSignup.create!(user: @volunteer, timeslot: timeslot)
+
+    sign_in @village_admin
+    get conference_schedule_url(@conference)
+
+    assert_response :success
+    assert_match "Radio Ray", response.body
+    assert_match "W1AW", response.body
+  end
+
   test "should get show as conference lead" do
     sign_in @conference_lead
     get conference_schedule_url(@conference)

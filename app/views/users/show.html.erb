@@ -11,8 +11,13 @@
         <div class="card-body">
           <dl class="row">
             <% if @user.handle.present? %>
-              <dt class="col-sm-3">Handle:</dt>
+              <dt class="col-sm-3">Display Name:</dt>
               <dd class="col-sm-9"><%= @user.handle %></dd>
+            <% end %>
+
+            <% if @user.callsign.present? %>
+              <dt class="col-sm-3">Callsign:</dt>
+              <dd class="col-sm-9"><%= @user.callsign %></dd>
             <% end %>
 
             <% if @user.phone.present? %>
