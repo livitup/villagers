@@ -18,3 +18,6 @@ application.register("location-fields", LocationFieldsController)
 
 import ShiftSignupController from "./shift_signup_controller"
 application.register("shift-signup", ShiftSignupController)
+
+import TooltipController from "./tooltip_controller"
+application.register("tooltip", TooltipController)

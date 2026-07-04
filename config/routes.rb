@@ -103,6 +103,11 @@ Rails.application.routes.draw do
     end
   end
 
+  # Self-service profile editing (Display Name, callsign, contact methods).
+  # Like notification preferences, this doesn't require the current password,
+  # so OAuth users (who have a random one) can still edit their own profile.
+  resource :profile, only: [ :update ]
+
   # Notification preferences (doesn't require password like Devise profile updates)
   resource :notification_preferences, only: [ :update ]
 

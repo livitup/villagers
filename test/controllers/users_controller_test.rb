@@ -94,6 +94,7 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     get edit_managed_user_url(@volunteer)
     assert_response :success
     assert_select "input[name='user[handle]']"
+    assert_select "input[name='user[callsign]']"
     assert_select "input[name='user[phone]']"
     assert_select "input[name='user[twitter]']"
     assert_select "input[name='user[signal]']"
