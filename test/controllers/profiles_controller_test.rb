@@ -87,4 +87,24 @@ class ProfilesControllerTest < ActionDispatch::IntegrationTest
     patch profile_path, params: { user: { handle: "x" } }
     assert_redirected_to new_user_session_path
   end
+
+  # --- completion modal ---
+
+  test "shows the completion modal for an incomplete profile on a normal page" do
+    # @user has a personalized handle but no contact method -> incomplete.
+    assert @user.needs_profile_completion?
+    get root_path
+    assert_select "#profileCompletionModal"
+  end
+
+  test "does not show the completion modal once the profile is complete" do
+    @user.update!(discord: "bob#1234")
+    get root_path
+    assert_select "#profileCompletionModal", count: 0
+  end
+
+  test "does not show the completion modal on the profile edit page itself" do
+    get edit_user_registration_path
+    assert_select "#profileCompletionModal", count: 0
+  end
 end

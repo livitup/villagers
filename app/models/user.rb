@@ -22,6 +22,30 @@ class User < ApplicationRecord
     handle.presence || email
   end
 
+  # Contact methods a lead could actually reach a volunteer through.
+  CONTACT_FIELDS = %i[phone signal discord twitter].freeze
+
+  def contact_method?
+    CONTACT_FIELDS.any? { |field| public_send(field).present? }
+  end
+
+  # A handle counts as a real Display Name only once it differs from the email
+  # fallback — otherwise the schedule still shows an email address.
+  def display_name_set?
+    handle.present? && !handle.to_s.casecmp?(email.to_s)
+  end
+
+  # "Complete" = a personalized Display Name plus at least one contact method.
+  # Callsign is collected but never required (Villagers ships to non-ham
+  # villages too).
+  def profile_complete?
+    display_name_set? && contact_method?
+  end
+
+  def needs_profile_completion?
+    !profile_complete?
+  end
+
   # Find or create a user from an OmniAuth callback.
   # Resolution order: existing identity (provider + uid) -> existing account
   # with the same email (linked) -> brand new just-in-time provisioned user.
