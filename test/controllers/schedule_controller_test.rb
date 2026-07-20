@@ -1,5 +1,9 @@
 require "test_helper"
 
+# The schedule is the coverage view (#244); the legacy grid is retired.
+# Detailed behavior is covered in schedule_coverage_test, schedule_triage_test,
+# and schedule_board_test — this file keeps the route smokes and the
+# legacy-URL redirect.
 class ScheduleControllerTest < ActionDispatch::IntegrationTest
   setup do
     @village = Village.create!(name: "Test Village", setup_complete: true)
@@ -37,391 +41,48 @@ class ScheduleControllerTest < ActionDispatch::IntegrationTest
       role_name: ConferenceRole::CONFERENCE_LEAD
     )
 
-    @program = Program.create!(
-      name: "Test Program",
-      village: @village
-    )
-
     @conference_program = ConferenceProgram.create!(
       conference: @conference,
-      program: @program
+      program: Program.create!(name: "Test Program", village: @village),
+      day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "11:00" } }
     )
   end
 
-  test "should get show as authenticated volunteer" do
+  test "schedule renders the coverage view for a volunteer" do
     sign_in @volunteer
     get conference_schedule_url(@conference)
+
     assert_response :success
+    assert_select ".coverage-card", text: /Test Program/
+    assert_select ".coverage-ribbon"
   end
 
-  test "should get show as village admin" do
-    sign_in @village_admin
-    get conference_schedule_url(@conference)
-    assert_response :success
+  test "schedule renders for village admin and conference lead with the board link" do
+    [ @village_admin, @conference_lead ].each do |manager|
+      sign_in manager
+      get conference_schedule_url(@conference)
+      assert_response :success
+      assert_select "a[href=?]", conference_schedule_board_path(@conference)
+    end
   end
 
-  test "grid identifies signed-up volunteers by Display Name and callsign, not email" do
-    @volunteer.update!(handle: "Radio Ray", callsign: "W1AW")
-    @conference_program.update!(day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "12:00" } })
-    timeslot = @conference_program.timeslots.reload.first
-    assert timeslot, "expected timeslots to be generated from the day schedule"
-    VolunteerSignup.create!(user: @volunteer, timeslot: timeslot)
-
-    sign_in @village_admin
+  test "volunteers get no board link" do
+    sign_in @volunteer
     get conference_schedule_url(@conference)
-
-    assert_response :success
-    assert_match "Radio Ray", response.body
-    assert_match "W1AW", response.body
+    assert_select "a[href=?]", conference_schedule_board_path(@conference), count: 0
   end
 
-  test "should get show as conference lead" do
-    sign_in @conference_lead
-    get conference_schedule_url(@conference)
-    assert_response :success
+  test "the old coverage URL redirects to the schedule, preserving filters" do
+    sign_in @volunteer
+    day = (@conference.start_date + 1.day).iso8601
+
+    get conference_schedule_coverage_url(@conference, day: day, hide_full: "1")
+
+    assert_redirected_to conference_schedule_path(@conference, day: day, hide_full: "1")
   end
 
   test "should redirect to login when not authenticated" do
     get conference_schedule_url(@conference)
     assert_redirected_to new_user_session_path
-  end
-
-  test "schedule shows programs for conference" do
-    # A program only renders a column on days where it has timeslots.
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    assert_match @program.name, response.body
-  end
-
-  test "conference manager can see all volunteers flag" do
-    sign_in @conference_lead
-    get conference_schedule_url(@conference)
-    assert_response :success
-    # Conference leads should be able to see volunteer management controls
-  end
-
-  test "volunteer cannot see all volunteers management controls" do
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    # Regular volunteers have limited view
-  end
-
-
-  test "schedule data includes conference dates" do
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    # Schedule should show each day of the conference
-  end
-
-  test "hides program column on days with no timeslots" do
-    # Enable the program only on the first day of the multi-day conference,
-    # which generates timeslots for day 1 but none for days 2 and 3.
-    @conference_program.update!(
-      day_schedules: {
-        "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" }
-      }
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-
-    # The program column header should render exactly once (only on day 1),
-    # not once per conference day.
-    assert_equal 1, response.body.scan('class="program-column text-center"').count
-    # Days with no scheduled program fall back to the empty-day message.
-    assert_match "No programs scheduled", response.body
-  end
-
-  test "schedule shows qualification required pill for unqualified user" do
-    qualification = Qualification.create!(
-      name: "Test Cert",
-      description: "A test certification",
-      village: @village
-    )
-    ProgramQualification.create!(program: @program, qualification: qualification)
-
-    # Create a timeslot for the program
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    assert_match "Test Cert qualification required", response.body
-    assert_match "slot-unqualified", response.body
-  end
-
-  test "schedule does not show qualification pill for qualified user" do
-    qualification = Qualification.create!(
-      name: "Test Cert",
-      description: "A test certification",
-      village: @village
-    )
-    ProgramQualification.create!(program: @program, qualification: qualification)
-    UserQualification.create!(user: @volunteer, qualification: qualification)
-
-    # Create a timeslot for the program
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    assert_no_match(/Test Cert qualification required/, response.body)
-    # Check that no actual table cells have the unqualified class (not the CSS definition)
-    assert_no_match(/<td class="schedule-cell slot-unqualified">/, response.body)
-  end
-
-  test "sign up button hidden for unqualified user" do
-    qualification = Qualification.create!(
-      name: "Test Cert",
-      description: "A test certification",
-      village: @village
-    )
-    ProgramQualification.create!(program: @program, qualification: qualification)
-
-    # Create a timeslot for the program
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    # Unqualified users see the qualification requirement, not a sign up button
-    assert_match "Test Cert qualification required", response.body
-    # Check that no schedule cell sign-up buttons exist (modal button is ok)
-    assert_no_match(/data-action="shift-signup#openModal"/, response.body)
-  end
-
-  test "sign up button shown for qualified user" do
-    qualification = Qualification.create!(
-      name: "Test Cert",
-      description: "A test certification",
-      village: @village
-    )
-    ProgramQualification.create!(program: @program, qualification: qualification)
-    UserQualification.create!(user: @volunteer, qualification: qualification)
-
-    # Create a timeslot for the program
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    # Should show Sign Up button, not qualification requirement
-    assert_no_match(/Test Cert qualification required/, response.body)
-  end
-
-  test "schedule respects conference-specific qualification removals" do
-    qualification = Qualification.create!(
-      name: "Test Cert",
-      description: "A test certification",
-      village: @village
-    )
-    ProgramQualification.create!(program: @program, qualification: qualification)
-    UserQualification.create!(user: @volunteer, qualification: qualification)
-    # Remove the qualification for this specific conference
-    QualificationRemoval.create!(
-      user: @volunteer,
-      qualification: qualification,
-      conference: @conference
-    )
-
-    # Create a timeslot for the program
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    # User should be treated as unqualified for this conference
-    assert_match "Test Cert qualification required", response.body
-    assert_match "slot-unqualified", response.body
-  end
-
-  test "schedule shows multiple missing qualifications" do
-    qual1 = Qualification.create!(
-      name: "Cert A",
-      description: "First certification",
-      village: @village
-    )
-    qual2 = Qualification.create!(
-      name: "Cert B",
-      description: "Second certification",
-      village: @village
-    )
-    ProgramQualification.create!(program: @program, qualification: qual1)
-    ProgramQualification.create!(program: @program, qualification: qual2)
-
-    # Create a timeslot for the program
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    assert_match "Cert A qualification required", response.body
-    assert_match "Cert B qualification required", response.body
-  end
-
-  # --- Collapsed mobile view (issue #187) ---
-
-  test "renders both the wide table and the collapsed mobile view" do
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    assert_match "schedule-table", response.body
-    assert_match "schedule-collapsed", response.body
-  end
-
-  test "collapsed view sign up button carries signable programs payload" do
-    timeslot = Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    # The collapsed "Sign Up" button advertises which programs can be signed up
-    # for at this time slot via a data-programs attribute.
-    assert_match "data-programs", response.body
-    assert_match @program.name, response.body
-    assert_match timeslot.id.to_s, response.body
-  end
-
-  test "collapsed view omits signable programs payload when user is unqualified" do
-    qualification = Qualification.create!(
-      name: "Test Cert",
-      description: "A test certification",
-      village: @village
-    )
-    ProgramQualification.create!(program: @program, qualification: qualification)
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    # No signable program at this time -> no sign up button / payload
-    assert_no_match(/data-programs/, response.body)
-  end
-
-  test "renders a day jump nav with an anchor per day for a multi-day conference" do
-    # setup conference spans 3 days (tomorrow .. tomorrow + 2 days)
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-
-    assert_match 'id="schedule-day-0"', response.body
-    assert_match 'id="schedule-day-1"', response.body
-    assert_match 'id="schedule-day-2"', response.body
-
-    assert_match 'href="#schedule-day-0"', response.body
-    assert_match 'href="#schedule-day-2"', response.body
-    assert_match "Jump to", response.body
-  end
-
-  test "does not render the day jump nav for a single-day conference" do
-    single_day = Conference.create!(
-      village: @village,
-      name: "One Day Conference",
-      start_date: Date.tomorrow,
-      end_date: Date.tomorrow,
-      conference_hours_start: "09:00",
-      conference_hours_end: "17:00"
-    )
-    ConferenceProgram.create!(conference: single_day, program: @program)
-
-    sign_in @volunteer
-    get conference_schedule_url(single_day)
-    assert_response :success
-
-    # The single day still gets its anchor, but there is no jump nav.
-    assert_match 'id="schedule-day-0"', response.body
-    assert_no_match(/href="#schedule-day-/, response.body)
-    assert_no_match(/Jump to/, response.body)
-  end
-
-  test "schedule shows qualified state when user has all required qualifications" do
-    qual1 = Qualification.create!(
-      name: "Cert A",
-      description: "First certification",
-      village: @village
-    )
-    qual2 = Qualification.create!(
-      name: "Cert B",
-      description: "Second certification",
-      village: @village
-    )
-    ProgramQualification.create!(program: @program, qualification: qual1)
-    ProgramQualification.create!(program: @program, qualification: qual2)
-    UserQualification.create!(user: @volunteer, qualification: qual1)
-    UserQualification.create!(user: @volunteer, qualification: qual2)
-
-    # Create a timeslot for the program
-    Timeslot.create!(
-      conference_program: @conference_program,
-      start_time: @conference.start_date.to_datetime + 9.hours,
-      max_volunteers: 2,
-      current_volunteers_count: 0
-    )
-
-    sign_in @volunteer
-    get conference_schedule_url(@conference)
-    assert_response :success
-    assert_no_match(/Cert A qualification required/, response.body)
-    assert_no_match(/Cert B qualification required/, response.body)
-    # Check that no actual table cells have the unqualified class (not the CSS definition)
-    assert_no_match(/<td class="schedule-cell slot-unqualified">/, response.body)
   end
 end

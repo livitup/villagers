@@ -2,44 +2,10 @@ class ScheduleController < ApplicationController
   before_action :authenticate_user!
   before_action :set_conference
 
+  # The schedule IS the coverage view (#244): per-activity claim stack
+  # rendered from CoverageProjection for one selected day, with the
+  # "where you're needed" triage. The legacy time-x-activity grid is retired.
   def show
-    authorize @conference, :show?, policy_class: ConferencePolicy
-
-    # Conference managers manage every activity; an activity lead manages only
-    # their own. @manageable_program_ids is the set of Program ids whose columns
-    # the current user may administer (see full volunteer names, add/remove
-    # volunteers, edit capacity). @can_see_all_volunteers stays true only for
-    # full conference managers (used for the page-level view badge).
-    @manageable_program_ids = manageable_program_ids
-    @can_see_all_volunteers = current_user.can_manage_conference?(@conference)
-
-    # Build time slots for each day (15-minute increments)
-    @schedule_data = build_schedule_data
-
-    # Get user's signups for highlighting
-    @user_signups = current_user.volunteer_signups
-                                .where(timeslot_id: @conference.timeslots.pluck(:id))
-                                .pluck(:timeslot_id)
-                                .to_set
-
-    # Get all programs for this conference
-    @programs = @conference.programs.order(:name)
-
-    # Build qualification data for programs
-    @program_qualifications = build_program_qualifications
-
-    # Build user's effective qualifications for this conference
-    @user_qualification_ids = build_user_qualification_ids
-
-    # Get all users for admin dropdown (needed whenever the user can manage at
-    # least one activity, so activity leads get the add-volunteer picker too)
-    @users = User.order(:email) if @manageable_program_ids.any?
-  end
-
-  # Coverage-based volunteer view (#240): per-activity claim stack rendered
-  # from CoverageProjection for one selected day. Ships alongside the legacy
-  # grid (#show) until the redesign reaches parity (#244).
-  def coverage
     authorize @conference, :show?, policy_class: ConferencePolicy
 
     @days = (@conference.start_date..@conference.end_date).to_a
@@ -73,6 +39,15 @@ class ScheduleController < ApplicationController
                               .sort_by { |signup| signup.timeslot.start_time }
     @my_timeslot_ids = day_signups.map(&:timeslot_id).to_set
     @my_shift_ranges = group_signups_into_ranges(day_signups)
+  end
+
+  # The coverage view moved to the main schedule URL when the grid retired
+  # (#244); keep old links working.
+  def coverage
+    redirect_to conference_schedule_path(
+      @conference,
+      params.permit(:day, :hide_full, around: []).to_h.symbolize_keys
+    )
   end
 
   # Admin coverage board (#243): every manageable activity x every conference
@@ -211,62 +186,6 @@ class ScheduleController < ApplicationController
                             })
                      .pluck(:program_id)
                      .to_set
-  end
-
-  def build_schedule_data
-    schedule = {}
-
-    (@conference.start_date..@conference.end_date).each do |date|
-      schedule[date] = {
-        time_slots: build_time_slots_for_day(date),
-        programs: {}
-      }
-
-      # Get timeslots for this day grouped by program
-      @conference.conference_programs.includes(:program).each do |cp|
-        program = cp.program
-        timeslots = {}
-
-        cp.timeslots.where("DATE(start_time) = ?", date).includes(:volunteer_signups, :users).each do |timeslot|
-          timeslots[timeslot.start_time.strftime("%H:%M")] = {
-            timeslot: timeslot,
-            volunteers: timeslot.users,
-            signed_up_count: timeslot.current_volunteers_count,
-            max_volunteers: timeslot.max_volunteers,
-            full: timeslot.full?
-          }
-        end
-
-        # Skip programs that have no timeslots on this day so empty columns are
-        # not rendered (issue #181).
-        next if timeslots.empty?
-
-        schedule[date][:programs][program.id] = {
-          name: program.name,
-          timeslots: timeslots
-        }
-      end
-    end
-
-    schedule
-  end
-
-  def build_time_slots_for_day(date)
-    slots = []
-    start_hour = @conference.conference_hours_start&.hour || 8
-    start_min = @conference.conference_hours_start&.min || 0
-    end_hour = @conference.conference_hours_end&.hour || 18
-    end_min = @conference.conference_hours_end&.min || 0
-
-    current_time = Time.zone.local(date.year, date.month, date.day, start_hour, start_min)
-    end_time = Time.zone.local(date.year, date.month, date.day, end_hour, end_min)
-
-    while current_time < end_time
-      slots << current_time.strftime("%H:%M")
-      current_time += 15.minutes
-    end
-
-    slots
   end
 
   # Build a hash of program_id => [qualifications] for efficient lookup

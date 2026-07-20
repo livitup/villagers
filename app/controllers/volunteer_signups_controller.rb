@@ -96,45 +96,6 @@ class VolunteerSignupsController < ApplicationController
                 notice: "Successfully signed up for #{created_count} shifts (#{duration_str.strip})."
   end
 
-  def available_timeslots
-    start_timeslot = Timeslot.find(params[:timeslot_id])
-    conference_program = start_timeslot.conference_program
-
-    # Get all future timeslots for this program on the same day
-    day_end = start_timeslot.start_time.end_of_day
-    timeslots = conference_program.timeslots
-                                  .where("start_time >= ? AND start_time < ?", start_timeslot.start_time, day_end)
-                                  .order(:start_time)
-
-    # Get user's existing signups
-    existing_signup_ids = current_user.volunteer_signups
-                                      .where(timeslot_id: timeslots.pluck(:id))
-                                      .pluck(:timeslot_id)
-                                      .to_set
-
-    # Build available end times (only consecutive available slots)
-    available_end_times = []
-    timeslots.each do |ts|
-      is_available = !ts.full? || existing_signup_ids.include?(ts.id)
-      break unless is_available # Stop at first unavailable slot
-
-      available_end_times << {
-        end_time: ts.end_time.iso8601,
-        display: ts.end_time.strftime("%l:%M %p").strip,
-        duration_minutes: ((ts.end_time - start_timeslot.start_time) / 60).to_i,
-        slots_count: available_end_times.length + 1
-      }
-    end
-
-    render json: {
-      start_time: start_timeslot.start_time.iso8601,
-      start_time_display: start_timeslot.start_time.strftime("%l:%M %p").strip,
-      program_name: conference_program.program.name,
-      minimum_shift_duration: @conference.effective_minimum_shift_duration,
-      available_end_times: available_end_times
-    }
-  end
-
   def destroy
     @volunteer_signup.destroy
     redirect_to conference_volunteer_signups_path(@conference), notice: "Signup cancelled successfully."
@@ -153,13 +114,13 @@ class VolunteerSignupsController < ApplicationController
 
   private
 
-  # Where bulk_create sends the user afterward. The coverage view (#240) posts
-  # return_to=coverage (+ return_day) so claims land back on the ribbon they
-  # came from; everything else keeps the legacy destinations.
+  # Where bulk_create sends the user afterward. The schedule's claim forms
+  # post return_to=coverage (+ return_day) so claims land back on the ribbon
+  # they came from; other callers keep the legacy destinations.
   def signup_return_path(default)
     return default unless params[:return_to] == "coverage"
 
-    conference_schedule_coverage_path(@conference, day: params[:return_day].presence)
+    conference_schedule_path(@conference, day: params[:return_day].presence)
   end
 
   def set_conference

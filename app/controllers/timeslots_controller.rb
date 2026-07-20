@@ -1,41 +1,7 @@
 class TimeslotsController < ApplicationController
   before_action :authenticate_user!
   before_action :set_conference
-  before_action :set_timeslot, only: [ :update, :add_volunteer, :remove_volunteer ]
-  before_action :set_conference_program, only: [ :bulk_add_volunteer, :bulk_remove_volunteer, :bulk_update_capacity ]
-
-  def update
-    authorize @timeslot.conference_program, :update?, policy_class: ConferenceProgramPolicy
-
-    if @timeslot.update(timeslot_params)
-      redirect_to conference_schedule_path(@conference), notice: "Timeslot updated successfully."
-    else
-      redirect_to conference_schedule_path(@conference), alert: @timeslot.errors.full_messages.join(", ")
-    end
-  end
-
-  def add_volunteer
-    authorize @timeslot.conference_program, :update?, policy_class: ConferenceProgramPolicy
-
-    user = User.find(params[:user_id])
-    signup = VolunteerSignup.new(user: user, timeslot: @timeslot)
-
-    if signup.save
-      redirect_to conference_schedule_path(@conference), notice: "#{user.email} added to shift."
-    else
-      redirect_to conference_schedule_path(@conference), alert: signup.errors.full_messages.join(", ")
-    end
-  end
-
-  def remove_volunteer
-    authorize @timeslot.conference_program, :update?, policy_class: ConferenceProgramPolicy
-
-    signup = @timeslot.volunteer_signups.find_by!(user_id: params[:user_id])
-    user_email = signup.user.email
-    signup.destroy
-
-    redirect_to conference_schedule_path(@conference), notice: "#{user_email} removed from shift."
-  end
+  before_action :set_conference_program
 
   # --- Window/day-scoped admin operations (#242) ---
   # A "window" is start_timeslot_id + duration_minutes, mirroring the volunteer
@@ -128,13 +94,5 @@ class TimeslotsController < ApplicationController
     return "to 0 slots" if slots.empty?
 
     "#{slots.first.start_time.strftime('%-l:%M %p')} – #{slots.last.end_time.strftime('%-l:%M %p')}"
-  end
-
-  def set_timeslot
-    @timeslot = @conference.timeslots.find(params[:id])
-  end
-
-  def timeslot_params
-    params.require(:timeslot).permit(:max_volunteers)
   end
 end

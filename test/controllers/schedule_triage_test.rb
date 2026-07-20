@@ -45,7 +45,7 @@ class ScheduleTriageTest < ActionDispatch::IntegrationTest
   end
 
   test "triage lists uncovered gaps across all days, worst first, skipping covered activities" do
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select ".triage-strip", 2                       # Ham Exams day1 + day2; Front Desk covered
     assert_select ".triage-strip", text: /Ham Exams/
@@ -54,17 +54,17 @@ class ScheduleTriageTest < ActionDispatch::IntegrationTest
   end
 
   test "I'm around day chips scope the triage to those days" do
-    get conference_schedule_coverage_path(@conference, around: [ @day2.iso8601 ])
+    get conference_schedule_path(@conference, around: [ @day2.iso8601 ])
 
     assert_select ".triage-strip", 1
     assert_select ".triage-strip", text: Regexp.new(@day2.strftime("%a"))
   end
 
   test "the Cover link carries day, focus, and filters, anchored to the activity card" do
-    get conference_schedule_coverage_path(@conference, around: [ @day2.iso8601 ])
+    get conference_schedule_path(@conference, around: [ @day2.iso8601 ])
 
     expected_focus = @exams.timeslots.where(start_time: @day2.in_time_zone.all_day).order(:start_time).first.id
-    expected = conference_schedule_coverage_path(
+    expected = conference_schedule_path(
       @conference, day: @day2.iso8601, around: [ @day2.iso8601 ], focus: expected_focus, anchor: "activity-#{@exams.id}"
     )
     assert_select ".triage-strip a.btn-primary[href=?]", expected
@@ -73,24 +73,24 @@ class ScheduleTriageTest < ActionDispatch::IntegrationTest
   test "focus param arms the matching card's ribbon controller" do
     focus_slot = @exams.timeslots.order(:start_time).first
 
-    get conference_schedule_coverage_path(@conference, focus: focus_slot.id)
+    get conference_schedule_path(@conference, focus: focus_slot.id)
 
     assert_select "#activity-#{@exams.id}[data-coverage-ribbon-focus-timeslot-id-value='#{focus_slot.id}']"
   end
 
   test "hide-full removes fully covered activities from the stack" do
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
     assert_select ".coverage-card", 2
 
-    get conference_schedule_coverage_path(@conference, hide_full: "1")
+    get conference_schedule_path(@conference, hide_full: "1")
     assert_select ".coverage-card", 1
     assert_select ".coverage-card", text: /Front Desk/, count: 0
   end
 
   test "day switcher links preserve around and hide_full params" do
-    get conference_schedule_coverage_path(@conference, around: [ @day2.iso8601 ], hide_full: "1")
+    get conference_schedule_path(@conference, around: [ @day2.iso8601 ], hide_full: "1")
 
-    expected = conference_schedule_coverage_path(@conference, day: @day2.iso8601, around: [ @day2.iso8601 ], hide_full: "1")
+    expected = conference_schedule_path(@conference, day: @day2.iso8601, around: [ @day2.iso8601 ], hide_full: "1")
     assert_select ".btn-group[aria-label='Day'] a[href=?]", expected
   end
 
@@ -98,7 +98,7 @@ class ScheduleTriageTest < ActionDispatch::IntegrationTest
     qualification = Qualification.create!(name: "Licensed Ham", description: "License", village: @village)
     ProgramQualification.create!(program: @exams.program, qualification: qualification)
 
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select ".triage-strip", text: /Ham Exams/
     assert_select ".triage-strip", text: /Licensed Ham/
@@ -108,7 +108,7 @@ class ScheduleTriageTest < ActionDispatch::IntegrationTest
   test "fully covered conference shows the all-covered message instead of triage" do
     @exams.timeslots.each { |slot| slot.update_column(:current_volunteers_count, 1) }
 
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select ".triage-strip", 0
     assert_match(/covered everywhere/i, response.body)

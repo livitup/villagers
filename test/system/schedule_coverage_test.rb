@@ -39,7 +39,7 @@ class ScheduleCoverageSystemTest < ApplicationSystemTestCase
 
   test "claiming a window from the ribbon" do
     login_as @volunteer
-    visit conference_schedule_coverage_path(@conference)
+    visit conference_schedule_path(@conference)
     assert_selector "[data-coverage-ribbon-ready]"
 
     # Tap the first tick, pick 1 hour, claim.
@@ -54,7 +54,7 @@ class ScheduleCoverageSystemTest < ApplicationSystemTestCase
     # Back on the coverage view with the window claimed. Wait on the flash
     # first — the form POST + redirect can outlast the default Capybara wait.
     assert_text "Successfully signed up for 4 shifts", wait: 10
-    assert_current_path conference_schedule_coverage_path(@conference, day: @conference.start_date.iso8601)
+    assert_current_path conference_schedule_path(@conference, day: @conference.start_date.iso8601)
     assert_selector ".tick.covered", count: 4
     assert_selector ".tick.mine", count: 4
     assert_selector ".my-shifts", text: /9:00 AM\s*–\s*10:00 AM/
@@ -65,7 +65,7 @@ class ScheduleCoverageSystemTest < ApplicationSystemTestCase
     @cp.timeslots.order(:start_time).offset(2).each { |slot| slot.update_column(:current_volunteers_count, 1) }
 
     login_as @volunteer
-    visit conference_schedule_coverage_path(@conference)
+    visit conference_schedule_path(@conference)
     assert_selector "[data-coverage-ribbon-ready]"
 
     first(".coverage-ribbon .tick.bare").click
@@ -85,7 +85,7 @@ class ScheduleCoverageSystemTest < ApplicationSystemTestCase
        .each { |slot| slot.update_column(:current_volunteers_count, 1) }
 
     login_as @volunteer
-    visit conference_schedule_coverage_path(@conference)
+    visit conference_schedule_path(@conference)
 
     within ".triage-list" do
       assert_text "1:00 PM"
@@ -108,7 +108,7 @@ class ScheduleCoverageSystemTest < ApplicationSystemTestCase
     covered.timeslots.each { |slot| slot.update_column(:current_volunteers_count, 1) }
 
     login_as @volunteer
-    visit conference_schedule_coverage_path(@conference)
+    visit conference_schedule_path(@conference)
     assert_selector ".coverage-card", count: 2
 
     click_link "Hide full activities"
@@ -126,7 +126,7 @@ class ScheduleCoverageSystemTest < ApplicationSystemTestCase
     })
 
     login_as @volunteer
-    visit conference_schedule_coverage_path(@conference)
+    visit conference_schedule_path(@conference)
     assert_selector ".triage-strip", count: 2
 
     day2 = @conference.start_date + 1.day
@@ -143,7 +143,7 @@ class ScheduleCoverageSystemTest < ApplicationSystemTestCase
     })
 
     login_as @volunteer
-    visit conference_schedule_coverage_path(@conference)
+    visit conference_schedule_path(@conference)
     assert_selector ".coverage-ribbon .tick", count: 8
 
     day2 = @conference.start_date + 1.day

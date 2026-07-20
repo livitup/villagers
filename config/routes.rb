@@ -62,16 +62,12 @@ Rails.application.routes.draw do
       collection do
         post :bulk_create
         delete :bulk_destroy
-        get :available_timeslots
       end
     end
-    resources :timeslots, only: [ :update ] do
-      member do
-        post :add_volunteer
-        delete :remove_volunteer
-      end
-      # Window/day-scoped admin operations (#242): act on a run of slots for
-      # one activity instead of a single 15-minute cell.
+    # Window/day-scoped admin operations (#242): act on a run of slots for
+    # one activity instead of a single 15-minute cell. (Single-slot actions
+    # retired with the legacy grid, #244.)
+    resources :timeslots, only: [] do
       collection do
         post :bulk_add_volunteer
         delete :bulk_remove_volunteer

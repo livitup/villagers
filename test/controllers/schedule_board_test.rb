@@ -126,11 +126,11 @@ class ScheduleBoardTest < ActionDispatch::IntegrationTest
 
   test "managers get a board link on the coverage view; volunteers do not" do
     sign_in @admin
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
     assert_select "a[href=?]", conference_schedule_board_path(@conference)
 
     sign_in @volunteer
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
     assert_select "a[href=?]", conference_schedule_board_path(@conference), count: 0
   end
 end

@@ -33,7 +33,7 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
   end
 
   test "renders the claim stack with a card per activity scheduled that day" do
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_response :success
     assert_select ".coverage-card", 1
@@ -43,24 +43,24 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
   end
 
   test "day defaults to the first conference day when today is outside the range" do
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select "[data-current-day='#{@conference.start_date.iso8601}']"
   end
 
   test "day param selects that day's schedule and clamps out-of-range values" do
     day2 = @conference.start_date + 1.day
-    get conference_schedule_coverage_path(@conference, day: day2.iso8601)
+    get conference_schedule_path(@conference, day: day2.iso8601)
     assert_select "[data-current-day='#{day2.iso8601}']"
     assert_select ".coverage-ribbon .tick", 8   # 10:00-12:00
 
-    get conference_schedule_coverage_path(@conference, day: "2001-01-01")
+    get conference_schedule_path(@conference, day: "2001-01-01")
     assert_select "[data-current-day='#{@conference.start_date.iso8601}']"
   end
 
   test "a day with nothing scheduled says so" do
     day3 = @conference.start_date + 2.days
-    get conference_schedule_coverage_path(@conference, day: day3.iso8601)
+    get conference_schedule_path(@conference, day: day3.iso8601)
 
     assert_response :success
     assert_select ".coverage-card", 0
@@ -72,7 +72,7 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
     slots[0].update_column(:current_volunteers_count, 1)
     VolunteerSignup.create!(user: @volunteer, timeslot: slots[1])
 
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select ".tick.covered", 2   # the filled slot + my signup (counter cache)
     assert_select ".tick.mine", 1
@@ -82,7 +82,7 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
     slots = @cp.timeslots.order(:start_time).to_a
     slots[0..2].each { |slot| VolunteerSignup.create!(user: @volunteer, timeslot: slot) }
 
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select ".my-shifts", text: /Ham Exams/
     assert_select ".my-shifts", text: /9:00\s*AM\s*[-–]\s*9:45\s*AM/
@@ -92,7 +92,7 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
     qualification = Qualification.create!(name: "Licensed Ham", description: "License", village: @village)
     ProgramQualification.create!(program: @program, qualification: qualification)
 
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select ".coverage-card .badge", text: /Licensed Ham/
     assert_select ".coverage-card form[action=?]", bulk_create_conference_volunteer_signups_path(@conference), count: 0
@@ -103,13 +103,13 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
     ProgramQualification.create!(program: @program, qualification: qualification)
     UserQualification.create!(user: @volunteer, qualification: qualification)
 
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select ".coverage-card form[action=?]", bulk_create_conference_volunteer_signups_path(@conference)
   end
 
   test "claim form carries the conference block size and the 4h cap for the ribbon controller" do
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
 
     assert_select "[data-coverage-ribbon-block-minutes-value='30']"
     assert_select "[data-coverage-ribbon-cap-minutes-value='240']"
@@ -117,7 +117,7 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
 
   test "requires authentication" do
     sign_out @volunteer
-    get conference_schedule_coverage_path(@conference)
+    get conference_schedule_path(@conference)
     assert_redirected_to new_user_session_path
   end
 
@@ -128,7 +128,7 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
          params: { timeslot_id: start_slot.id, duration_minutes: 30,
                    return_to: "coverage", return_day: @conference.start_date.iso8601 }
 
-    assert_redirected_to conference_schedule_coverage_path(@conference, day: @conference.start_date.iso8601)
+    assert_redirected_to conference_schedule_path(@conference, day: @conference.start_date.iso8601)
     assert_equal 2, @volunteer.volunteer_signups.count
   end
 
@@ -151,7 +151,7 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
          params: { timeslot_id: start_slot.id, duration_minutes: 20,
                    return_to: "coverage", return_day: @conference.start_date.iso8601 }
 
-    assert_redirected_to conference_schedule_coverage_path(@conference, day: @conference.start_date.iso8601)
+    assert_redirected_to conference_schedule_path(@conference, day: @conference.start_date.iso8601)
     assert_match(/blocks/, flash[:alert])
   end
 end

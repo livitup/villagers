@@ -35,7 +35,7 @@ class CoverageTimezoneTest < ApplicationSystemTestCase
     click_button "Log in"
     assert_text "Logout"
 
-    visit conference_schedule_coverage_path(@conference)
+    visit conference_schedule_path(@conference)
     assert_selector "[data-coverage-ribbon-ready]"
 
     first(".coverage-ribbon .tick.bare").click

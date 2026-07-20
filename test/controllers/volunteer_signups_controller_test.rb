@@ -341,28 +341,6 @@ class VolunteerSignupsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_user_session_path
   end
 
-  test "bulk create returns available timeslots data as JSON" do
-    timeslots = []
-    4.times do |i|
-      timeslots << Timeslot.create!(
-        conference_program: @conference_program,
-        start_time: Date.tomorrow.to_datetime + 11.hours + (i * 15).minutes,
-        max_volunteers: 2
-      )
-    end
-
-    sign_in @volunteer
-    get available_timeslots_conference_volunteer_signups_url(@conference),
-        params: { timeslot_id: timeslots.first.id },
-        as: :json
-
-    assert_response :success
-    json = JSON.parse(response.body)
-    assert_equal timeslots.first.start_time.iso8601, json["start_time"]
-    assert json["available_end_times"].is_a?(Array)
-    assert_equal 4, json["available_end_times"].length
-  end
-
   # Consolidated shifts tests
   test "index groups consecutive signups into shift groups" do
     # Create 4 consecutive timeslots (use 13:00 to avoid conflicts)
