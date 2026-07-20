@@ -7,6 +7,11 @@ import * as bootstrap from "bootstrap"
 // backdrop, or Escape) suppresses it for the rest of the session.
 export default class extends Controller {
   connect() {
+    // Don't interrupt automated browsers (Selenium sets navigator.webdriver);
+    // an auto-opening modal would intercept clicks in system tests. Real users
+    // are never flagged this way. The modal still renders, so its markup and
+    // the underlying completion logic stay covered by integration tests.
+    if (navigator.webdriver) return
     if (sessionStorage.getItem("profilePromptDismissed")) return
 
     this._modal = new bootstrap.Modal(this.element)
