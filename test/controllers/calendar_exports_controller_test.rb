@@ -114,4 +114,18 @@ class CalendarExportsControllerTest < ActionDispatch::IntegrationTest
     # Should have no events
     assert_equal 0, response.body.scan("BEGIN:VEVENT").count
   end
+  test "export uses the conference's TZID and local wall clock (#252)" do
+    @conference.update!(time_zone: "Pacific Time (US & Canada)")
+    # Regeneration on zone change slid the slots; re-find the user's slot.
+    slot = @conference.timeslots.order(:start_time).first
+    VolunteerSignup.find_or_create_by!(user: @user, timeslot: slot)
+
+    sign_in @user
+    get conference_calendar_export_url(@conference)
+
+    assert_response :success
+    assert_match "TZID=America/Los_Angeles", response.body
+    local = slot.start_time.in_time_zone("Pacific Time (US & Canada)").strftime("%Y%m%dT%H%M%S")
+    assert_match local, response.body
+  end
 end

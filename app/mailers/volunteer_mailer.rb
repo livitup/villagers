@@ -58,6 +58,15 @@ class VolunteerMailer < ApplicationMailer
     )
   end
 
+  # Render every shift email in the conference's time zone (#252) so the
+  # times volunteers read match the clock at the event. mail() renders the
+  # templates synchronously, so wrapping it wraps the views too.
+  def mail(**)
+    return super unless @conference
+
+    Time.use_zone(@conference.time_zone) { super }
+  end
+
   private
 
   def group_signups_by_program(signups)

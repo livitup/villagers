@@ -1,5 +1,6 @@
 class TimeslotsController < ApplicationController
   before_action :authenticate_user!
+  include ConferenceTimeZone
   before_action :set_conference
   before_action :set_conference_program
 

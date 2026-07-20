@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_042923) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_20_043541) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -94,6 +94,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_042923) do
     t.integer "reminder_hours_before"
     t.date "start_date"
     t.string "state"
+    t.string "time_zone", default: "UTC", null: false
     t.datetime "updated_at", null: false
     t.bigint "village_id", null: false
     t.index ["village_id"], name: "index_conferences_on_village_id"

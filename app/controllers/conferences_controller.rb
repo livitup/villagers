@@ -135,6 +135,6 @@ class ConferencesController < ApplicationController
   end
 
   def conference_params
-    params.require(:conference).permit(:name, :country, :state, :city, :start_date, :end_date, :conference_hours_start, :conference_hours_end, :reminder_hours_before, :minimum_shift_duration)
+    params.require(:conference).permit(:name, :country, :state, :city, :time_zone, :start_date, :end_date, :conference_hours_start, :conference_hours_end, :reminder_hours_before, :minimum_shift_duration)
   end
 end

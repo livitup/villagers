@@ -115,6 +115,17 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
     assert_select "[data-coverage-ribbon-cap-minutes-value='240']"
   end
 
+  test "labels render in the conference's time zone, not the server default (#252)" do
+    @conference.update!(time_zone: "Pacific Time (US & Canada)")
+
+    get conference_schedule_path(@conference)
+
+    assert_response :success
+    # 09:00 wall clock in PDT is 16:00 UTC; labels must still read 9:00 AM.
+    assert_match "9:00 AM", response.body
+    refute_match "4:00 PM", response.body
+  end
+
   test "requires authentication" do
     sign_out @volunteer
     get conference_schedule_path(@conference)

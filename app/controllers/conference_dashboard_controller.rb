@@ -1,5 +1,6 @@
 class ConferenceDashboardController < ApplicationController
   before_action :authenticate_user!
+  include ConferenceTimeZone
   before_action :set_conference
 
   def show

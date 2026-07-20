@@ -1,5 +1,6 @@
 class ScheduleController < ApplicationController
   before_action :authenticate_user!
+  include ConferenceTimeZone
   before_action :set_conference
 
   # The schedule IS the coverage view (#244): per-activity claim stack

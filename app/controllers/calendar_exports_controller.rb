@@ -2,6 +2,7 @@ require "icalendar"
 
 class CalendarExportsController < ApplicationController
   before_action :authenticate_user!
+  include ConferenceTimeZone
   before_action :set_conference
 
   def show
@@ -16,8 +17,11 @@ class CalendarExportsController < ApplicationController
       program = timeslot.conference_program.program
 
       calendar.event do |event|
-        event.dtstart = Icalendar::Values::DateTime.new(timeslot.start_time)
-        event.dtend = Icalendar::Values::DateTime.new(timeslot.end_time)
+        # Export in the conference's zone with an explicit TZID (#252) so
+        # subscribers' calendars show shifts at the event's local time.
+        tzid = @conference.tz.tzinfo.identifier
+        event.dtstart = Icalendar::Values::DateTime.new(timeslot.start_time.in_time_zone(@conference.tz), "tzid" => tzid)
+        event.dtend = Icalendar::Values::DateTime.new(timeslot.end_time.in_time_zone(@conference.tz), "tzid" => tzid)
         event.summary = "Volunteer: #{program.name}"
         event.description = "Volunteer shift for #{program.name} at #{@conference.name}"
         event.location = @conference.display_location

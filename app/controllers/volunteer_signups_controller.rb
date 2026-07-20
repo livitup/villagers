@@ -1,5 +1,6 @@
 class VolunteerSignupsController < ApplicationController
   before_action :authenticate_user!
+  include ConferenceTimeZone
   before_action :set_conference
   before_action :set_timeslot, only: [ :create ]
   before_action :set_volunteer_signup, only: [ :destroy ]

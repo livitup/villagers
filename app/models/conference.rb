@@ -12,6 +12,8 @@ class Conference < ApplicationRecord
   validates :name, presence: true
   validates :start_date, presence: true
   validates :end_date, presence: true
+  # The zone all schedule wall-clock times are interpreted in (#252).
+  validates :time_zone, presence: true, inclusion: { in: ActiveSupport::TimeZone.all.map(&:name), message: "is not a known time zone" }
   validate :end_date_after_start_date
 
   after_update :regenerate_timeslots_if_schedule_changed
@@ -136,6 +138,10 @@ class Conference < ApplicationRecord
     minimum_shift_duration || 15
   end
 
+  def tz
+    ActiveSupport::TimeZone[time_zone] || ActiveSupport::TimeZone["UTC"]
+  end
+
   private
 
   def end_date_after_start_date
@@ -146,13 +152,16 @@ class Conference < ApplicationRecord
 
   def regenerate_timeslots_if_schedule_changed
     return unless saved_change_to_start_date? || saved_change_to_end_date? ||
-                  saved_change_to_conference_hours_start? || saved_change_to_conference_hours_end?
+                  saved_change_to_conference_hours_start? || saved_change_to_conference_hours_end? ||
+                  saved_change_to_time_zone?
 
     # Reconcile timeslots for all conference programs. TimeslotGenerator keeps
-    # timeslots (and signups) whose start time still fits the new dates/hours
-    # instead of destroying and recreating everything (issue #225).
+    # timeslots (and signups) whose date + wall-clock identity survives
+    # (#225/#252): a pure zone change slides every slot's instant in place
+    # with no destruction and no notifications.
+    previous_zone = saved_change_to_time_zone? ? saved_change_to_time_zone.first : time_zone
     conference_programs.find_each do |cp|
-      TimeslotGenerator.new(cp).generate
+      TimeslotGenerator.new(cp, previous_time_zone: previous_zone).generate
     end
   end
 end

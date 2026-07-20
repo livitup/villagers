@@ -36,6 +36,12 @@
               </div>
             </div>
 
+            <div class="mb-3">
+              <%= form.label :time_zone, "Time Zone", class: "form-label" %>
+              <%= form.time_zone_select :time_zone, ActiveSupport::TimeZone.us_zones, {}, { class: "form-select" } %>
+              <div class="form-text">All schedule times, reminders, and calendar exports use this zone.</div>
+            </div>
+
             <div class="row">
               <div class="col-md-6 mb-3">
                 <%= form.label :conference_hours_start, "Conference Hours Start", class: "form-label" %>

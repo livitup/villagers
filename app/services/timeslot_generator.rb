@@ -1,40 +1,54 @@
 class TimeslotGenerator
-  def initialize(conference_program)
+  def initialize(conference_program, previous_time_zone: nil)
     @conference_program = conference_program
     @conference = conference_program.conference
     @day_schedules = conference_program.day_schedules
+    # The zone the EXISTING timeslots' wall clock was written in. Callers pass
+    # this when the conference's zone just changed (#252); defaults to the
+    # current zone, which makes reconciliation instant-equivalent otherwise.
+    @previous_time_zone = previous_time_zone.presence || @conference.time_zone
   end
 
   # Reconciles the conference program's timeslots against its current schedule.
   #
-  # Rather than destroying every timeslot and recreating from scratch (which
-  # would cascade-delete all volunteer signups), this keeps timeslots whose
-  # start time still exists in the schedule, creates any newly-scheduled slots,
-  # and removes only the slots that no longer belong. Volunteers signed up for a
-  # removed slot are notified that their shift was cancelled (issue #225).
+  # A slot's identity is its calendar date + wall-clock time in the
+  # conference's zone (#226/#252), not its absolute instant. So:
+  # - identity unchanged, instant unchanged -> untouched;
+  # - identity unchanged, instant moved (the conference's time zone changed)
+  #   -> the slot slides in place, keeping its id and volunteer signups, with
+  #   no notifications;
+  # - identity gone (day dropped, hours narrowed) -> destroyed, and its
+  #   volunteers are notified their shift was cancelled (issue #225);
+  # - new identity -> created.
   def generate
-    desired_start_times = compute_desired_start_times
-
-    remove_obsolete_timeslots(desired_start_times)
-    create_missing_timeslots(desired_start_times)
+    # use_zone so cancellation notifications (and any other formatting done
+    # during reconciliation) render times in the conference's zone.
+    Time.use_zone(@conference.tz) do
+      reconcile(compute_desired_slots)
+    end
   end
 
   private
 
-  # Every start time the current schedule calls for, as Time objects.
-  def compute_desired_start_times
-    return [] if @day_schedules.empty?
+  # { [iso_date, "HH:MM"] => Time } for every 15-minute tick the current
+  # schedule calls for, with instants computed in the conference's zone.
+  def compute_desired_slots
+    return {} if @day_schedules.empty?
 
-    start_times = []
-    # day_schedules are keyed by calendar date (#226); dates outside the
-    # conference range are retained in the config but generate nothing.
-    (@conference.start_date..@conference.end_date).each do |date|
-      day_schedule = @day_schedules[date.iso8601]
-      next unless day_schedule && day_schedule["enabled"] == true
+    Time.use_zone(@conference.tz) do
+      desired = {}
+      (@conference.start_date..@conference.end_date).each do |date|
+        # day_schedules are keyed by calendar date (#226); dates outside the
+        # conference range are retained in the config but generate nothing.
+        day_schedule = @day_schedules[date.iso8601]
+        next unless day_schedule && day_schedule["enabled"] == true
 
-      start_times.concat(start_times_for_day(date, day_schedule))
+        start_times_for_day(date, day_schedule).each do |time|
+          desired[[ date.iso8601, time.strftime("%H:%M") ]] = time
+        end
+      end
+      desired
     end
-    start_times
   end
 
   def start_times_for_day(date, day_schedule)
@@ -43,14 +57,11 @@ class TimeslotGenerator
 
     # Use day-specific times if provided, otherwise use conference defaults
     if start_time_str.nil? && @conference.conference_hours_start
-      # conference_hours_start is stored as a time, format it as HH:MM
-      time_obj = @conference.conference_hours_start
-      # For time columns, use strftime with UTC to avoid timezone issues
-      start_time_str = time_obj.utc.strftime("%H:%M")
+      # conference_hours_start is stored as a time column; format it as HH:MM
+      start_time_str = @conference.conference_hours_start.utc.strftime("%H:%M")
     end
     if end_time_str.nil? && @conference.conference_hours_end
-      time_obj = @conference.conference_hours_end
-      end_time_str = time_obj.utc.strftime("%H:%M")
+      end_time_str = @conference.conference_hours_end.utc.strftime("%H:%M")
     end
 
     return [] unless start_time_str && end_time_str
@@ -67,26 +78,28 @@ class TimeslotGenerator
     times
   end
 
-  # Remove timeslots that no longer belong to the schedule. Compare by epoch
-  # seconds so persisted (DB-loaded) and freshly-parsed times match regardless
-  # of adapter or timezone representation.
-  def remove_obsolete_timeslots(desired_start_times)
-    desired_keys = desired_start_times.map(&:to_i).to_set
+  def reconcile(desired)
+    remaining = desired.dup
+    previous_zone = ActiveSupport::TimeZone[@previous_time_zone] || @conference.tz
 
     @conference_program.timeslots.includes(volunteer_signups: :user).find_each do |timeslot|
-      next if desired_keys.include?(timeslot.start_time.to_i)
+      # The slot's identity, read back in the zone its wall clock was written in.
+      local = timeslot.start_time.in_time_zone(previous_zone)
+      key = [ local.to_date.iso8601, local.strftime("%H:%M") ]
+      new_start = remaining.delete(key)
 
-      notify_affected_volunteers(timeslot)
-      timeslot.destroy!
+      if new_start.nil?
+        notify_affected_volunteers(timeslot)
+        timeslot.destroy!
+      elsif timeslot.start_time.to_i != new_start.to_i
+        # Same wall-clock identity, new instant (zone change): slide in place.
+        # update_columns skips callbacks/validations — transient uniqueness
+        # collisions mid-slide are fine because the mapping is one-to-one.
+        timeslot.update_columns(start_time: new_start, end_time: new_start + 15.minutes)
+      end
     end
-  end
 
-  def create_missing_timeslots(desired_start_times)
-    existing_keys = @conference_program.timeslots.pluck(:start_time).map(&:to_i).to_set
-
-    desired_start_times.each do |start_time|
-      next if existing_keys.include?(start_time.to_i)
-
+    remaining.each_value do |start_time|
       Timeslot.create!(
         conference_program: @conference_program,
         start_time: start_time,
