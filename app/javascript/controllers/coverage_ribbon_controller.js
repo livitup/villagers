@@ -73,22 +73,28 @@ export default class extends Controller {
     this.lengthOptionsTarget.querySelectorAll("button").forEach(button => {
       button.classList.toggle("active", Number(button.dataset.minutes) === minutes)
     })
-    this.highlightSelection(minutes)
+    const lastTick = this.highlightSelection(minutes)
 
-    const start = new Date(this.startTick.dataset.start)
-    const end = new Date(start.getTime() + minutes * 60000)
+    // Display times come exclusively from server-rendered labels (#250):
+    // formatting a Date client-side would use the BROWSER's time zone, which
+    // may differ from the conference's and skew the end time.
     this.submitButtonTarget.disabled = false
     this.submitButtonTarget.textContent =
-      `Cover ${this.startTick.dataset.label} – ${this.formatTime(end)}`
+      `Cover ${this.startTick.dataset.label} – ${lastTick.dataset.endLabel}`
   }
 
+  // Marks the selected ticks and returns the last one.
   highlightSelection(minutes) {
     const startIso = this.startTick.dataset.start
     const endMs = new Date(startIso).getTime() + minutes * 60000
+    let lastSelected = this.startTick
     this.ribbonTarget.querySelectorAll(".tick").forEach(tick => {
       const tickMs = new Date(tick.dataset.start).getTime()
-      tick.classList.toggle("selected", tick.dataset.start >= startIso && tickMs < endMs)
+      const selected = tick.dataset.start >= startIso && tickMs < endMs
+      tick.classList.toggle("selected", selected)
+      if (selected) lastSelected = tick
     })
+    return lastSelected
   }
 
   formatDuration(minutes) {
@@ -97,9 +103,5 @@ export default class extends Controller {
     if (hours === 0) return `${mins}m`
     if (mins === 0) return `${hours}h`
     return `${hours}h ${mins}m`
-  }
-
-  formatTime(date) {
-    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
   }
 }

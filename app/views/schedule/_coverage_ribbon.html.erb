@@ -12,6 +12,7 @@
           data-timeslot-id="<%= tick[:timeslot_id] %>"
           data-start="<%= tick[:start].iso8601 %>"
           data-label="<%= tick[:start].strftime("%-l:%M %p") %>"
+          data-end-label="<%= tick[:end].strftime("%-l:%M %p") %>"
           <% if interactive && tick[:on] < tick[:needed] %>
           data-action="click->coverage-ribbon#pickStart"
           role="button"
