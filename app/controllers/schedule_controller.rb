@@ -49,6 +49,19 @@ class ScheduleController < ApplicationController
     @program_qualifications = build_program_qualifications
     @user_qualification_ids = build_user_qualification_ids
 
+    # "Where you're needed" triage (#241): every uncovered gap across the days
+    # the volunteer is around (all days when unfiltered), worst first.
+    @around_days = parse_around_days
+    triage_days = @around_days.presence || @days
+    @triage = triage_days.flat_map do |day|
+      CoverageProjection.summary(@conference, day).map { |entry| entry.merge(day: day) }
+    end
+    @triage = @triage.reject { |entry| entry[:worst_state] == :covered }
+                     .sort_by { |entry| [ CoverageProjection::STATE_RANK.fetch(entry[:worst_state]), -entry[:uncovered_minutes] ] }
+
+    @hide_full = params[:hide_full] == "1"
+    @stack = @stack.reject { |entry| entry[:projection].gaps.empty? } if @hide_full
+
     # My signups for the day: a Set of timeslot ids for ribbon marking, and
     # contiguous ranges per activity for the "Your shifts" card.
     day_signups = current_user.volunteer_signups
@@ -78,6 +91,16 @@ class ScheduleController < ApplicationController
     return requested if requested && (@conference.start_date..@conference.end_date).cover?(requested)
 
     Date.current.clamp(@conference.start_date, @conference.end_date)
+  end
+
+  # Valid conference days from around[] params, in conference order.
+  def parse_around_days
+    requested = Array(params[:around]).filter_map do |value|
+      Date.iso8601(value.to_s)
+    rescue Date::Error
+      nil
+    end
+    @days & requested
   end
 
   # Collapse a day's signups into contiguous ranges per activity:

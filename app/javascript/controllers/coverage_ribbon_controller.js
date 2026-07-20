@@ -12,16 +12,28 @@ export default class extends Controller {
   static values = {
     blockMinutes: Number,
     capMinutes: Number,
-    gaps: Array
+    gaps: Array,
+    focusTimeslotId: Number
   }
 
   connect() {
+    // Deep link from the triage "Cover" button (#241): pre-select that gap.
+    if (this.focusTimeslotIdValue) {
+      const tick = this.ribbonTarget.querySelector(`[data-timeslot-id='${this.focusTimeslotIdValue}']`)
+      if (tick && (tick.classList.contains("bare") || tick.classList.contains("short"))) {
+        this.armFrom(tick)
+        this.element.scrollIntoView({ block: "center" })
+      }
+    }
     // Signal readiness so system tests can wait for the controller.
     this.element.dataset.coverageRibbonReady = "true"
   }
 
   pickStart(event) {
-    const tick = event.currentTarget
+    this.armFrom(event.currentTarget)
+  }
+
+  armFrom(tick) {
     const startIso = tick.dataset.start
     const gap = this.gapsValue.find(g => g.start <= startIso && startIso < g.end)
     if (!gap) return

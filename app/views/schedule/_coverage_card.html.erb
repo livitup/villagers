@@ -5,12 +5,15 @@
   worst = projection.worst_state
   state_badge = { bare: [ "text-bg-danger", "Bare" ], short: [ "text-bg-warning", "Short" ], covered: [ "text-bg-success", "Covered" ] }[worst]
 %>
-<div class="card coverage-card"
+<div class="card coverage-card" id="activity-<%= conference_program.id %>"
      <% unless locked %>
      data-controller="coverage-ribbon"
      data-coverage-ribbon-block-minutes-value="<%= @conference.effective_minimum_shift_duration %>"
      data-coverage-ribbon-cap-minutes-value="240"
      data-coverage-ribbon-gaps-value="<%= projection.gaps.map { |gap| { start: gap[:start].iso8601, end: gap[:end].iso8601, startTimeslotId: gap[:start_timeslot_id] } }.to_json %>"
+     <% if params[:focus].present? %>
+     data-coverage-ribbon-focus-timeslot-id-value="<%= params[:focus].to_i %>"
+     <% end %>
      <% end %>>
   <div class="card-body">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">

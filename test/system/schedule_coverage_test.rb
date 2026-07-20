@@ -75,7 +75,68 @@ class ScheduleCoverageSystemTest < ApplicationSystemTestCase
     end
   end
 
-  test "switching days re-renders the stack in the frame" do
+  test "triage Cover jumps to the gap on another day and pre-selects it" do
+    @cp.update!(day_schedules: {
+      "0" => { "enabled" => true, "start" => "09:00", "end" => "11:00" },
+      "1" => { "enabled" => true, "start" => "13:00", "end" => "15:00" }
+    })
+    # Cover day 1 fully so the only triage gap is day 2's afternoon.
+    @cp.timeslots.where(start_time: @conference.start_date.in_time_zone.all_day)
+       .each { |slot| slot.update_column(:current_volunteers_count, 1) }
+
+    login_as @volunteer
+    visit conference_schedule_coverage_path(@conference)
+
+    within ".triage-list" do
+      assert_text "1:00 PM"
+      click_link "Cover"
+    end
+
+    day2 = @conference.start_date + 1.day
+    assert_selector "[data-current-day='#{day2.iso8601}']"
+    # The gap arrived pre-selected: claim panel open, button armed at 1:00 PM.
+    assert_selector "[data-coverage-ribbon-target='claimPanel']:not([hidden])"
+    assert_selector "button:not([disabled])", text: /\ACover 1:00 PM/
+  end
+
+  test "hide-full toggle removes covered activities from the stack" do
+    covered = ConferenceProgram.create!(
+      conference: @conference,
+      program: Program.create!(name: "Front Desk", village: @village),
+      day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" } }
+    )
+    covered.timeslots.each { |slot| slot.update_column(:current_volunteers_count, 1) }
+
+    login_as @volunteer
+    visit conference_schedule_coverage_path(@conference)
+    assert_selector ".coverage-card", count: 2
+
+    click_link "Hide full activities"
+    assert_selector ".coverage-card", count: 1
+    assert_no_text "Front Desk"
+
+    click_link "Show full activities"
+    assert_selector ".coverage-card", count: 2
+  end
+
+  test "I'm around chips scope the triage list" do
+    @cp.update!(day_schedules: {
+      "0" => { "enabled" => true, "start" => "09:00", "end" => "11:00" },
+      "1" => { "enabled" => true, "start" => "09:00", "end" => "11:00" }
+    })
+
+    login_as @volunteer
+    visit conference_schedule_coverage_path(@conference)
+    assert_selector ".triage-strip", count: 2
+
+    day2 = @conference.start_date + 1.day
+    within ".card", text: "Where you're needed" do
+      click_link day2.strftime("%a")
+    end
+    assert_selector ".triage-strip", count: 1
+  end
+
+  test "switching days re-renders the stack" do
     @cp.update!(day_schedules: {
       "0" => { "enabled" => true, "start" => "09:00", "end" => "11:00" },
       "1" => { "enabled" => true, "start" => "13:00", "end" => "14:00" }
