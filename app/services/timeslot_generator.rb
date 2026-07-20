@@ -26,8 +26,10 @@ class TimeslotGenerator
     return [] if @day_schedules.empty?
 
     start_times = []
-    (@conference.start_date..@conference.end_date).each_with_index do |date, day_index|
-      day_schedule = @day_schedules[day_index.to_s]
+    # day_schedules are keyed by calendar date (#226); dates outside the
+    # conference range are retained in the config but generate nothing.
+    (@conference.start_date..@conference.end_date).each do |date|
+      day_schedule = @day_schedules[date.iso8601]
       next unless day_schedule && day_schedule["enabled"] == true
 
       start_times.concat(start_times_for_day(date, day_schedule))

@@ -44,26 +44,26 @@
               </p>
               <div id="day-schedules">
                 <% (@conference.start_date..@conference.end_date).each_with_index do |date, index| %>
-                  <% day_schedule = @conference_program.day_schedules[index.to_s] || {} %>
+                  <% day_schedule = @conference_program.day_schedules[date.iso8601] || {} %>
                   <% enabled = day_schedule["enabled"] == true || day_schedule["enabled"] == "1" %>
                   <div class="card mb-2">
                     <div class="card-body">
                       <div class="form-check mb-2">
-                        <%= check_box_tag "conference_program[day_schedules][#{index}][enabled]", "1", enabled, 
+                        <%= check_box_tag "conference_program[day_schedules][#{date.iso8601}][enabled]", "1", enabled, 
                             class: "form-check-input day-enabled", id: "day_#{index}_enabled",
                             data: { day: index } %>
                         <%= label_tag "day_#{index}_enabled", "Day #{index + 1}: #{date.strftime('%A, %B %d')}", class: "form-check-label fw-bold" %>
                       </div>
                       <div class="row day-schedule-fields" style="display: <%= enabled ? 'block' : 'none' %>;">
                         <div class="col-md-6">
-                          <%= label_tag "conference_program[day_schedules][#{index}][start]", "Start Time", class: "form-label" %>
-                          <%= time_field_tag "conference_program[day_schedules][#{index}][start]", 
+                          <%= label_tag "conference_program[day_schedules][#{date.iso8601}][start]", "Start Time", class: "form-label" %>
+                          <%= time_field_tag "conference_program[day_schedules][#{date.iso8601}][start]", 
                               day_schedule["start"] || @conference.conference_hours_start&.strftime("%H:%M"), 
                               class: "form-control" %>
                         </div>
                         <div class="col-md-6">
-                          <%= label_tag "conference_program[day_schedules][#{index}][end]", "End Time", class: "form-label" %>
-                          <%= time_field_tag "conference_program[day_schedules][#{index}][end]", 
+                          <%= label_tag "conference_program[day_schedules][#{date.iso8601}][end]", "End Time", class: "form-label" %>
+                          <%= time_field_tag "conference_program[day_schedules][#{date.iso8601}][end]", 
                               day_schedule["end"] || @conference.conference_hours_end&.strftime("%H:%M"), 
                               class: "form-control" %>
                         </div>

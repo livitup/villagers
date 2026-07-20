@@ -26,12 +26,27 @@ class ConferenceProgram < ApplicationRecord
 
   after_create :generate_timeslots
   after_update :regenerate_timeslots_if_needed
+  before_validation :normalize_day_schedule_keys
 
   def day_schedules
     super || {}
   end
 
   private
+
+  # day_schedules are keyed by calendar date (ISO "YYYY-MM-DD") so a
+  # conference date change never re-assigns a day's hours to a different
+  # date (#226). Legacy positional index keys ("0", "1", ...) — old stored
+  # data, old callers, seeds — are converted here using the conference's
+  # current start_date at write time.
+  def normalize_day_schedule_keys
+    return if day_schedules.blank? || conference.nil?
+
+    normalized = day_schedules.transform_keys do |key|
+      key.to_s.match?(/\A\d+\z/) ? (conference.start_date + key.to_i).iso8601 : key.to_s
+    end
+    self.day_schedules = normalized if normalized != day_schedules
+  end
 
   def generate_timeslots
     TimeslotGenerator.new(self).generate

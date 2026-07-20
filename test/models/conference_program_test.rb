@@ -73,7 +73,7 @@ class ConferenceProgramTest < ActiveSupport::TestCase
     assert_equal @program, cp.program
   end
 
-  test "should store day schedules in jsonb" do
+  test "should store day schedules keyed by calendar date, normalizing legacy index keys" do
     schedules = {
       "0" => { "enabled" => true, "start" => "09:00", "end" => "17:00" },
       "1" => { "enabled" => true, "start" => "10:00", "end" => "18:00" },
@@ -85,7 +85,12 @@ class ConferenceProgramTest < ActiveSupport::TestCase
       public_description: "Test",
       day_schedules: schedules
     )
-    assert_equal schedules, cp.day_schedules
+    expected = {
+      @conference.start_date.iso8601 => { "enabled" => true, "start" => "09:00", "end" => "17:00" },
+      (@conference.start_date + 1.day).iso8601 => { "enabled" => true, "start" => "10:00", "end" => "18:00" },
+      (@conference.start_date + 2.days).iso8601 => { "enabled" => false }
+    }
+    assert_equal expected, cp.day_schedules
   end
 
   test "day_schedules should default to empty hash" do

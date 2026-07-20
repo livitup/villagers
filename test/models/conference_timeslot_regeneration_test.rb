@@ -26,17 +26,21 @@ class ConferenceTimeslotRegenerationTest < ActiveSupport::TestCase
     )
   end
 
-  test "should regenerate timeslots when conference start_date changes" do
+  test "start_date changes drop out-of-range days but never re-assign schedules (#226)" do
     initial_count = @conference_program.timeslots.count
     assert initial_count > 0
+    scheduled_date = @conference.start_date
 
-    new_start_date = @conference.start_date + 1.day
-    @conference.update!(start_date: new_start_date)
+    # Moving start past the scheduled date: its slots go away, but the
+    # schedule stays bound to its calendar date (retained in config)...
+    @conference.update!(start_date: scheduled_date + 1.day)
+    assert_equal 0, @conference_program.timeslots.count
+    assert @conference_program.reload.day_schedules.key?(scheduled_date.iso8601)
 
-    # Timeslots should be regenerated with new dates
+    # ...and comes back when the range covers that date again.
+    @conference.update!(start_date: scheduled_date)
     assert_equal initial_count, @conference_program.timeslots.count
-    first_timeslot = @conference_program.timeslots.order(:start_time).first
-    assert_equal new_start_date, first_timeslot.start_time.to_date
+    assert_equal scheduled_date, @conference_program.timeslots.order(:start_time).first.start_time.to_date
   end
 
   test "should regenerate timeslots when conference end_date changes" do

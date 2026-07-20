@@ -54,21 +54,21 @@
                   <div class="card mb-2">
                     <div class="card-body">
                       <div class="form-check mb-2">
-                        <%= check_box_tag "conference_program[day_schedules][#{index}][enabled]", "1", false, 
+                        <%= check_box_tag "conference_program[day_schedules][#{date.iso8601}][enabled]", "1", false, 
                             class: "form-check-input day-enabled", id: "day_#{index}_enabled",
                             data: { day: index } %>
                         <%= label_tag "day_#{index}_enabled", "Day #{index + 1}: #{date.strftime('%A, %B %d')}", class: "form-check-label fw-bold" %>
                       </div>
                       <div class="row day-schedule-fields" style="display: none;">
                         <div class="col-md-6">
-                          <%= label_tag "conference_program[day_schedules][#{index}][start]", "Start Time", class: "form-label" %>
-                          <%= time_field_tag "conference_program[day_schedules][#{index}][start]", 
+                          <%= label_tag "conference_program[day_schedules][#{date.iso8601}][start]", "Start Time", class: "form-label" %>
+                          <%= time_field_tag "conference_program[day_schedules][#{date.iso8601}][start]", 
                               @conference.conference_hours_start&.strftime("%H:%M"), 
                               class: "form-control" %>
                         </div>
                         <div class="col-md-6">
-                          <%= label_tag "conference_program[day_schedules][#{index}][end]", "End Time", class: "form-label" %>
-                          <%= time_field_tag "conference_program[day_schedules][#{index}][end]", 
+                          <%= label_tag "conference_program[day_schedules][#{date.iso8601}][end]", "End Time", class: "form-label" %>
+                          <%= time_field_tag "conference_program[day_schedules][#{date.iso8601}][end]", 
                               @conference.conference_hours_end&.strftime("%H:%M"), 
                               class: "form-control" %>
                         </div>
