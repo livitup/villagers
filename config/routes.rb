@@ -68,6 +68,13 @@ Rails.application.routes.draw do
         post :add_volunteer
         delete :remove_volunteer
       end
+      # Window/day-scoped admin operations (#242): act on a run of slots for
+      # one activity instead of a single 15-minute cell.
+      collection do
+        post :bulk_add_volunteer
+        delete :bulk_remove_volunteer
+        patch :bulk_update_capacity
+      end
     end
     resources :reports, controller: "conference_reports", only: [ :index ] do
       collection do

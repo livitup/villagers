@@ -4,6 +4,12 @@ class VolunteerSignup < ApplicationRecord
   has_one :conference, through: :timeslot
   has_one :program, through: :timeslot
 
+  # Admin placements may exceed a slot's needed count (#242 settled decision:
+  # admins can place anyone anywhere, including over-covering). Volunteer
+  # self-signup never sets this, so the fullness check still protects it.
+  # Overlap and qualification validations apply to everyone regardless.
+  attr_accessor :allow_over_capacity
+
   validates :user, presence: true
   validates :timeslot, presence: true, uniqueness: { scope: :user_id }
   validate :no_overlapping_signups
@@ -31,6 +37,7 @@ class VolunteerSignup < ApplicationRecord
 
   def timeslot_not_full
     return unless timeslot
+    return if allow_over_capacity
 
     if timeslot.current_volunteers_count >= timeslot.max_volunteers
       errors.add(:base, "This timeslot is full")
