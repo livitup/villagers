@@ -14,8 +14,8 @@ class Api::V1::VolunteersControllerTest < ActionDispatch::IntegrationTest
     @program = Program.create!(name: "Test Program", village: @village)
     @conference_program = ConferenceProgram.create!(conference: @conference, program: @program)
 
-    @volunteer = create_confirmed_user(email: "volunteer@example.com", name: "Vol One", handle: "vol1")
-    @volunteer2 = create_confirmed_user(email: "volunteer2@example.com", name: "Vol Two", handle: "vol2")
+    @volunteer = create_confirmed_user(email: "volunteer@example.com", handle: "vol1")
+    @volunteer2 = create_confirmed_user(email: "volunteer2@example.com", handle: "vol2")
     @lead = create_confirmed_user(email: "lead@example.com")
     ConferenceRole.create!(user: @lead, conference: @conference, role_name: ConferenceRole::CONFERENCE_LEAD)
 
