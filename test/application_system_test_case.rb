@@ -1,27 +1,31 @@
 require "test_helper"
-# Not autoloaded until a Chrome driver boots, but we patch it at load time.
-require "capybara/selenium/nodes/chrome_node"
 
 # Chrome (149+) has a DevTools race: when a node is detached from the DOM
-# between Capybara finding it and checking its visibility, chromedriver
+# between Capybara finding it and operating on it (a Turbo page swap during
+# an assert_text, a re-render during a visibility check, ...), chromedriver
 # reports a generic UnknownError ("unhandled inspector error: ... Node with
 # given id does not belong to the document") instead of a
 # StaleElementReferenceError. Capybara auto-retries stale-element errors
 # inside #synchronize (re-running the query and re-finding the node), but not
 # UnknownError — so a routine, retryable race hard-errors the test instead.
-# Re-raise it as the stale-element error it actually is. (Issue #234)
+#
+# Convert it at the single choke point every WebDriver command's error is
+# classified through, so the fix covers find/text/click/visible?/etc. alike.
+# (Issues #234, #237 — a visible?-only version of this missed the text path.)
 module RetryableStaleInspectorNode
   STALE_INSPECTOR_NODE = /Node with given id does not belong to the document/
 
-  def visible?
-    super
-  rescue Selenium::WebDriver::Error::UnknownError => e
-    raise unless e.message.match?(STALE_INSPECTOR_NODE)
+  def error
+    ex = super
+    return ex unless ex.is_a?(Selenium::WebDriver::Error::UnknownError) &&
+                     ex.message.match?(STALE_INSPECTOR_NODE)
 
-    raise Selenium::WebDriver::Error::StaleElementReferenceError, e.message
+    Selenium::WebDriver::Error::StaleElementReferenceError.new(ex.message).tap do |stale|
+      stale.set_backtrace(ex.backtrace) if ex.backtrace
+    end
   end
 end
-Capybara::Selenium::ChromeNode.prepend(RetryableStaleInspectorNode)
+Selenium::WebDriver::Remote::Response.prepend(RetryableStaleInspectorNode)
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # Use Chrome's modern headless mode. The legacy `:headless_chrome` mode
