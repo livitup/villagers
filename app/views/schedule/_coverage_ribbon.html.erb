@@ -1,0 +1,20 @@
+<%# Coverage ribbon: one server-rendered tick per 15-min slot. The Stimulus
+    controller only toggles selection classes and reads data-* — all state
+    comes from CoverageProjection. %>
+<div class="d-flex justify-content-between text-muted small">
+  <span><%= projection.ticks.first[:start].strftime("%-l:%M %p") %></span>
+  <span><%= projection.ticks.last[:end].strftime("%-l:%M %p") %></span>
+</div>
+<div class="coverage-ribbon <%= "claimable" if interactive %>" <% if interactive %>data-coverage-ribbon-target="ribbon"<% end %>>
+  <% projection.ticks.each do |tick| %>
+    <span class="tick <%= tick[:state] %> <%= "mine" if @my_timeslot_ids.include?(tick[:timeslot_id]) %>"
+          title="<%= tick[:start].strftime("%-l:%M %p") %> — <%= tick[:on] %> of <%= tick[:needed] %> covered"
+          data-timeslot-id="<%= tick[:timeslot_id] %>"
+          data-start="<%= tick[:start].iso8601 %>"
+          data-label="<%= tick[:start].strftime("%-l:%M %p") %>"
+          <% if interactive && tick[:on] < tick[:needed] %>
+          data-action="click->coverage-ribbon#pickStart"
+          role="button"
+          <% end %>></span>
+  <% end %>
+</div>

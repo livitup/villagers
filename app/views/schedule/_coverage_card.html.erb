@@ -1,0 +1,58 @@
+<%
+  program = conference_program.program
+  qualifications = @program_qualifications[program.id] || []
+  locked = qualifications.any? { |qualification| !@user_qualification_ids.include?(qualification.id) }
+  worst = projection.worst_state
+  state_badge = { bare: [ "text-bg-danger", "Bare" ], short: [ "text-bg-warning", "Short" ], covered: [ "text-bg-success", "Covered" ] }[worst]
+%>
+<div class="card coverage-card"
+     <% unless locked %>
+     data-controller="coverage-ribbon"
+     data-coverage-ribbon-block-minutes-value="<%= @conference.effective_minimum_shift_duration %>"
+     data-coverage-ribbon-cap-minutes-value="240"
+     data-coverage-ribbon-gaps-value="<%= projection.gaps.map { |gap| { start: gap[:start].iso8601, end: gap[:end].iso8601, startTimeslotId: gap[:start_timeslot_id] } }.to_json %>"
+     <% end %>>
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-2">
+      <div>
+        <h2 class="h5 mb-1"><%= program.name %></h2>
+        <% qualifications.each do |qualification| %>
+          <span class="badge rounded-pill <%= @user_qualification_ids.include?(qualification.id) ? 'text-bg-light border' : 'text-bg-secondary' %>">
+            <%= "🔒 " unless @user_qualification_ids.include?(qualification.id) %><%= qualification.name %>
+          </span>
+        <% end %>
+      </div>
+      <span class="badge <%= state_badge[0] %>"><%= state_badge[1] %></span>
+    </div>
+
+    <%= render "coverage_ribbon", projection: projection, interactive: !locked %>
+
+    <% if locked %>
+      <p class="text-muted small mb-0 mt-2">
+        Requires <%= qualifications.reject { |q| @user_qualification_ids.include?(q.id) }.map(&:name).to_sentence %> —
+        contact an organizer to get qualified.
+      </p>
+    <% elsif projection.gaps.any? %>
+      <div class="mt-2" data-coverage-ribbon-target="claimPanel" hidden>
+        <div class="d-flex align-items-center flex-wrap gap-2">
+          <span class="text-muted small">Length:</span>
+          <div class="btn-group" role="group" data-coverage-ribbon-target="lengthOptions"></div>
+        </div>
+        <%= form_with url: bulk_create_conference_volunteer_signups_path(@conference), method: :post, data: { turbo: false } do %>
+          <input type="hidden" name="timeslot_id" data-coverage-ribbon-target="timeslotField">
+          <input type="hidden" name="duration_minutes" data-coverage-ribbon-target="durationField">
+          <input type="hidden" name="return_to" value="coverage">
+          <input type="hidden" name="return_day" value="<%= @day.iso8601 %>">
+          <button type="submit" class="btn btn-primary w-100 mt-2" data-coverage-ribbon-target="submitButton" disabled>
+            Pick a start time on the ribbon
+          </button>
+        <% end %>
+      </div>
+      <p class="text-muted small mb-0 mt-2" data-coverage-ribbon-target="hint">
+        Tap an uncovered (red/amber) segment to pick your start time.
+      </p>
+    <% else %>
+      <p class="text-success small mb-0 mt-2">Fully covered — nothing needed here today.</p>
+    <% end %>
+  </div>
+</div>

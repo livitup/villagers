@@ -36,10 +36,62 @@ class ScheduleController < ApplicationController
     @users = User.order(:email) if @manageable_program_ids.any?
   end
 
+  # Coverage-based volunteer view (#240): per-activity claim stack rendered
+  # from CoverageProjection for one selected day. Ships alongside the legacy
+  # grid (#show) until the redesign reaches parity (#244).
+  def coverage
+    authorize @conference, :show?, policy_class: ConferencePolicy
+
+    @days = (@conference.start_date..@conference.end_date).to_a
+    @day = resolve_day
+    @stack = CoverageProjection.stack(@conference, @day)
+
+    @program_qualifications = build_program_qualifications
+    @user_qualification_ids = build_user_qualification_ids
+
+    # My signups for the day: a Set of timeslot ids for ribbon marking, and
+    # contiguous ranges per activity for the "Your shifts" card.
+    day_signups = current_user.volunteer_signups
+                              .joins(timeslot: { conference_program: :program })
+                              .where(conference_programs: { conference_id: @conference.id })
+                              .where(timeslots: { start_time: @day.in_time_zone.all_day })
+                              .includes(timeslot: { conference_program: :program })
+                              .sort_by { |signup| signup.timeslot.start_time }
+    @my_timeslot_ids = day_signups.map(&:timeslot_id).to_set
+    @my_shift_ranges = group_signups_into_ranges(day_signups)
+  end
+
   private
 
   def set_conference
     @conference = Conference.find(params[:conference_id])
+  end
+
+  # The selected day: ?day= if it falls inside the conference, else today
+  # clamped into the conference range.
+  def resolve_day
+    requested = begin
+      Date.iso8601(params[:day].to_s)
+    rescue Date::Error
+      nil
+    end
+    return requested if requested && (@conference.start_date..@conference.end_date).cover?(requested)
+
+    Date.current.clamp(@conference.start_date, @conference.end_date)
+  end
+
+  # Collapse a day's signups into contiguous ranges per activity:
+  # [{ program_name:, starts_at:, ends_at: }, ...]
+  def group_signups_into_ranges(signups)
+    signups.group_by { |signup| signup.timeslot.conference_program }.flat_map do |conference_program, program_signups|
+      program_signups.chunk_while { |a, b| a.timeslot.end_time == b.timeslot.start_time }.map do |run|
+        {
+          program_name: conference_program.program.name,
+          starts_at: run.first.timeslot.start_time,
+          ends_at: run.last.timeslot.end_time
+        }
+      end
+    end.sort_by { |range| range[:starts_at] }
   end
 
   # Set of Program ids the current user may administer on this schedule.

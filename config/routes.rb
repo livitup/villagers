@@ -55,6 +55,7 @@ Rails.application.routes.draw do
     resources :custom_programs, only: [ :new, :create, :edit, :update, :destroy ]
     resources :conference_roles, only: [ :create, :destroy ]
     get "schedule", to: "schedule#show", as: :schedule
+    get "schedule/coverage", to: "schedule#coverage", as: :schedule_coverage
     get "leaderboard", to: "leaderboard#conference", as: :leaderboard
     resources :volunteer_signups, only: [ :index, :create, :destroy ] do
       collection do

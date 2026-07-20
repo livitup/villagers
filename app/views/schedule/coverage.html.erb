@@ -1,0 +1,48 @@
+<div class="container-fluid mt-4" style="max-width: 1440px;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="mb-0"><%= @conference.name %> - Coverage</h1>
+    <%= link_to "Grid view", conference_schedule_path(@conference), class: "btn btn-outline-secondary btn-sm" %>
+  </div>
+
+  <%= turbo_frame_tag :schedule_day do %>
+    <%# Day switcher: Turbo Frame reload per day. data-current-day lives INSIDE
+        the frame (frame element attributes survive frame navigation). %>
+    <div class="btn-group mb-4" role="group" aria-label="Day" data-current-day="<%= @day.iso8601 %>">
+      <% @days.each do |day| %>
+        <%= link_to day.strftime("%a %-m/%-d"),
+            conference_schedule_coverage_path(@conference, day: day.iso8601),
+            class: "btn btn-sm #{day == @day ? 'btn-primary' : 'btn-outline-primary'}" %>
+      <% end %>
+    </div>
+
+    <% if @my_shift_ranges.any? %>
+      <div class="card my-shifts mb-4 border-info">
+        <div class="card-header bg-info-subtle"><strong>Your shifts — <%= @day.strftime("%A, %B %-d") %></strong></div>
+        <ul class="list-group list-group-flush">
+          <% @my_shift_ranges.each do |range| %>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><%= range[:program_name] %></span>
+              <span class="text-muted">
+                <%= range[:starts_at].strftime("%-l:%M %p") %> – <%= range[:ends_at].strftime("%-l:%M %p") %>
+              </span>
+            </li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <% if @stack.empty? %>
+      <div class="alert alert-secondary">Nothing scheduled on <%= @day.strftime("%A, %B %-d") %>.</div>
+    <% else %>
+      <div class="row row-cols-1 g-3">
+        <% @stack.each do |entry| %>
+          <div class="col">
+            <%= render "coverage_card",
+                conference_program: entry[:conference_program],
+                projection: entry[:projection] %>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

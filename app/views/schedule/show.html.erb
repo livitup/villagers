@@ -8,6 +8,7 @@
           <span aria-hidden="true">&larr;</span> Conference
         <% end %>
         <h1 class="mb-0"><%= @conference.name %> - Schedule</h1>
+        <%= link_to "Coverage view", conference_schedule_coverage_path(@conference), class: "btn btn-outline-secondary btn-sm ms-auto" %>
       </div>
       <p class="text-muted">
         <% if @can_see_all_volunteers %>

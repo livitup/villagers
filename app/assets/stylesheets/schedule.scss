@@ -164,3 +164,34 @@
 .schedule-day-nav-spacer {
   height: 4rem;
 }
+
+// --- Coverage view (#240) -------------------------------------------------
+// The ribbon: one tick per 15-minute slot, colored by coverage state.
+// Themed entirely off Bootstrap CSS variables so it follows any overrides.
+.coverage-ribbon {
+  display: flex;
+  gap: 2px;
+  border-radius: 0.375rem;
+  overflow: hidden;
+
+  .tick {
+    flex: 1;
+    height: 1.5rem;
+    min-width: 4px;
+    background: var(--bs-tertiary-bg);
+
+    &.bare { background: var(--bs-danger); }
+    &.short { background: var(--bs-warning); }
+    &.covered { background: var(--bs-success); }
+
+    // My own shifts: an info underline on top of whatever state color.
+    &.mine { box-shadow: inset 0 -4px 0 var(--bs-info); }
+
+    // Current claim selection.
+    &.selected { box-shadow: inset 0 0 0 3px var(--bs-primary); }
+    &.selected.mine { box-shadow: inset 0 0 0 3px var(--bs-primary), inset 0 -4px 0 var(--bs-info); }
+  }
+
+  &.claimable .tick.bare,
+  &.claimable .tick.short { cursor: pointer; }
+}

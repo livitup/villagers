@@ -25,6 +25,21 @@ class CoverageProjection
     new(conference_program.timeslots.where(start_time: date.in_time_zone.all_day).order(:start_time))
   end
 
+  # Every program scheduled on the date with its full projection, ordered by
+  # program name — the volunteer claim stack renders straight from this.
+  # Same bounded-query load as .summary (no per-program N+1).
+  def self.stack(conference, date)
+    slots = Timeslot.joins(:conference_program)
+                    .where(conference_programs: { conference_id: conference.id })
+                    .where(start_time: date.in_time_zone.all_day)
+                    .order(:start_time)
+                    .preload(conference_program: :program)
+
+    slots.group_by(&:conference_program)
+         .map { |conference_program, program_slots| { conference_program: conference_program, projection: new(program_slots) } }
+         .sort_by { |entry| entry[:conference_program].program.name }
+  end
+
   # One entry per conference program scheduled on the date, worst coverage
   # first (any bare beats any short beats covered; ties broken by uncovered
   # minutes, descending). Programs with no slots that day are omitted — the

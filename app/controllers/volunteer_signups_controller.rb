@@ -42,7 +42,7 @@ class VolunteerSignupsController < ApplicationController
     # and a whole number of blocks (e.g. 30-min blocks => 30, 60, 90, ...).
     block_minutes = @conference.effective_minimum_shift_duration
     if requested_minutes < block_minutes || (requested_minutes % block_minutes).nonzero?
-      redirect_to conference_schedule_path(@conference),
+      redirect_to signup_return_path(conference_schedule_path(@conference)),
                   alert: "Shifts must be booked in #{block_minutes}-minute blocks for this conference."
       return
     end
@@ -64,7 +64,7 @@ class VolunteerSignupsController < ApplicationController
     # Check if any timeslot is full
     full_timeslots = timeslots_to_signup.select(&:full?)
     if full_timeslots.any?
-      redirect_to conference_schedule_path(@conference),
+      redirect_to signup_return_path(conference_schedule_path(@conference)),
                   alert: "Cannot sign up: Some timeslots are full (#{full_timeslots.first.start_time.strftime('%l:%M %p').strip})"
       return
     end
@@ -92,7 +92,7 @@ class VolunteerSignupsController < ApplicationController
     duration_str = hours > 0 ? "#{hours} hour#{'s' if hours > 1}" : ""
     duration_str += " #{minutes} minutes" if minutes > 0
 
-    redirect_to conference_volunteer_signups_path(@conference),
+    redirect_to signup_return_path(conference_volunteer_signups_path(@conference)),
                 notice: "Successfully signed up for #{created_count} shifts (#{duration_str.strip})."
   end
 
@@ -152,6 +152,15 @@ class VolunteerSignupsController < ApplicationController
   end
 
   private
+
+  # Where bulk_create sends the user afterward. The coverage view (#240) posts
+  # return_to=coverage (+ return_day) so claims land back on the ribbon they
+  # came from; everything else keeps the legacy destinations.
+  def signup_return_path(default)
+    return default unless params[:return_to] == "coverage"
+
+    conference_schedule_coverage_path(@conference, day: params[:return_day].presence)
+  end
 
   def set_conference
     @conference = Conference.find(params[:conference_id])
