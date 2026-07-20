@@ -17,14 +17,14 @@ Ruby on Rails app for hacker conference village organizers to manage volunteer s
 ### Git Hygiene (CRITICAL)
 
 1. **NEW REQUEST = NEW ISSUE**: Every feature/bug starts with a GitHub issue
-2. **NEW ISSUE = NEW BRANCH**: Each issue gets its own branch
+2. **NEW ISSUE = NEW BRANCH**: Each issue gets its own branch (generally — see rule 5)
 3. **Before new branch**:
    ```bash
    git checkout main
    git pull
    ```
-4. **Branch naming**: `git checkout -b issue-{number}-{descriptive-name}`
-5. **One issue per branch**: Never mix multiple issues in one branch
+4. **Branch naming**: `git checkout -b issue-{number}-{descriptive-name}` for single-issue branches; multi-issue feature branches (rule 5 exception) are named for the **feature** (e.g. `schedule-coverage-redesign`), never for the first ticket in the chain
+5. **One issue per branch (generally)**: Don't mix unrelated issues in one branch. **Exception — deadlock dependencies**: when issues can only build on one another unmerged (e.g. sequential epic tickets, each depending on the previous, none merged yet), they may share a single feature-named branch. Keep **one commit per issue** so per-ticket review survives, and the PR must close every included issue
 6. **Always branch from main**: Never from another feature branch unless explicitly requested
 7. **No direct commits to main**: All work goes through branches and PRs
 8. **Link PRs to issues**: Include `Closes #<issue-number>` in PR body to auto-close issue on merge
