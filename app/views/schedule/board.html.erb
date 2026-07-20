@@ -1,0 +1,56 @@
+<div class="container-fluid mt-4" style="max-width: 1440px;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="mb-0"><%= @conference.name %> - Coverage Board</h1>
+    <div class="d-flex gap-2">
+      <%= link_to "Coverage view", conference_schedule_coverage_path(@conference), class: "btn btn-outline-secondary btn-sm" %>
+      <%= link_to "Grid view", conference_schedule_path(@conference), class: "btn btn-outline-secondary btn-sm" %>
+    </div>
+  </div>
+  <p class="text-muted">Is every activity covered every day? Click a day to manage it.</p>
+
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead class="table-light">
+        <tr>
+          <th>Activity</th>
+          <% @days.each do |day| %>
+            <th class="text-center"><%= day.strftime("%a %-m/%-d") %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% @rows.each do |row| %>
+          <tr class="board-row">
+            <th scope="row"><%= row[:conference_program].program.name %></th>
+            <% @days.each do |day| %>
+              <% projection = row[:cells][day] %>
+              <td class="board-cell text-center" style="min-width: 9rem;">
+                <% if projection %>
+                  <%
+                    state_badge = { bare: [ "text-bg-danger", "Bare" ], short: [ "text-bg-warning", "Short" ],
+                                    covered: [ "text-bg-success", "Covered" ] }[projection.worst_state]
+                  %>
+                  <%= link_to conference_schedule_board_path(@conference, manage: row[:conference_program].id, day: day.iso8601),
+                      class: "text-decoration-none d-block" do %>
+                    <span class="badge <%= state_badge[0] %> mb-1"><%= state_badge[1] %></span>
+                    <div class="coverage-ribbon">
+                      <% projection.ticks.each do |tick| %>
+                        <span class="tick <%= tick[:state] %>"></span>
+                      <% end %>
+                    </div>
+                  <% end %>
+                <% else %>
+                  <span class="text-muted small">Not scheduled</span>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
+  <% if @manage_cp %>
+    <%= render "manage_panel" %>
+  <% end %>
+</div>

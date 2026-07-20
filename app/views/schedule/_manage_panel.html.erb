@@ -1,0 +1,86 @@
+<%# Statically-shown offcanvas (#243): opened by a plain Drive navigation
+    (?manage=cp&day=), closed by a link that drops the params. No backdrop,
+    body scroll allowed — the board stays visible and clickable behind it. %>
+<div class="offcanvas offcanvas-end show manage-panel" tabindex="-1" style="visibility: visible;" aria-modal="false" role="dialog">
+  <div class="offcanvas-header border-bottom">
+    <div>
+      <h2 class="h5 mb-0"><%= @manage_cp.program.name %></h2>
+      <small class="text-muted"><%= @manage_day.strftime("%A, %B %-d") %></small>
+    </div>
+    <%= link_to "", conference_schedule_board_path(@conference), class: "btn-close", "aria-label": "Close" %>
+  </div>
+  <div class="offcanvas-body">
+    <%= render "coverage_ribbon", projection: @manage_projection, interactive: false %>
+
+    <%# Needed today: one value per day (settled decision) -> #242 capacity path %>
+    <%= form_with url: bulk_update_capacity_conference_timeslots_path(@conference), method: :patch, data: { turbo: false }, class: "mt-3" do %>
+      <input type="hidden" name="conference_program_id" value="<%= @manage_cp.id %>">
+      <input type="hidden" name="date" value="<%= @manage_day.iso8601 %>">
+      <label class="form-label mb-1" for="manage-needed">Needed today</label>
+      <div class="input-group input-group-sm" style="max-width: 12rem;">
+        <input type="number" id="manage-needed" name="max_volunteers" min="1" class="form-control"
+               value="<%= @manage_projection.ticks.map { |tick| tick[:needed] }.max || 1 %>">
+        <button type="submit" class="btn btn-outline-primary">Save</button>
+      </div>
+    <% end %>
+
+    <hr>
+
+    <h3 class="h6">On the schedule</h3>
+    <% if @manage_roster.empty? %>
+      <p class="text-muted small">No one is signed up yet.</p>
+    <% else %>
+      <ul class="list-group list-group-flush mb-3">
+        <% @manage_roster.each do |range| %>
+          <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+            <div>
+              <div><%= display_name_with_callsign(range[:user]) %></div>
+              <small class="text-muted">
+                <%= range[:starts_at].strftime("%-l:%M %p") %> – <%= range[:ends_at].strftime("%-l:%M %p") %>
+              </small>
+            </div>
+            <%# Turbo-driven (not turbo:false) so data-turbo-confirm works. %>
+            <%= form_with url: bulk_remove_volunteer_conference_timeslots_path(@conference), method: :delete do %>
+              <input type="hidden" name="conference_program_id" value="<%= @manage_cp.id %>">
+              <input type="hidden" name="user_id" value="<%= range[:user].id %>">
+              <input type="hidden" name="start_timeslot_id" value="<%= range[:start_timeslot_id] %>">
+              <input type="hidden" name="duration_minutes" value="<%= range[:minutes] %>">
+              <button type="submit" class="btn btn-sm btn-outline-danger"
+                      data-turbo-confirm="Remove <%= range[:user].display_name %> from this window?">Remove</button>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <hr>
+
+    <h3 class="h6">Add a volunteer</h3>
+    <%= form_with url: bulk_add_volunteer_conference_timeslots_path(@conference), method: :post, data: { turbo: false } do %>
+      <input type="hidden" name="conference_program_id" value="<%= @manage_cp.id %>">
+      <div class="mb-2">
+        <label class="form-label small mb-0" for="manage-add-user">Who</label>
+        <%= select_tag :user_id,
+            options_for_select(@users.map { |user| [ display_name_with_callsign(user), user.id ] }),
+            id: "manage-add-user", class: "form-select form-select-sm" %>
+      </div>
+      <div class="row g-2 mb-2">
+        <div class="col">
+          <label class="form-label small mb-0" for="manage-add-start">From</label>
+          <%= select_tag :start_timeslot_id,
+              options_for_select(@manage_projection.ticks.map { |tick| [ tick[:start].strftime("%-l:%M %p"), tick[:timeslot_id] ] }),
+              id: "manage-add-start", class: "form-select form-select-sm" %>
+        </div>
+        <div class="col">
+          <label class="form-label small mb-0" for="manage-add-duration">For</label>
+          <%= select_tag :duration_minutes,
+              options_for_select([ [ "15m", 15 ], [ "30m", 30 ], [ "45m", 45 ], [ "1h", 60 ], [ "1.5h", 90 ],
+                                   [ "2h", 120 ], [ "3h", 180 ], [ "4h", 240 ] ], 60),
+              id: "manage-add-duration", class: "form-select form-select-sm" %>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm w-100">Add to schedule</button>
+      <p class="text-muted small mt-1 mb-0">Admin placements can exceed the needed count; overlap and qualification rules still apply.</p>
+    <% end %>
+  </div>
+</div>

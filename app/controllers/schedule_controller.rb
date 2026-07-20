@@ -45,6 +45,7 @@ class ScheduleController < ApplicationController
     @days = (@conference.start_date..@conference.end_date).to_a
     @day = resolve_day
     @stack = CoverageProjection.stack(@conference, @day)
+    @can_manage_any = manageable_program_ids.any?
 
     @program_qualifications = build_program_qualifications
     @user_qualification_ids = build_user_qualification_ids
@@ -74,10 +75,87 @@ class ScheduleController < ApplicationController
     @my_shift_ranges = group_signups_into_ranges(day_signups)
   end
 
+  # Admin coverage board (#243): every manageable activity x every conference
+  # day at a glance, plus a manage panel (roster / add / remove / needed)
+  # wired to the #242 bulk endpoints. The panel opens via a plain Drive
+  # navigation (?manage=cp_id&day=) and closes via a link that drops the
+  # params — no Turbo Frames (see #241's chromedriver finding), no new JS.
+  def board
+    authorize @conference, :show?, policy_class: ConferencePolicy
+
+    @manageable_program_ids = manageable_program_ids
+    if @manageable_program_ids.empty?
+      redirect_to conference_schedule_coverage_path(@conference),
+                  alert: "You don't manage any activities at this conference."
+      return
+    end
+
+    @days = (@conference.start_date..@conference.end_date).to_a
+
+    # Rows: manageable activities x days, each cell a projection (or nil when
+    # not scheduled that day). Built from the same bounded per-day loads the
+    # volunteer stack uses.
+    per_day = @days.index_with { |day| CoverageProjection.stack(@conference, day) }
+    row_cps = per_day.values.flatten.map { |entry| entry[:conference_program] }.uniq
+                     .select { |cp| @manageable_program_ids.include?(cp.program_id) }
+                     .sort_by { |cp| cp.program.name }
+    @rows = row_cps.map do |cp|
+      cells = @days.index_with do |day|
+        per_day[day].find { |entry| entry[:conference_program].id == cp.id }&.fetch(:projection)
+      end
+      { conference_program: cp, cells: cells }
+    end
+
+    # The ribbon partial is shared with the volunteer view; the board renders
+    # it read-only, so there are no "mine" markers to compute.
+    @my_timeslot_ids = Set.new
+
+    load_manage_panel if params[:manage].present?
+  end
+
   private
 
   def set_conference
     @conference = Conference.find(params[:conference_id])
+  end
+
+  # Manage-panel data for one activity+day. Denies activity leads reaching for
+  # an activity that isn't theirs (same chokepoint as the #242 endpoints).
+  def load_manage_panel
+    @manage_cp = @conference.conference_programs.find(params[:manage])
+    authorize @manage_cp, :update?, policy_class: ConferenceProgramPolicy
+
+    @manage_day = begin
+      day = Date.iso8601(params[:day].to_s)
+      (@conference.start_date..@conference.end_date).cover?(day) ? day : @days.first
+    rescue Date::Error
+      @days.first
+    end
+    @manage_projection = CoverageProjection.for(@manage_cp, @manage_day)
+    @manage_roster = manage_roster(@manage_cp, @manage_day)
+    @users = User.order(:handle)
+  end
+
+  # The day's signups for one activity, grouped into contiguous ranges per
+  # user: [{ user:, starts_at:, ends_at:, start_timeslot_id:, minutes: }]
+  def manage_roster(conference_program, day)
+    signups = VolunteerSignup.joins(:timeslot)
+                             .where(timeslots: { conference_program_id: conference_program.id })
+                             .where(timeslots: { start_time: day.in_time_zone.all_day })
+                             .includes(:user, :timeslot)
+                             .sort_by { |signup| signup.timeslot.start_time }
+
+    signups.group_by(&:user).flat_map do |user, user_signups|
+      user_signups.chunk_while { |a, b| a.timeslot.end_time == b.timeslot.start_time }.map do |run|
+        {
+          user: user,
+          starts_at: run.first.timeslot.start_time,
+          ends_at: run.last.timeslot.end_time,
+          start_timeslot_id: run.first.timeslot.id,
+          minutes: run.size * 15
+        }
+      end
+    end.sort_by { |range| [ range[:starts_at], range[:user].display_name ] }
   end
 
   # The selected day: ?day= if it falls inside the conference, else today

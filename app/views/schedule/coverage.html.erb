@@ -1,7 +1,12 @@
 <div class="container-fluid mt-4" style="max-width: 1440px;">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <h1 class="mb-0"><%= @conference.name %> - Coverage</h1>
-    <%= link_to "Grid view", conference_schedule_path(@conference), class: "btn btn-outline-secondary btn-sm" %>
+    <div class="d-flex gap-2">
+      <% if @can_manage_any %>
+        <%= link_to "Coverage board", conference_schedule_board_path(@conference), class: "btn btn-outline-primary btn-sm" %>
+      <% end %>
+      <%= link_to "Grid view", conference_schedule_path(@conference), class: "btn btn-outline-secondary btn-sm" %>
+    </div>
   </div>
 
   <%# Day/filter links are plain Turbo Drive navigations, NOT a Turbo Frame.
