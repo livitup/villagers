@@ -28,13 +28,13 @@ class LeaderboardControllerTest < ActionDispatch::IntegrationTest
       email: "volunteer@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Test Volunteer"
+      handle: "Test Volunteer"
     )
     @top_volunteer = User.create!(
       email: "top@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Top Volunteer"
+      handle: "Top Volunteer"
     )
     # Create signups for leaderboard
     VolunteerSignup.create!(user: @top_volunteer, timeslot: @cp.timeslots.first)
@@ -72,6 +72,6 @@ class LeaderboardControllerTest < ActionDispatch::IntegrationTest
     sign_in @user
     get conference_leaderboard_url(@conference)
     assert_response :success
-    assert_match @top_volunteer.name, response.body
+    assert_match @top_volunteer.display_name, response.body
   end
 end

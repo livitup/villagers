@@ -28,7 +28,7 @@ class CalendarExportsControllerTest < ActionDispatch::IntegrationTest
       email: "volunteer@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Test Volunteer"
+      handle: "Test Volunteer"
     )
     # Create signups for the user
     VolunteerSignup.create!(user: @user, timeslot: @cp.timeslots.first)
@@ -90,7 +90,7 @@ class CalendarExportsControllerTest < ActionDispatch::IntegrationTest
       email: "other@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Other Volunteer"
+      handle: "Other Volunteer"
     )
     VolunteerSignup.create!(user: other_user, timeslot: @cp.timeslots.third)
 
@@ -105,7 +105,7 @@ class CalendarExportsControllerTest < ActionDispatch::IntegrationTest
       email: "noshifts@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "No Shifts User"
+      handle: "No Shifts User"
     )
 
     sign_in other_user

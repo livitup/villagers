@@ -30,8 +30,8 @@
               <ul class="list-group mb-3">
                 <% @qualification.users.each do |user| %>
                   <li class="list-group-item d-flex justify-content-between align-items-center">
-                    <%= user.name || user.email %>
-                    <%= link_to "Revoke", conference_conference_user_qualification_path(@conference, @qualification.conference_user_qualifications.find_by(user: user)), data: { turbo_method: :delete, turbo_confirm: "Revoke this qualification from #{user.name || user.email}?" }, class: "btn btn-sm btn-outline-danger" %>
+                    <%= user.display_name %>
+                    <%= link_to "Revoke", conference_conference_user_qualification_path(@conference, @qualification.conference_user_qualifications.find_by(user: user)), data: { turbo_method: :delete, turbo_confirm: "Revoke this qualification from #{user.display_name}?" }, class: "btn btn-sm btn-outline-danger" %>
                   </li>
                 <% end %>
               </ul>

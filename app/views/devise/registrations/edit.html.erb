@@ -9,6 +9,52 @@
           <h2 class="h4 mb-0">Edit Profile</h2>
         </div>
         <div class="card-body">
+          <div data-controller="tooltip">
+            <h5 class="mb-3">My Profile</h5>
+            <%= form_with url: profile_path, scope: :user, method: :patch, data: { turbo: false } do |f| %>
+              <div class="mb-3">
+                <%= f.label :handle, "Display Name", class: "form-label" %>
+                <i class="bi bi-info-circle text-muted ms-1"
+                   data-bs-toggle="tooltip"
+                   data-bs-placement="right"
+                   title="Your name, a handle, your callsign — we don't care which. Whatever you put here is what you'll be called on the schedule and what leads will use to find you, so pick something you'll answer to."></i>
+                <%= f.text_field :handle, value: resource.handle, class: "form-control", placeholder: "What should we call you?" %>
+              </div>
+
+              <div class="mb-3">
+                <%= f.label :callsign, class: "form-label" %>
+                <%= f.text_field :callsign, value: resource.callsign, class: "form-control", placeholder: "e.g. W1AW (optional)" %>
+              </div>
+
+              <div class="mb-3">
+                <%= f.label :phone, class: "form-label" %>
+                <%= f.text_field :phone, value: resource.phone, class: "form-control", placeholder: "Phone number" %>
+              </div>
+
+              <div class="mb-3">
+                <%= f.label :twitter, class: "form-label" %>
+                <%= f.text_field :twitter, value: resource.twitter, class: "form-control", placeholder: "@username" %>
+              </div>
+
+              <div class="mb-3">
+                <%= f.label :signal, class: "form-label" %>
+                <%= f.text_field :signal, value: resource.signal, class: "form-control", placeholder: "Signal username" %>
+              </div>
+
+              <div class="mb-3">
+                <%= f.label :discord, class: "form-label" %>
+                <%= f.text_field :discord, value: resource.discord, class: "form-control", placeholder: "username#1234" %>
+              </div>
+
+              <div class="d-grid mb-2">
+                <%= f.submit "Save Profile", class: "btn btn-primary" %>
+              </div>
+              <p class="text-muted small">No password needed to update your profile.</p>
+            <% end %>
+          </div>
+
+          <hr class="my-4">
+
           <%= form_for(resource, as: resource_name, url: registration_path(resource_name), html: { method: :put, data: { turbo: false } }) do |f| %>
             <%= render "devise/shared/error_messages", resource: resource %>
 

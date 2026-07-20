@@ -1,6 +1,6 @@
 <h1>New Volunteer Signup</h1>
 
-<p>Hello <%= @admin.name.presence || @admin.email %>,</p>
+<p>Hello <%= @admin.display_name %>,</p>
 
 <p>A volunteer has signed up for a shift at <strong><%= @conference.name %></strong>.</p>
 
@@ -10,7 +10,7 @@
   <tbody>
     <tr>
       <td style="padding: 10px; border: 1px solid #dee2e6; background-color: #f8f9fa; font-weight: bold;">Volunteer</td>
-      <td style="padding: 10px; border: 1px solid #dee2e6;"><%= @volunteer.name.presence || @volunteer.email %></td>
+      <td style="padding: 10px; border: 1px solid #dee2e6;"><%= @volunteer.display_name %></td>
     </tr>
     <tr>
       <td style="padding: 10px; border: 1px solid #dee2e6; background-color: #f8f9fa; font-weight: bold;">Email</td>

@@ -42,6 +42,6 @@ class SetupController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:email, :password, :password_confirmation, :name, :handle, :phone, :twitter, :signal, :discord)
+    params.require(:user).permit(:email, :password, :password_confirmation, :handle, :callsign, :phone, :twitter, :signal, :discord)
   end
 end

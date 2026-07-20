@@ -38,12 +38,11 @@ class ConferenceProgram < ApplicationRecord
   end
 
   def regenerate_timeslots_if_needed
-    return unless saved_change_to_day_schedules? || saved_change_to_public_description?
-
-    # Only regenerate if day_schedules changed
     return unless saved_change_to_day_schedules?
 
-    timeslots.destroy_all
+    # Reconcile timeslots against the new schedule. TimeslotGenerator preserves
+    # timeslots (and their volunteer signups) whose start time is unchanged, so
+    # editing the schedule no longer silently drops existing signups (issue #225).
     generate_timeslots
   end
 end

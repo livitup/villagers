@@ -1,0 +1,61 @@
+<% if user_signed_in? && current_user.needs_profile_completion? && !current_page?(edit_user_registration_path) && controller_name != "setup" %>
+  <div class="modal fade" id="profileCompletionModal" tabindex="-1" data-controller="profile-prompt tooltip" aria-labelledby="profileCompletionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="profileCompletionModalLabel">Finish setting up your profile</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <%= form_with url: profile_path, scope: :user, method: :patch, data: { turbo: false } do |f| %>
+          <div class="modal-body">
+            <p class="text-muted">
+              So leads can recognize you on the schedule and reach you about shifts,
+              tell us what to call you and give us at least one way to get in touch.
+            </p>
+
+            <div class="mb-3">
+              <%= f.label :handle, "Display Name", class: "form-label" %>
+              <i class="bi bi-info-circle text-muted ms-1"
+                 data-bs-toggle="tooltip"
+                 data-bs-placement="right"
+                 title="Your name, a handle, your callsign — we don't care which. Whatever you put here is what you'll be called on the schedule and what leads will use to find you, so pick something you'll answer to."></i>
+              <%= f.text_field :handle,
+                    value: (current_user.display_name_set? ? current_user.handle : nil),
+                    class: "form-control", placeholder: "What should we call you?", required: true %>
+            </div>
+
+            <div class="mb-3">
+              <%= f.label :callsign, "Callsign (optional)", class: "form-label" %>
+              <%= f.text_field :callsign, value: current_user.callsign, class: "form-control", placeholder: "e.g. W1AW" %>
+            </div>
+
+            <fieldset class="mb-1">
+              <legend class="form-label mb-2">At least one contact method</legend>
+
+              <div class="mb-2">
+                <%= f.label :discord, class: "form-label small mb-0" %>
+                <%= f.text_field :discord, value: current_user.discord, class: "form-control", placeholder: "username#1234" %>
+              </div>
+              <div class="mb-2">
+                <%= f.label :signal, class: "form-label small mb-0" %>
+                <%= f.text_field :signal, value: current_user.signal, class: "form-control", placeholder: "Signal username" %>
+              </div>
+              <div class="mb-2">
+                <%= f.label :phone, class: "form-label small mb-0" %>
+                <%= f.text_field :phone, value: current_user.phone, class: "form-control", placeholder: "Phone number" %>
+              </div>
+              <div class="mb-2">
+                <%= f.label :twitter, class: "form-label small mb-0" %>
+                <%= f.text_field :twitter, value: current_user.twitter, class: "form-control", placeholder: "@username" %>
+              </div>
+            </fieldset>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Remind me later</button>
+            <%= f.submit "Save Profile", class: "btn btn-primary" %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

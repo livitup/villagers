@@ -26,8 +26,8 @@ class ApplicationController < ActionController::Base
   protected
 
   def configure_permitted_parameters
-    devise_parameter_sanitizer.permit(:sign_up, keys: [ :name, :handle, :phone, :twitter, :signal, :discord ])
-    devise_parameter_sanitizer.permit(:account_update, keys: [ :name, :handle, :phone, :twitter, :signal, :discord, :notify_by_email, :notify_in_app ])
+    devise_parameter_sanitizer.permit(:sign_up, keys: [ :handle, :callsign, :phone, :twitter, :signal, :discord ])
+    devise_parameter_sanitizer.permit(:account_update, keys: [ :handle, :callsign, :phone, :twitter, :signal, :discord, :notify_by_email, :notify_in_app ])
   end
 
   private

@@ -69,7 +69,7 @@ class ConferenceReportsController < ApplicationController
             timeslot.start_time.strftime("%Y-%m-%d"),
             "#{timeslot.start_time.strftime('%H:%M')} - #{timeslot.end_time.strftime('%H:%M')}",
             timeslot.conference_program.program.name,
-            user.name || "N/A",
+            user.display_name,
             user.email
           ]
         end

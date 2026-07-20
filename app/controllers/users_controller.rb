@@ -39,6 +39,6 @@ class UsersController < ApplicationController
 
   def user_params
     # Only allow profile fields - no email or password changes
-    params.require(:user).permit(:name, :handle, :phone, :twitter, :signal, :discord)
+    params.require(:user).permit(:handle, :callsign, :phone, :twitter, :signal, :discord)
   end
 end

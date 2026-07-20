@@ -34,9 +34,9 @@
                   <% end %>
                 </td>
                 <td>
-                  <strong><%= volunteer.name.presence || volunteer.email %></strong>
-                  <% if volunteer.handle.present? %>
-                    <br><small class="text-muted">@<%= volunteer.handle %></small>
+                  <strong><%= volunteer.display_name %></strong>
+                  <% if volunteer.callsign.present? %>
+                    <br><small class="text-muted"><%= volunteer.callsign %></small>
                   <% end %>
                 </td>
                 <td class="text-center"><%= volunteer.total_shifts %></td>

@@ -7,7 +7,6 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
       email: "admin@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Admin User",
       handle: "admin"
     )
     village_admin_role = Role.find_or_create_by!(name: Role::VILLAGE_ADMIN)
@@ -18,7 +17,6 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
       email: "volunteer@example.com",
       password: "password123",
       password_confirmation: "password123",
-      name: "Volunteer User",
       handle: "volunteer"
     )
 
@@ -95,8 +93,8 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     sign_in_user(@village_admin)
     get edit_managed_user_url(@volunteer)
     assert_response :success
-    assert_select "input[name='user[name]']"
     assert_select "input[name='user[handle]']"
+    assert_select "input[name='user[callsign]']"
     assert_select "input[name='user[phone]']"
     assert_select "input[name='user[twitter]']"
     assert_select "input[name='user[signal]']"
@@ -116,7 +114,6 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     sign_in_user(@village_admin)
     patch managed_user_url(@volunteer), params: {
       user: {
-        name: "Updated Name",
         handle: "newhandle",
         phone: "555-1234",
         twitter: "@newtwitter",
@@ -127,7 +124,6 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to managed_user_path(@volunteer)
 
     @volunteer.reload
-    assert_equal "Updated Name", @volunteer.name
     assert_equal "newhandle", @volunteer.handle
     assert_equal "555-1234", @volunteer.phone
     assert_equal "@newtwitter", @volunteer.twitter
@@ -137,40 +133,40 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
 
   test "should not update user as volunteer" do
     sign_in_user(@volunteer)
-    original_name = @village_admin.name
+    original_handle = @village_admin.handle
     patch managed_user_url(@village_admin), params: {
-      user: { name: "Hacked Name" }
+      user: { handle: "Hacked Name" }
     }
     assert_redirected_to root_path
 
     @village_admin.reload
-    assert_equal original_name, @village_admin.name
+    assert_equal original_handle, @village_admin.handle
   end
 
   test "update should not change user email" do
     sign_in_user(@village_admin)
     original_email = @volunteer.email
     patch managed_user_url(@volunteer), params: {
-      user: { email: "hacked@example.com", name: "New Name" }
+      user: { email: "hacked@example.com", handle: "New Name" }
     }
     assert_redirected_to managed_user_path(@volunteer)
 
     @volunteer.reload
     assert_equal original_email, @volunteer.email
-    assert_equal "New Name", @volunteer.name
+    assert_equal "New Name", @volunteer.handle
   end
 
   test "update should not change user password" do
     sign_in_user(@village_admin)
     original_password = @volunteer.encrypted_password
     patch managed_user_url(@volunteer), params: {
-      user: { password: "newpassword123", password_confirmation: "newpassword123", name: "New Name" }
+      user: { password: "newpassword123", password_confirmation: "newpassword123", handle: "New Name" }
     }
     assert_redirected_to managed_user_path(@volunteer)
 
     @volunteer.reload
     assert_equal original_password, @volunteer.encrypted_password
-    assert_equal "New Name", @volunteer.name
+    assert_equal "New Name", @volunteer.handle
   end
 
   test "show page should have edit link for village admin" do

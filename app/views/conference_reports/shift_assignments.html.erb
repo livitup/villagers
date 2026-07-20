@@ -54,7 +54,7 @@
                   <td><%= timeslot.start_time.strftime("%A, %B %d") %></td>
                   <td><%= timeslot.start_time.strftime("%l:%M %p") %> - <%= timeslot.end_time.strftime("%l:%M %p") %></td>
                   <td><%= timeslot.conference_program.program.name %></td>
-                  <td><%= user.name || "N/A" %></td>
+                  <td><%= user.display_name %></td>
                   <td><%= user.email %></td>
                 </tr>
               <% end %>

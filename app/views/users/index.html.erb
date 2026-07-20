@@ -11,8 +11,8 @@
             <thead>
               <tr>
                 <th>Email</th>
-                <th>Name</th>
-                <th>Handle</th>
+                <th>Display Name</th>
+                <th>Callsign</th>
                 <th>Qualifications</th>
                 <th>Actions</th>
               </tr>
@@ -21,8 +21,8 @@
               <% @users.each do |user| %>
                 <tr>
                   <td><%= user.email %></td>
-                  <td><%= user.name %></td>
                   <td><%= user.handle %></td>
+                  <td><%= user.callsign %></td>
                   <td>
                     <% if user.qualifications.any? %>
                       <% user.qualifications.each do |qual| %>

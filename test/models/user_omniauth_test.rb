@@ -16,7 +16,7 @@ class UserOmniauthTest < ActiveSupport::TestCase
       assert_equal "villager_oauth", user.provider
       assert_equal "uid-1", user.uid
       assert_equal "newcomer@example.com", user.email
-      assert_equal "New Comer", user.name
+      assert_equal "New Comer", user.handle
       assert user.confirmed?, "OAuth users should be auto-confirmed"
     end
   end
@@ -39,6 +39,29 @@ class UserOmniauthTest < ActiveSupport::TestCase
       assert_equal "villager_oauth", linked.provider
       assert_equal "uid-link", linked.uid
     end
+  end
+
+  test "from_omniauth prefills the Display Name from the provider name" do
+    user = User.from_omniauth(auth_hash(uid: "uid-name", name: "Radio Ray"))
+    assert_equal "Radio Ray", user.handle
+  end
+
+  test "from_omniauth never overwrites a handle the volunteer has chosen" do
+    chosen = User.new(email: "chosen@example.com", password: "password123", password_confirmation: "password123", handle: "MyChosenName")
+    chosen.skip_confirmation!
+    chosen.save!
+
+    # Same person signs in via OAuth (linked by email); the provider reports a
+    # different name, but their self-chosen Display Name must survive.
+    linked = User.from_omniauth(auth_hash(uid: "uid-chosen", email: "chosen@example.com", name: "Provider Name"))
+
+    assert_equal chosen.id, linked.id
+    assert_equal "MyChosenName", linked.reload.handle
+  end
+
+  test "from_omniauth falls back to the email when the provider sends no name" do
+    user = User.from_omniauth(auth_hash(uid: "uid-noname", email: "noname@example.com", name: nil))
+    assert_equal "noname@example.com", user.handle
   end
 
   test "from_omniauth generates a usable random password for new users" do

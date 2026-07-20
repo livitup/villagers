@@ -220,6 +220,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_163926) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.string "callsign"
     t.datetime "confirmation_sent_at"
     t.string "confirmation_token"
     t.datetime "confirmed_at"
@@ -227,8 +228,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_19_163926) do
     t.string "discord"
     t.string "email", null: false
     t.string "encrypted_password", default: "", null: false
-    t.string "handle"
-    t.string "name"
+    t.string "handle", null: false
     t.boolean "notify_by_email", default: true, null: false
     t.boolean "notify_in_app", default: true, null: false
     t.string "phone"

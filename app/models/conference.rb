@@ -107,7 +107,7 @@ class Conference < ApplicationRecord
     lead = primary_lead
     return "No lead assigned" unless lead
 
-    name = lead.name.presence || lead.email
+    name = lead.display_name
     additional_leads = conference_leads.count - 1
     additional_leads > 0 ? "#{name} +#{additional_leads}" : name
   end
@@ -148,9 +148,10 @@ class Conference < ApplicationRecord
     return unless saved_change_to_start_date? || saved_change_to_end_date? ||
                   saved_change_to_conference_hours_start? || saved_change_to_conference_hours_end?
 
-    # Regenerate timeslots for all conference programs
+    # Reconcile timeslots for all conference programs. TimeslotGenerator keeps
+    # timeslots (and signups) whose start time still fits the new dates/hours
+    # instead of destroying and recreating everything (issue #225).
     conference_programs.find_each do |cp|
-      cp.timeslots.destroy_all
       TimeslotGenerator.new(cp).generate
     end
   end

@@ -8,6 +8,44 @@ class User < ApplicationRecord
   # Devise handles email validation, but we keep format validation
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
 
+  # `handle` is the one and only Display Name — whatever a volunteer wants to be
+  # called (a name, a handle, a callsign). It's required, but we never block a
+  # save on it: a blank handle falls back to the email address so every account
+  # always has a Display Name. The self-service form nudges people to set a real
+  # one (see the profile-completion prompt).
+  before_validation :ensure_display_name
+  validates :handle, presence: true
+
+  # The single accessor every view should use to show a person. Defensive
+  # `|| email` in case a record ever slips through with a blank handle.
+  def display_name
+    handle.presence || email
+  end
+
+  # Contact methods a lead could actually reach a volunteer through.
+  CONTACT_FIELDS = %i[phone signal discord twitter].freeze
+
+  def contact_method?
+    CONTACT_FIELDS.any? { |field| public_send(field).present? }
+  end
+
+  # A handle counts as a real Display Name only once it differs from the email
+  # fallback — otherwise the schedule still shows an email address.
+  def display_name_set?
+    handle.present? && !handle.to_s.casecmp?(email.to_s)
+  end
+
+  # "Complete" = a personalized Display Name plus at least one contact method.
+  # Callsign is collected but never required (Villagers ships to non-ham
+  # villages too).
+  def profile_complete?
+    display_name_set? && contact_method?
+  end
+
+  def needs_profile_completion?
+    !profile_complete?
+  end
+
   # Find or create a user from an OmniAuth callback.
   # Resolution order: existing identity (provider + uid) -> existing account
   # with the same email (linked) -> brand new just-in-time provisioned user.
@@ -24,7 +62,9 @@ class User < ApplicationRecord
     user = find_or_initialize_by(email: auth.info.email)
     user.provider = auth.provider
     user.uid = auth.uid
-    user.name ||= auth.info.name
+    # Prefill the Display Name from the provider's name on first sign-in only;
+    # never overwrite a handle the volunteer has since chosen for themselves.
+    user.handle = auth.info.name if user.handle.blank? && auth.info.name.present?
     user.password = Devise.friendly_token[0, 32] if user.encrypted_password.blank?
     user.skip_confirmation! unless user.confirmed?
     user.save
@@ -51,6 +91,10 @@ class User < ApplicationRecord
 
   private def auto_confirm_if_email_disabled
     skip_confirmation! unless Village.email_enabled?
+  end
+
+  private def ensure_display_name
+    self.handle = email if handle.blank?
   end
 
   private def prevent_demo_account_deletion

@@ -125,7 +125,7 @@ class AuthenticationTest < ActionDispatch::IntegrationTest
     sign_in user
     patch user_registration_path, params: {
       user: {
-        name: "Test User",
+        handle: "Test User",
         current_password: "password123"
       }
     }

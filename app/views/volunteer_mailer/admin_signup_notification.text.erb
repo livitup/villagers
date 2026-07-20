@@ -1,12 +1,12 @@
 New Volunteer Signup
 
-Hello <%= @admin.name.presence || @admin.email %>,
+Hello <%= @admin.display_name %>,
 
 A volunteer has signed up for a shift at <%= @conference.name %>.
 
 SIGNUP DETAILS
 ==============
-Volunteer: <%= @volunteer.name.presence || @volunteer.email %>
+Volunteer: <%= @volunteer.display_name %>
 Email: <%= @volunteer.email %>
 Program: <%= @program.name %>
 Date: <%= @timeslot.start_time.strftime("%A, %B %d, %Y") %>

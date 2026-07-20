@@ -1,13 +1,13 @@
 class NotificationMailerPreview < ActionMailer::Preview
   # Preview: http://localhost:3000/rails/mailers/notification_mailer/test_email
   def test_email
-    user = User.first || User.new(email: "preview@example.com", name: "Preview User")
+    user = User.first || User.new(email: "preview@example.com", handle: "Preview User")
     NotificationMailer.test_email(user)
   end
 
   # Preview: http://localhost:3000/rails/mailers/notification_mailer/notification_email
   def notification_email
-    user = User.first || User.new(email: "preview@example.com", name: "Preview User")
+    user = User.first || User.new(email: "preview@example.com", handle: "Preview User")
 
     NotificationMailer.notification_email(
       user: user,
