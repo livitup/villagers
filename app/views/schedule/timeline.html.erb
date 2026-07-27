@@ -1,6 +1,6 @@
 <%# Staffing timeline (#262): horizontally-scrolling who-works-when view.
-    One bar per contiguous volunteer shift, positioned by time within the
-    day's scheduled window; the badge names the activity. %>
+    One lane per activity, one bar per contiguous volunteer shift, positioned
+    by time within the day's scheduled window on a shared hour ruler. %>
 <div class="container-fluid mt-4" style="max-width: 1440px;">
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
     <h1 class="mb-0"><%= @conference.name %> - Staffing Timeline</h1>
@@ -11,12 +11,19 @@
   </div>
   <p class="text-muted">Who is scheduled when — spot thin handoffs and high-turnover stretches at a glance.</p>
 
-  <div class="d-flex align-items-center flex-wrap gap-3 mb-3">
+  <%
+    # A stable Bootstrap color per activity, keyed across ALL manageable
+    # programs so an activity keeps its color as lanes are toggled.
+    badge_cycle = %w[text-bg-primary text-bg-success text-bg-info text-bg-warning text-bg-dark text-bg-secondary]
+    color_index = @programs.each_with_index.to_h { |program, index| [ program.id, index % badge_cycle.size ] }
+  %>
+
+  <div class="d-flex align-items-start flex-wrap gap-3 mb-3">
     <div class="btn-group" role="group" aria-label="Day" data-current-day="<%= @day.iso8601 %>">
       <% @days.each do |day| %>
         <%= link_to day.strftime("%a %-m/%-d"),
             conference_schedule_timeline_path(@conference, day: day.iso8601,
-              program_id: params[:program_id].presence, from: params[:from].presence, to: params[:to].presence),
+              program_ids: params[:program_ids].presence, from: params[:from].presence, to: params[:to].presence),
             class: "btn btn-sm #{day == @day ? 'btn-primary' : 'btn-outline-primary'}" %>
       <% end %>
     </div>
@@ -24,13 +31,26 @@
     <%= form_with url: conference_schedule_timeline_path(@conference), method: :get, local: true,
                   class: "d-flex align-items-end flex-wrap gap-2", data: { controller: "auto-submit" } do %>
       <input type="hidden" name="day" value="<%= @day.iso8601 %>">
-      <div>
-        <label class="form-label small mb-0" for="timeline-program">Activity</label>
-        <%= select_tag :program_id,
-            options_from_collection_for_select(@programs, :id, :name, params[:program_id]),
-            include_blank: "All activities", id: "timeline-program",
-            class: "form-select form-select-sm", data: { action: "change->auto-submit#submit" } %>
-      </div>
+      <% if @programs.size > 1 %>
+        <fieldset class="me-2">
+          <legend class="form-label small mb-0 float-none w-auto">Activities</legend>
+          <%# The blank entry keeps program_ids[] present when every box is
+              unchecked, so "none selected" doesn't snap back to "all". %>
+          <input type="hidden" name="program_ids[]" value="">
+          <div class="d-flex flex-wrap gap-3 pt-1">
+            <% @programs.each do |program| %>
+              <div class="form-check">
+                <%= check_box_tag "program_ids[]", program.id, @selected_program_ids.include?(program.id),
+                    id: "timeline-program-#{program.id}", class: "form-check-input",
+                    data: { action: "change->auto-submit#submit" } %>
+                <label class="form-check-label" for="timeline-program-<%= program.id %>">
+                  <span class="badge <%= badge_cycle[color_index[program.id]] %>"><%= program.name %></span>
+                </label>
+              </div>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
       <div>
         <label class="form-label small mb-0" for="timeline-from">From</label>
         <%= time_field_tag :from, params[:from], id: "timeline-from", class: "form-control form-control-sm" %>
@@ -45,10 +65,13 @@
     <% end %>
   </div>
 
-  <% if @bars.empty? %>
+  <% if @lanes.empty? %>
     <div class="alert alert-secondary">
-      No one is scheduled<%= " for the selected filters" if params[:program_id].present? || params[:from].present? || params[:to].present? %>
-      on <%= @day.strftime("%A, %B %-d") %>.
+      <% if @selected_program_ids.empty? %>
+        No activities selected — check at least one activity above.
+      <% else %>
+        Nothing scheduled on <%= @day.strftime("%A, %B %-d") %>.
+      <% end %>
     </div>
   <% else %>
     <%
@@ -59,9 +82,7 @@
       row_height = 2.5
       now = Time.current
       show_now = now.between?(@window_start, @window_end)
-      # A stable Bootstrap color per activity so bars group visually.
-      badge_cycle = %w[text-bg-primary text-bg-success text-bg-info text-bg-warning text-bg-dark text-bg-secondary]
-      badge_class = @programs.each_with_index.to_h { |program, index| [ program.name, badge_cycle[index % badge_cycle.size] ] }
+      total_bars = @lanes.sum { |lane| lane[:bars].size }
     %>
     <div class="timeline-scroll pb-2">
       <div class="staffing-timeline" style="min-width: <%= [ hours * 8, 24 ].max %>rem;">
@@ -70,31 +91,40 @@
             <span class="hour-label <%= "edge-start" if index.zero? %>" style="left: <%= position.call(mark) %>%;"><%= mark.strftime("%-l %p") %></span>
           <% end %>
         </div>
-        <div class="timeline-body" style="height: <%= @bars.size * row_height + 0.5 %>rem;">
-          <% ruler_marks.each do |mark| %>
-            <div class="hour-line" style="left: <%= position.call(mark) %>%;"></div>
-          <% end %>
-          <% if show_now %>
-            <div class="timeline-now" style="left: <%= position.call(now) %>%;" title="Now"></div>
-          <% end %>
-          <% @bars.each_with_index do |bar, row| %>
-            <%# The bar's width is the truthful time span. As it narrows, the
-                time range and then the activity badge drop out (container
-                queries) and the name ellipsizes; the tooltip always carries
-                the full details. %>
-            <%= link_to managed_user_path(bar[:user]), class: "timeline-bar",
-                style: "left: #{position.call(bar[:starts_at])}%; width: #{(position.call(bar[:ends_at]) - position.call(bar[:starts_at])).round(3)}%; top: #{(row * row_height + 0.25).round(2)}rem;",
-                title: "#{display_name_with_callsign(bar[:user])} — #{bar[:program_name]}, #{bar[:starts_at].strftime("%-l:%M %p")} – #{bar[:ends_at].strftime("%-l:%M %p")}" do %>
-              <strong class="bar-name"><%= display_name_with_callsign(bar[:user]) %></strong>
-              <span class="badge bar-activity <%= badge_class.fetch(bar[:program_name], "text-bg-primary") %>"><%= bar[:program_name] %></span>
-              <span class="text-muted small bar-times"><%= bar[:starts_at].strftime("%-l:%M") %>–<%= bar[:ends_at].strftime("%-l:%M %p") %></span>
-            <% end %>
-          <% end %>
-        </div>
+        <% @lanes.each do |lane| %>
+          <div class="timeline-lane" data-program-name="<%= lane[:program].name %>">
+            <div class="lane-header">
+              <span class="badge <%= badge_cycle[color_index[lane[:program].id]] %>"><%= lane[:program].name %></span>
+              <span class="text-muted small"><%= lane[:bars].size %> shift<%= "s" unless lane[:bars].size == 1 %></span>
+            </div>
+            <div class="timeline-body" style="height: <%= [ lane[:bars].size, 1 ].max * row_height + 0.5 %>rem;">
+              <% ruler_marks.each do |mark| %>
+                <div class="hour-line" style="left: <%= position.call(mark) %>%;"></div>
+              <% end %>
+              <% if show_now %>
+                <div class="timeline-now" style="left: <%= position.call(now) %>%;" title="Now"></div>
+              <% end %>
+              <% if lane[:bars].empty? %>
+                <p class="text-muted small m-2 mb-0">No one scheduled in this window.</p>
+              <% end %>
+              <% lane[:bars].each_with_index do |bar, row| %>
+                <%# The bar's width is the truthful time span. As it narrows,
+                    the time range drops out (container query) and the name
+                    ellipsizes; the tooltip always carries the full details. %>
+                <%= link_to managed_user_path(bar[:user]), class: "timeline-bar lane-color-#{color_index[lane[:program].id]}",
+                    style: "left: #{position.call(bar[:starts_at])}%; width: #{(position.call(bar[:ends_at]) - position.call(bar[:starts_at])).round(3)}%; top: #{(row * row_height + 0.25).round(2)}rem;",
+                    title: "#{display_name_with_callsign(bar[:user])} — #{bar[:program_name]}, #{bar[:starts_at].strftime("%-l:%M %p")} – #{bar[:ends_at].strftime("%-l:%M %p")}" do %>
+                  <strong class="bar-name"><%= display_name_with_callsign(bar[:user]) %></strong>
+                  <span class="text-muted small bar-times"><%= bar[:starts_at].strftime("%-l:%M") %>–<%= bar[:ends_at].strftime("%-l:%M %p") %></span>
+                <% end %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
       </div>
     </div>
     <p class="text-muted small">
-      <%= @bars.size %> shift<%= "s" unless @bars.size == 1 %> ·
+      <%= total_bars %> shift<%= "s" unless total_bars == 1 %> ·
       <%= @window_start.strftime("%-l:%M %p") %> – <%= @window_end.strftime("%-l:%M %p") %>
     </p>
   <% end %>

@@ -43,17 +43,20 @@ class ScheduleTimelineTest < ActionDispatch::IntegrationTest
     user
   end
 
-  test "a village admin sees one bar per contiguous shift with name and activity" do
+  test "a village admin sees a lane per activity with one bar per contiguous shift" do
     sign_in @admin
     get conference_schedule_timeline_path(@conference)
 
     assert_response :success
-    assert_select ".timeline-bar", 2
-    assert_select ".timeline-bar", text: /Radio Ray/ do
-      assert_select ".badge", text: "Ham Exams"
+    assert_select ".timeline-lane", 2
+    assert_select ".timeline-lane[data-program-name='Ham Exams']" do
+      assert_select ".lane-header .badge", text: "Ham Exams"
+      assert_select ".timeline-bar", 1
+      assert_select ".timeline-bar", text: /Radio Ray/
     end
-    assert_select ".timeline-bar", text: /Sam/ do
-      assert_select ".badge", text: "Front Desk"
+    assert_select ".timeline-lane[data-program-name='Front Desk']" do
+      assert_select ".timeline-bar", 1
+      assert_select ".timeline-bar", text: /Sam/
     end
   end
 
@@ -68,7 +71,7 @@ class ScheduleTimelineTest < ActionDispatch::IntegrationTest
     assert_select ".timeline-bar", 2
   end
 
-  test "an activity lead sees only their own activity's bars" do
+  test "an activity lead sees only their own activity's lane and no foreign filter options" do
     lead = create_user("activity-lead@example.com", handle: "Exams Lead")
     ConferenceProgramRole.create!(user: lead, conference_program: @exams,
                                   role_name: ConferenceProgramRole::ACTIVITY_LEAD)
@@ -77,8 +80,21 @@ class ScheduleTimelineTest < ActionDispatch::IntegrationTest
     get conference_schedule_timeline_path(@conference)
 
     assert_response :success
-    assert_select ".timeline-bar", 1
+    assert_select ".timeline-lane", 1
     assert_select ".timeline-bar", text: /Radio Ray/
+    assert_select ".timeline-bar", text: /Sam/, count: 0
+    assert_select "input[name='program_ids[]'][value='#{@desk.program_id}']", count: 0
+  end
+
+  test "an activity lead cannot opt into a foreign activity via program_ids" do
+    lead = create_user("activity-lead@example.com", handle: "Exams Lead")
+    ConferenceProgramRole.create!(user: lead, conference_program: @exams,
+                                  role_name: ConferenceProgramRole::ACTIVITY_LEAD)
+    sign_in lead
+
+    get conference_schedule_timeline_path(@conference, program_ids: [ @desk.program_id ])
+
+    assert_response :success
     assert_select ".timeline-bar", text: /Sam/, count: 0
   end
 
@@ -94,12 +110,28 @@ class ScheduleTimelineTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_user_session_path
   end
 
-  test "the activity filter narrows to one activity" do
+  test "activity checkboxes select which lanes show" do
     sign_in @admin
-    get conference_schedule_timeline_path(@conference, program_id: @desk.program_id)
 
-    assert_select ".timeline-bar", 1
+    # Both offered as checkboxes, both checked by default.
+    get conference_schedule_timeline_path(@conference)
+    assert_select "input[type=checkbox][name='program_ids[]']", 2
+    assert_select "input[type=checkbox][name='program_ids[]'][checked]", 2
+
+    # Deselecting down to one narrows the lanes.
+    get conference_schedule_timeline_path(@conference, program_ids: [ @desk.program_id ])
+    assert_select ".timeline-lane", 1
     assert_select ".timeline-bar", text: /Sam/
+    assert_select "input[type=checkbox][name='program_ids[]'][checked]", 1
+  end
+
+  test "deselecting every activity shows an empty state, not everything" do
+    sign_in @admin
+    get conference_schedule_timeline_path(@conference, program_ids: [ "" ])
+
+    assert_response :success
+    assert_select ".timeline-lane", 0
+    assert_select ".timeline-bar", 0
   end
 
   test "the time window filter keeps only overlapping bars" do

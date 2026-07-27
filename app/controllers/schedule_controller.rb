@@ -91,10 +91,11 @@ class ScheduleController < ApplicationController
     load_manage_panel if params[:manage].present?
   end
 
-  # Staffing timeline (#262): who works when, at a glance — one horizontal bar
-  # per contiguous volunteer shift across the day's manageable activities.
-  # Conference managers see every activity; activity leads only their own.
-  # Filters: day, activity (program_id), and a from/to time window.
+  # Staffing timeline (#262): who works when, at a glance — one lane per
+  # activity, one horizontal bar per contiguous volunteer shift. Conference
+  # managers see every activity; activity leads only their own, and the
+  # activity checkboxes let multi-activity leads pick which lanes show.
+  # Filters: day, activities (program_ids[]), and a from/to time window.
   def timeline
     authorize @conference, :show?, policy_class: ConferencePolicy
 
@@ -109,27 +110,40 @@ class ScheduleController < ApplicationController
     @day = resolve_day
 
     @programs = Program.where(id: @manageable_program_ids).order(:name)
-    @program_filter = @programs.find_by(id: params[:program_id])
-    program_ids = @program_filter ? [ @program_filter.id ] : @manageable_program_ids.to_a
+    # Absent param = everything; a present-but-empty selection (all boxes
+    # unchecked) honestly shows nothing. Foreign ids are dropped.
+    @selected_program_ids =
+      if params.key?(:program_ids)
+        Array(params[:program_ids]).map(&:to_i) & @manageable_program_ids.to_a
+      else
+        @manageable_program_ids.to_a
+      end
+
+    @lanes = []
+    return if @selected_program_ids.empty?
 
     day_slots = Timeslot.joins(:conference_program)
-                        .where(conference_programs: { conference_id: @conference.id, program_id: program_ids })
+                        .where(conference_programs: { conference_id: @conference.id, program_id: @selected_program_ids })
                         .where(start_time: @day.in_time_zone.all_day)
     scheduled_start = day_slots.minimum(:start_time)
     scheduled_end = day_slots.maximum(:end_time)
-    if scheduled_start.nil?
-      @bars = []
-      return
-    end
+    return if scheduled_start.nil?
 
     # The visible window: the day's scheduled span, narrowed by from/to.
     @window_start = parse_window_time(params[:from]) || scheduled_start
     @window_end = parse_window_time(params[:to]) || scheduled_end
     @window_end = @window_start + 1.hour if @window_end <= @window_start
 
-    @bars = timeline_bars(program_ids)
-            .select { |bar| bar[:starts_at] < @window_end && bar[:ends_at] > @window_start }
-            .sort_by { |bar| [ bar[:starts_at], bar[:user].display_name ] }
+    bars = timeline_bars(@selected_program_ids)
+           .select { |bar| bar[:starts_at] < @window_end && bar[:ends_at] > @window_start }
+    @lanes = @programs.select { |program| @selected_program_ids.include?(program.id) }
+                      .map do |program|
+      {
+        program: program,
+        bars: bars.select { |bar| bar[:program_id] == program.id }
+                  .sort_by { |bar| [ bar[:starts_at], bar[:user].display_name ] }
+      }
+    end
   end
 
   private
@@ -153,6 +167,7 @@ class ScheduleController < ApplicationController
       group.chunk_while { |a, b| a.timeslot.end_time == b.timeslot.start_time }.map do |run|
         {
           user: run.first.user,
+          program_id: run.first.timeslot.conference_program.program_id,
           program_name: run.first.timeslot.conference_program.program.name,
           starts_at: run.first.timeslot.start_time,
           ends_at: run.last.timeslot.end_time
