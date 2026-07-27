@@ -6,11 +6,23 @@ class ConferenceReportsController < ApplicationController
   before_action :set_conference
   before_action :authorize_reports
 
+  # Optional volunteer profile columns for the shift assignments report
+  # (#261): whitelisted param key => column header. Selected via columns[]
+  # checkboxes; anything not listed here is ignored.
+  PROFILE_COLUMNS = {
+    "callsign" => "Callsign",
+    "phone" => "Phone",
+    "twitter" => "Twitter",
+    "signal" => "Signal",
+    "discord" => "Discord"
+  }.freeze
+
   def index
     @programs = @conference.programs
   end
 
   def shift_assignments
+    @profile_columns = PROFILE_COLUMNS.keys & Array(params[:columns]).map(&:to_s)
     @timeslots = filtered_timeslots
                  .includes(:volunteer_signups, :users, conference_program: :program)
                  .where("timeslots.current_volunteers_count > 0")
@@ -64,7 +76,8 @@ class ConferenceReportsController < ApplicationController
 
   def send_shift_assignments_csv
     csv_data = CSV.generate(headers: true) do |csv|
-      csv << [ "Date", "Time", "Program", "Volunteer Name", "Volunteer Email" ]
+      csv << [ "Date", "Time", "Program", "Volunteer Name", "Volunteer Email",
+               *@profile_columns.map { |column| PROFILE_COLUMNS[column] } ]
 
       @timeslots.each do |timeslot|
         timeslot.users.each do |user|
@@ -73,7 +86,8 @@ class ConferenceReportsController < ApplicationController
             "#{timeslot.start_time.strftime('%H:%M')} - #{timeslot.end_time.strftime('%H:%M')}",
             timeslot.conference_program.program.name,
             user.display_name,
-            user.email
+            user.email,
+            *@profile_columns.map { |column| user.public_send(column) }
           ]
         end
       end
