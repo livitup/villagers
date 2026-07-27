@@ -3,41 +3,33 @@
     <div class="col-lg-10 col-xl-8">
       <div class="card">
         <div class="card-header d-flex align-items-center">
-          <%= link_to managed_users_path, class: "btn btn-secondary btn-sm me-3" do %>
-            <span aria-hidden="true">&larr;</span> Users
+          <% if policy(User).index? %>
+            <%= link_to managed_users_path, class: "btn btn-secondary btn-sm me-3" do %>
+              <span aria-hidden="true">&larr;</span> Users
+            <% end %>
           <% end %>
           <h2 class="h4 mb-0"><%= @user.email %></h2>
         </div>
         <div class="card-body">
+          <%# Every profile attribute, blank or not (#262) — a viewer must be
+              able to tell "not set" from "hidden". %>
           <dl class="row">
-            <% if @user.handle.present? %>
-              <dt class="col-sm-3">Display Name:</dt>
-              <dd class="col-sm-9"><%= @user.handle %></dd>
-            <% end %>
-
-            <% if @user.callsign.present? %>
-              <dt class="col-sm-3">Callsign:</dt>
-              <dd class="col-sm-9"><%= @user.callsign %></dd>
-            <% end %>
-
-            <% if @user.phone.present? %>
-              <dt class="col-sm-3">Phone:</dt>
-              <dd class="col-sm-9"><%= @user.phone %></dd>
-            <% end %>
-
-            <% if @user.twitter.present? %>
-              <dt class="col-sm-3">Twitter:</dt>
-              <dd class="col-sm-9"><%= @user.twitter %></dd>
-            <% end %>
-
-            <% if @user.signal.present? %>
-              <dt class="col-sm-3">Signal:</dt>
-              <dd class="col-sm-9"><%= @user.signal %></dd>
-            <% end %>
-
-            <% if @user.discord.present? %>
-              <dt class="col-sm-3">Discord:</dt>
-              <dd class="col-sm-9"><%= @user.discord %></dd>
+            <% {
+                 "Display Name" => @user.handle,
+                 "Callsign" => @user.callsign,
+                 "Phone" => @user.phone,
+                 "Twitter" => @user.twitter,
+                 "Signal" => @user.signal,
+                 "Discord" => @user.discord
+               }.each do |label, value| %>
+              <dt class="col-sm-3"><%= label %>:</dt>
+              <dd class="col-sm-9">
+                <% if value.present? %>
+                  <%= value %>
+                <% else %>
+                  <span class="text-muted">&mdash;</span>
+                <% end %>
+              </dd>
             <% end %>
           </dl>
 
@@ -89,9 +81,11 @@
                   <% @user.qualifications.each do |qualification| %>
                     <li class="list-group-item d-flex justify-content-between align-items-center">
                       <%= qualification.name %>
-                      <%= link_to "Remove", managed_user_user_qualification_path(@user, @user.user_qualifications.find_by(qualification: qualification)),
-                          data: { turbo_method: :delete, turbo_confirm: "Remove this qualification from #{@user.email}?" },
-                          class: "btn btn-sm btn-outline-danger" %>
+                      <% if policy(@user).grant_qualification? %>
+                        <%= link_to "Remove", managed_user_user_qualification_path(@user, @user.user_qualifications.find_by(qualification: qualification)),
+                            data: { turbo_method: :delete, turbo_confirm: "Remove this qualification from #{@user.email}?" },
+                            class: "btn btn-sm btn-outline-danger" %>
+                      <% end %>
                     </li>
                   <% end %>
                 </ul>
@@ -100,7 +94,7 @@
               <% end %>
 
               <% available_qualifications = @qualifications - @user.qualifications %>
-              <% if available_qualifications.any? %>
+              <% if available_qualifications.any? && policy(@user).grant_qualification? %>
                 <%= form_with url: managed_user_user_qualifications_path(@user), method: :post, local: true, class: "d-flex gap-2" do |f| %>
                   <select name="qualification_id" class="form-select form-select-sm" required>
                     <option value="">Select qualification...</option>
@@ -114,10 +108,16 @@
             </div>
           </div>
         </div>
-        <div class="card-footer d-flex justify-content-between">
-          <%= link_to "← Back to Users", managed_users_path, class: "btn btn-link" %>
-          <%= link_to "Edit", edit_managed_user_path(@user), class: "btn btn-outline-primary" %>
-        </div>
+        <% if policy(User).index? || policy(@user).edit? %>
+          <div class="card-footer d-flex justify-content-between">
+            <% if policy(User).index? %>
+              <%= link_to "← Back to Users", managed_users_path, class: "btn btn-link" %>
+            <% end %>
+            <% if policy(@user).edit? %>
+              <%= link_to "Edit", edit_managed_user_path(@user), class: "btn btn-outline-primary" %>
+            <% end %>
+          </div>
+        <% end %>
       </div>
     </div>
   </div>

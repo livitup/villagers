@@ -57,6 +57,7 @@ Rails.application.routes.draw do
     get "schedule", to: "schedule#show", as: :schedule
     get "schedule/coverage", to: "schedule#coverage", as: :schedule_coverage
     get "schedule/board", to: "schedule#board", as: :schedule_board
+    get "schedule/timeline", to: "schedule#timeline", as: :schedule_timeline
     get "leaderboard", to: "leaderboard#conference", as: :leaderboard
     resources :volunteer_signups, only: [ :index, :create, :destroy ] do
       collection do
