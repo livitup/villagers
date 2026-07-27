@@ -19,6 +19,10 @@ class UserPolicy < ApplicationPolicy
     user&.village_admin?
   end
 
+  def manage_village_admin_role?
+    user&.village_admin?
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       if user&.village_admin?
