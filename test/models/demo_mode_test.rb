@@ -4,20 +4,23 @@ class DemoModeTest < ActiveSupport::TestCase
   setup do
     @original_demo_mode = ENV["DEMO_MODE"]
     @original_banner_text = ENV["DEMO_BANNER_TEXT"]
-    @timestamp_file = Rails.root.join("tmp", "demo_last_reset.txt")
-    @original_timestamp = File.read(@timestamp_file) if File.exist?(@timestamp_file)
+
+    # Parallel test workers share the filesystem, so the real
+    # tmp/demo_last_reset.txt would race across processes. Point DemoMode at a
+    # per-process file for the duration of each test.
+    @timestamp_file = Rails.root.join("tmp", "demo_last_reset_test_#{Process.pid}.txt")
+    DemoMode.singleton_class.alias_method :original_timestamp_file_path, :timestamp_file_path
+    file = @timestamp_file
+    DemoMode.define_singleton_method(:timestamp_file_path) { file }
   end
 
   teardown do
     ENV["DEMO_MODE"] = @original_demo_mode
     ENV["DEMO_BANNER_TEXT"] = @original_banner_text
 
-    # Restore or clean up timestamp file
-    if @original_timestamp
-      File.write(@timestamp_file, @original_timestamp)
-    elsif File.exist?(@timestamp_file)
-      File.delete(@timestamp_file)
-    end
+    DemoMode.singleton_class.alias_method :timestamp_file_path, :original_timestamp_file_path
+    DemoMode.singleton_class.remove_method :original_timestamp_file_path
+    File.delete(@timestamp_file) if File.exist?(@timestamp_file)
   end
 
   test "enabled? returns false by default" do
@@ -148,6 +151,8 @@ class DemoModeTest < ActiveSupport::TestCase
   end
 
   test "timestamp_file_path returns path in tmp directory" do
-    assert_equal Rails.root.join("tmp", "demo_last_reset.txt").to_s, DemoMode.timestamp_file_path.to_s
+    # setup stubs timestamp_file_path per test process; assert the real
+    # implementation through the alias it preserved.
+    assert_equal Rails.root.join("tmp", "demo_last_reset.txt").to_s, DemoMode.original_timestamp_file_path.to_s
   end
 end

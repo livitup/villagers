@@ -38,7 +38,8 @@ class CoverageTimezoneTest < ApplicationSystemTestCase
     visit conference_schedule_path(@conference)
     assert_selector "[data-coverage-ribbon-ready]"
 
-    first(".coverage-ribbon .tick.bare").click
+    click_expecting first(".coverage-ribbon .tick.bare"),
+                    "[data-coverage-ribbon-target='lengthOptions']"
     within "[data-coverage-ribbon-target='lengthOptions']" do
       find("button", text: "1h", exact_text: true).click
     end

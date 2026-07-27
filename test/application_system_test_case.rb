@@ -28,6 +28,38 @@ end
 Selenium::WebDriver::Remote::Response.prepend(RetryableStaleInspectorNode)
 
 class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
+  # Chrome 150's other click hazard (sibling of the stale-inspector race
+  # above, see #241): after the first Turbo Drive body swap of a session,
+  # chromedriver's native click dispatch goes dead — every further click is
+  # silently dropped (no error, no event) even though the element is visible
+  # and correctly positioned. JS-dispatched clicks are unaffected. So: click
+  # natively once, and if the expected effect doesn't appear, re-dispatch the
+  # click through JS and wait again. Keep `wait` generous for clicks that
+  # submit forms, so a slow in-flight POST isn't double-submitted.
+  def click_expecting(element, effect_selector = nil, text: nil, count: nil, gone: nil, wait: 3)
+    element.click
+    return if click_effect?(effect_selector, text: text, count: count, gone: gone, wait: wait)
+
+    page.execute_script("arguments[0].click()", element)
+    return if click_effect?(effect_selector, text: text, count: count, gone: gone, wait: wait)
+
+    flunk "expected #{(effect_selector || text || "#{gone} to disappear").inspect} after clicking #{element.inspect}"
+  end
+
+  private
+
+  def click_effect?(effect_selector, text:, count:, gone:, wait:)
+    if effect_selector
+      options = { wait: wait }
+      options[:count] = count if count
+      page.has_selector?(effect_selector, **options)
+    elsif gone
+      page.has_no_selector?(gone, wait: wait)
+    else
+      page.has_text?(text, wait: wait)
+    end
+  end
+
   # Use Chrome's modern headless mode. The legacy `:headless_chrome` mode
   # (--headless) has DOM/CDP inconsistencies on recent Chrome that intermittently
   # raise "Node with given id does not belong to the document" during Capybara
@@ -37,6 +69,7 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
+    options.add_argument("--force-device-scale-factor=1")
     # Escape hatch when selenium-manager picks the wrong local browser (e.g. a
     # stale "Chrome for Testing" install shadowing the real Chrome):
     #   CHROME_BINARY="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" bin/rails test:system

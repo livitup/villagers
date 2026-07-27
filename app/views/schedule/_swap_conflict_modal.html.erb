@@ -1,0 +1,49 @@
+<%# Swap-or-keep conflict modal (#267): statically shown, opened by a plain
+    redirect carrying ?confirm_swap&swap_minutes (same pattern as the board's
+    manage panel). "Keep" and the close button are links that drop the params;
+    "Swap" re-posts the claim with replace_conflicts=1. %>
+<% plural = @swap_conflict_ranges.size > 1 %>
+<div class="modal fade show d-block swap-conflict-modal" tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="swap-conflict-title">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title h5" id="swap-conflict-title">You're already scheduled then</h2>
+        <%= link_to "", conference_schedule_path(@conference, day: @day.iso8601), class: "btn-close", "aria-label": "Close" %>
+      </div>
+      <div class="modal-body">
+        <p>
+          You asked to cover <strong><%= @swap_program_name %></strong> on
+          <%= @swap_start_slot.start_time.strftime("%A, %B %-d") %> from
+          <%= @swap_start_slot.start_time.strftime("%-l:%M %p") %> to <%= @swap_end_time.strftime("%-l:%M %p") %>,
+          but that overlaps <%= plural ? "shifts" : "a shift" %> you're already signed up for:
+        </p>
+        <ul class="list-group mb-3">
+          <% @swap_conflict_ranges.each do |range| %>
+            <li class="list-group-item d-flex justify-content-between">
+              <span><%= range[:program_name] %></span>
+              <span class="text-muted"><%= range[:starts_at].strftime("%-l:%M %p") %> – <%= range[:ends_at].strftime("%-l:%M %p") %></span>
+            </li>
+          <% end %>
+        </ul>
+        <p class="mb-0">
+          You can cancel the conflicting shift<%= "s" if plural %> and take the new one instead,
+          or keep your schedule exactly as it is.
+        </p>
+      </div>
+      <div class="modal-footer">
+        <%= link_to "Keep my current shifts", conference_schedule_path(@conference, day: @day.iso8601),
+            class: "btn btn-outline-secondary" %>
+        <%= form_with url: bulk_create_conference_volunteer_signups_path(@conference), method: :post,
+                      data: { turbo: false }, class: "d-inline" do %>
+          <input type="hidden" name="timeslot_id" value="<%= @swap_start_slot.id %>">
+          <input type="hidden" name="duration_minutes" value="<%= @swap_minutes %>">
+          <input type="hidden" name="replace_conflicts" value="1">
+          <input type="hidden" name="return_to" value="coverage">
+          <input type="hidden" name="return_day" value="<%= @day.iso8601 %>">
+          <button type="submit" class="btn btn-primary">Cancel conflicting shift<%= "s" if plural %> and sign up</button>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal-backdrop fade show"></div>

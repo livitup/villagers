@@ -3,19 +3,22 @@ require "test_helper"
 class HealthControllerTest < ActionDispatch::IntegrationTest
   setup do
     @original_demo_mode = ENV["DEMO_MODE"]
-    @timestamp_file = Rails.root.join("tmp", "demo_last_reset.txt")
-    @original_timestamp = File.read(@timestamp_file) if File.exist?(@timestamp_file)
+
+    # Parallel test workers share the filesystem, so the real
+    # tmp/demo_last_reset.txt would race across processes. Point DemoMode at a
+    # per-process file for the duration of each test.
+    @timestamp_file = Rails.root.join("tmp", "demo_last_reset_test_#{Process.pid}.txt")
+    DemoMode.singleton_class.alias_method :original_timestamp_file_path, :timestamp_file_path
+    file = @timestamp_file
+    DemoMode.define_singleton_method(:timestamp_file_path) { file }
   end
 
   teardown do
     ENV["DEMO_MODE"] = @original_demo_mode
 
-    # Restore or clean up timestamp file
-    if @original_timestamp
-      File.write(@timestamp_file, @original_timestamp)
-    elsif File.exist?(@timestamp_file)
-      File.delete(@timestamp_file)
-    end
+    DemoMode.singleton_class.alias_method :timestamp_file_path, :original_timestamp_file_path
+    DemoMode.singleton_class.remove_method :original_timestamp_file_path
+    File.delete(@timestamp_file) if File.exist?(@timestamp_file)
   end
 
   test "health check returns 200" do

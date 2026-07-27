@@ -40,6 +40,8 @@ class ScheduleController < ApplicationController
                               .sort_by { |signup| signup.timeslot.start_time }
     @my_timeslot_ids = day_signups.map(&:timeslot_id).to_set
     @my_shift_ranges = group_signups_into_ranges(day_signups)
+
+    load_swap_confirmation if params[:confirm_swap].present?
   end
 
   # The coverage view moved to the main schedule URL when the grid retired
@@ -93,6 +95,30 @@ class ScheduleController < ApplicationController
 
   def set_conference
     @conference = Conference.find(params[:conference_id])
+  end
+
+  # Swap-or-keep confirmation (#267): a conflicting claim redirects here with
+  # ?confirm_swap=<start timeslot>&swap_minutes=. The conflicts are re-derived
+  # server-side rather than trusted from the URL; a stale or hand-edited link
+  # with no real conflict renders no modal.
+  def load_swap_confirmation
+    start_slot = Timeslot.joins(:conference_program)
+                         .where(conference_programs: { conference_id: @conference.id })
+                         .find_by(id: params[:confirm_swap])
+    minutes = params[:swap_minutes].to_i
+    return if start_slot.nil? || minutes <= 0
+
+    end_time = start_slot.start_time + minutes.minutes
+    conflicts = VolunteerSignup.conflicting_for(
+      current_user, start_slot.conference_program, start_slot.start_time, end_time
+    ).to_a
+    return if conflicts.empty?
+
+    @swap_start_slot = start_slot
+    @swap_minutes = minutes
+    @swap_end_time = end_time
+    @swap_program_name = start_slot.conference_program.program.name
+    @swap_conflict_ranges = group_signups_into_ranges(conflicts)
   end
 
   # Manage-panel data for one activity+day. Denies activity leads reaching for

@@ -165,4 +165,66 @@ class ScheduleCoverageTest < ActionDispatch::IntegrationTest
     assert_redirected_to conference_schedule_path(@conference, day: @conference.start_date.iso8601)
     assert_match(/blocks/, flash[:alert])
   end
+
+  # --- swap confirmation modal (#267) ---
+
+  def swap_conflict_setup
+    @other_cp = ConferenceProgram.create!(
+      conference: @conference,
+      program: Program.create!(name: "Front Desk", village: @village),
+      day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "11:00" } }
+    )
+    # I'm on Front Desk 9:00–9:30; the swap target is Ham Exams 9:00–10:00.
+    @other_cp.timeslots.order(:start_time).first(2).each do |slot|
+      VolunteerSignup.create!(user: @volunteer, timeslot: slot)
+    end
+    @target_start = @cp.timeslots.order(:start_time).first
+  end
+
+  test "confirm_swap renders the conflict modal with swap and keep choices" do
+    swap_conflict_setup
+
+    get conference_schedule_path(@conference, day: @conference.start_date.iso8601,
+                                              confirm_swap: @target_start.id, swap_minutes: 60)
+
+    assert_response :success
+    assert_select ".swap-conflict-modal" do
+      assert_select "*", text: /Front Desk/
+      assert_select "*", text: /Ham Exams/
+      assert_select "*", text: /9:00 AM\s*–\s*9:30 AM/
+      assert_select "form input[name=replace_conflicts][value='1']"
+      assert_select "form input[name=timeslot_id][value='#{@target_start.id}']"
+      assert_select "form input[name=duration_minutes][value='60']"
+      assert_select "a", text: /keep/i
+    end
+  end
+
+  test "confirm_swap without an actual conflict renders no modal" do
+    get conference_schedule_path(@conference, day: @conference.start_date.iso8601,
+                                              confirm_swap: @cp.timeslots.order(:start_time).first.id,
+                                              swap_minutes: 60)
+
+    assert_response :success
+    assert_select ".swap-conflict-modal", 0
+  end
+
+  test "confirm_swap ignores a timeslot from another conference" do
+    swap_conflict_setup
+    foreign_conference = Conference.create!(
+      village: @village, name: "Other Con",
+      start_date: Date.tomorrow, end_date: Date.tomorrow + 1.day,
+      conference_hours_start: "09:00", conference_hours_end: "17:00"
+    )
+    foreign_cp = ConferenceProgram.create!(
+      conference: foreign_conference,
+      program: Program.create!(name: "Foreign", village: @village),
+      day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" } }
+    )
+
+    get conference_schedule_path(@conference, day: @conference.start_date.iso8601,
+                                              confirm_swap: foreign_cp.timeslots.first.id, swap_minutes: 60)
+
+    assert_response :success
+    assert_select ".swap-conflict-modal", 0
+  end
 end
