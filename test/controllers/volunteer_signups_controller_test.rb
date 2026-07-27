@@ -322,6 +322,115 @@ class VolunteerSignupsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  # --- conflicting signups (#267): swap-or-keep instead of a green "0 shifts" ---
+
+  def build_run(conference_program, hour, count: 4, max: 2)
+    count.times.map do |i|
+      Timeslot.create!(
+        conference_program: conference_program,
+        start_time: Date.tomorrow.to_datetime + hour.hours + (i * 15).minutes,
+        max_volunteers: max
+      )
+    end
+  end
+
+  def conflict_setup
+    other_cp = ConferenceProgram.create!(
+      conference: @conference,
+      program: Program.create!(name: "Front Desk", village: @village)
+    )
+    @my_slots = build_run(other_cp, 11, count: 2)             # Front Desk 11:00–11:30
+    @my_signups = @my_slots.map { |slot| VolunteerSignup.create!(user: @volunteer, timeslot: slot) }
+    @target_slots = build_run(@conference_program, 11)        # Test Program 11:00–12:00
+  end
+
+  test "bulk create with the whole window already claimed alerts instead of a green zero-shift notice" do
+    slots = build_run(@conference_program, 11)
+    slots.each { |slot| VolunteerSignup.create!(user: @volunteer, timeslot: slot) }
+
+    sign_in @volunteer
+    assert_no_difference("VolunteerSignup.count") do
+      post bulk_create_conference_volunteer_signups_url(@conference), params: {
+        timeslot_id: slots.first.id,
+        duration_minutes: 60
+      }
+    end
+    assert_nil flash[:notice]
+    assert_match(/already signed up/i, flash[:alert])
+  end
+
+  test "bulk create with a cross-activity conflict redirects to swap confirmation instead of silently failing" do
+    conflict_setup
+
+    sign_in @volunteer
+    assert_no_difference([ "VolunteerSignup.count", "Notification.count" ]) do
+      post bulk_create_conference_volunteer_signups_url(@conference), params: {
+        timeslot_id: @target_slots.first.id,
+        duration_minutes: 60,
+        return_to: "coverage",
+        return_day: Date.tomorrow.iso8601
+      }
+    end
+    assert_redirected_to conference_schedule_path(
+      @conference, day: Date.tomorrow.iso8601,
+      confirm_swap: @target_slots.first.id, swap_minutes: 60
+    )
+  end
+
+  test "bulk create with replace_conflicts cancels the conflicting shifts and books the window" do
+    conflict_setup
+
+    sign_in @volunteer
+    assert_difference("VolunteerSignup.count", 2) do  # -2 old, +4 new
+      post bulk_create_conference_volunteer_signups_url(@conference), params: {
+        timeslot_id: @target_slots.first.id,
+        duration_minutes: 60,
+        replace_conflicts: "1"
+      }
+    end
+    assert_empty @volunteer.volunteer_signups.where(timeslot_id: @my_slots.map(&:id))
+    assert_equal @target_slots.map(&:id).sort, @volunteer.volunteer_signups.pluck(:timeslot_id).sort
+    assert_equal [ 0, 0 ], @my_slots.map { |slot| slot.reload.current_volunteers_count }
+    assert_equal [ 1, 1, 1, 1 ], @target_slots.map { |slot| slot.reload.current_volunteers_count }
+    assert_match(/4 shifts/, flash[:notice])
+  end
+
+  test "a failed swap keeps the existing shifts and sends no notification" do
+    conflict_setup
+    qualification = Qualification.create!(name: "Radio License", description: "FCC license", village: @village)
+    ProgramQualification.create!(program: @program, qualification: qualification)
+
+    sign_in @volunteer
+    assert_no_difference([ "VolunteerSignup.count", "Notification.count" ]) do
+      post bulk_create_conference_volunteer_signups_url(@conference), params: {
+        timeslot_id: @target_slots.first.id,
+        duration_minutes: 60,
+        replace_conflicts: "1"
+      }
+    end
+    assert_equal @my_slots.map(&:id).sort, @volunteer.volunteer_signups.pluck(:timeslot_id).sort,
+                 "the conflicting shifts must survive a failed swap"
+    assert_equal [ 1, 1 ], @my_slots.map { |slot| slot.reload.current_volunteers_count }
+    assert_nil flash[:notice]
+    assert_match(/qualification/i, flash[:alert])
+  end
+
+  test "bulk create surfaces validation failures instead of a green zero-shift notice" do
+    qualification = Qualification.create!(name: "Radio License", description: "FCC license", village: @village)
+    ProgramQualification.create!(program: @program, qualification: qualification)
+    slots = build_run(@conference_program, 11)
+
+    sign_in @volunteer
+    assert_no_difference([ "VolunteerSignup.count", "Notification.count" ]) do
+      post bulk_create_conference_volunteer_signups_url(@conference), params: {
+        timeslot_id: slots.first.id,
+        duration_minutes: 60
+      }
+    end
+    assert_nil flash[:notice]
+    assert_match(/qualification/i, flash[:alert])
+  end
+
   test "bulk create requires authentication" do
     timeslots = []
     2.times do |i|

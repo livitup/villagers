@@ -19,6 +19,23 @@ class VolunteerSignup < ApplicationRecord
   after_create :increment_timeslot_count
   after_destroy :decrement_timeslot_count
 
+  # The user's signups that clash in time with a requested window (#267):
+  # anything overlapping [start_time, end_time) except signups on the window's
+  # own slots — those are extensions of an existing shift, not conflicts.
+  # Ordered by start time for display. Shared by the bulk-claim path and the
+  # swap-confirmation modal so both always agree on what conflicts.
+  def self.conflicting_for(user, conference_program, start_time, end_time)
+    window_slot_ids = conference_program.timeslots
+                                        .where("start_time >= ? AND start_time < ?", start_time, end_time)
+                                        .select(:id)
+    user.volunteer_signups
+        .joins(:timeslot)
+        .where("timeslots.start_time < ? AND timeslots.end_time > ?", end_time, start_time)
+        .where.not(timeslot_id: window_slot_ids)
+        .includes(timeslot: { conference_program: :program })
+        .order("timeslots.start_time")
+  end
+
   private
 
   def no_overlapping_signups

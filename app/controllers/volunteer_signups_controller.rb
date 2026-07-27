@@ -62,6 +62,29 @@ class VolunteerSignupsController < ApplicationController
     # Filter to timeslots user isn't already signed up for
     timeslots_to_signup = timeslots.reject { |ts| existing_signup_ids.include?(ts.id) }
 
+    # Time conflicts with other shifts (#267): don't silently fail — send the
+    # volunteer to the schedule's swap-or-keep confirmation modal. The modal
+    # posts back here with replace_conflicts=1 to swap.
+    conflicting_signups = VolunteerSignup.conflicting_for(
+      current_user, conference_program, start_timeslot.start_time, end_time
+    ).to_a
+    if conflicting_signups.any? && params[:replace_conflicts] != "1"
+      redirect_to conference_schedule_path(
+        @conference,
+        day: params[:return_day].presence || start_timeslot.start_time.to_date.iso8601,
+        confirm_swap: start_timeslot.id, swap_minutes: requested_minutes
+      )
+      return
+    end
+
+    # Everything requested is already theirs: say so instead of celebrating a
+    # zero-shift signup (#267).
+    if timeslots_to_signup.empty?
+      redirect_to signup_return_path(conference_schedule_path(@conference)),
+                  alert: "You're already signed up for this window — nothing was changed."
+      return
+    end
+
     # Check if any timeslot is full
     full_timeslots = timeslots_to_signup.select(&:full?)
     if full_timeslots.any?
@@ -70,21 +93,34 @@ class VolunteerSignupsController < ApplicationController
       return
     end
 
-    # Create signups in a transaction
+    # Swap atomically: cancel the conflicting shifts and create the new ones in
+    # one transaction, so a failed signup leaves the old shifts untouched.
+    # (ActiveRecord::Rollback is swallowed by the transaction block, so the
+    # failure must be carried out via a local — previously it fell through to
+    # the success notice, the "signed up for 0 shifts" bug.)
     created_signups = []
+    failure_message = nil
     ActiveRecord::Base.transaction do
+      conflicting_signups.each(&:destroy!)
       timeslots_to_signup.each do |timeslot|
         signup = VolunteerSignup.new(user: current_user, timeslot: timeslot)
         if signup.save
           created_signups << signup
         else
-          raise ActiveRecord::Rollback, signup.errors.full_messages.join(", ")
+          failure_message = signup.errors.full_messages.join(", ")
+          raise ActiveRecord::Rollback
         end
       end
     end
 
+    if failure_message
+      redirect_to signup_return_path(conference_schedule_path(@conference)),
+                  alert: "Could not sign up: #{failure_message}. Your existing shifts are unchanged."
+      return
+    end
+
     # Send single consolidated notification for all signups
-    NotificationService.notify_shift_signups(user: current_user, signups: created_signups) if created_signups.any?
+    NotificationService.notify_shift_signups(user: current_user, signups: created_signups)
 
     created_count = created_signups.size
     total_minutes = created_count * 15
@@ -93,8 +129,12 @@ class VolunteerSignupsController < ApplicationController
     duration_str = hours > 0 ? "#{hours} hour#{'s' if hours > 1}" : ""
     duration_str += " #{minutes} minutes" if minutes > 0
 
-    redirect_to signup_return_path(conference_volunteer_signups_path(@conference)),
-                notice: "Successfully signed up for #{created_count} shifts (#{duration_str.strip})."
+    notice = "Successfully signed up for #{created_count} shifts (#{duration_str.strip})."
+    if conflicting_signups.any?
+      notice = "Cancelled #{conflicting_signups.size} conflicting shift#{'s' if conflicting_signups.size != 1}. #{notice}"
+    end
+
+    redirect_to signup_return_path(conference_volunteer_signups_path(@conference)), notice: notice
   end
 
   def destroy
