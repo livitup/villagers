@@ -11,13 +11,6 @@
   </div>
   <p class="text-muted">Who is scheduled when — spot thin handoffs and high-turnover stretches at a glance.</p>
 
-  <%
-    # A stable Bootstrap color per activity, keyed across ALL manageable
-    # programs so an activity keeps its color as lanes are toggled.
-    badge_cycle = %w[text-bg-primary text-bg-success text-bg-info text-bg-warning text-bg-dark text-bg-secondary]
-    color_index = @programs.each_with_index.to_h { |program, index| [ program.id, index % badge_cycle.size ] }
-  %>
-
   <div class="d-flex align-items-start flex-wrap gap-3 mb-3">
     <div class="btn-group" role="group" aria-label="Day" data-current-day="<%= @day.iso8601 %>">
       <% @days.each do |day| %>
@@ -44,7 +37,7 @@
                     id: "timeline-program-#{program.id}", class: "form-check-input",
                     data: { action: "change->auto-submit#submit" } %>
                 <label class="form-check-label" for="timeline-program-<%= program.id %>">
-                  <span class="badge <%= badge_cycle[color_index[program.id]] %>"><%= program.name %></span>
+                  <span class="badge text-bg-secondary"><%= program.name %></span>
                 </label>
               </div>
             <% end %>
@@ -94,7 +87,7 @@
         <% @lanes.each do |lane| %>
           <div class="timeline-lane" data-program-name="<%= lane[:program].name %>">
             <div class="lane-header">
-              <span class="badge <%= badge_cycle[color_index[lane[:program].id]] %>"><%= lane[:program].name %></span>
+              <span class="badge text-bg-secondary"><%= lane[:program].name %></span>
               <span class="text-muted small"><%= lane[:bars].size %> shift<%= "s" unless lane[:bars].size == 1 %></span>
             </div>
             <div class="timeline-body" style="height: <%= [ lane[:bars].size, 1 ].max * row_height + 0.5 %>rem;">
@@ -111,7 +104,7 @@
                 <%# The bar's width is the truthful time span. As it narrows,
                     the time range drops out (container query) and the name
                     ellipsizes; the tooltip always carries the full details. %>
-                <%= link_to managed_user_path(bar[:user]), class: "timeline-bar lane-color-#{color_index[lane[:program].id]}",
+                <%= link_to managed_user_path(bar[:user]), class: "timeline-bar",
                     style: "left: #{position.call(bar[:starts_at])}%; width: #{(position.call(bar[:ends_at]) - position.call(bar[:starts_at])).round(3)}%; top: #{(row * row_height + 0.25).round(2)}rem;",
                     title: "#{display_name_with_callsign(bar[:user])} — #{bar[:program_name]}, #{bar[:starts_at].strftime("%-l:%M %p")} – #{bar[:ends_at].strftime("%-l:%M %p")}" do %>
                   <strong class="bar-name"><%= display_name_with_callsign(bar[:user]) %></strong>

@@ -89,8 +89,7 @@
   // The bar's width is its true time span. Rather than clip mid-pill or
   // overflow the timeline, content degrades as the bar narrows: the time
   // range drops first, then the name ellipsizes. The activity is carried by
-  // the lane and the color-matched left border; the title tooltip always
-  // has the full details.
+  // the lane; the title tooltip always has the full details.
   .timeline-bar {
     position: absolute;
     height: 2.25rem;
@@ -119,19 +118,6 @@
       border-color: var(--bs-primary);
       z-index: 2;
     }
-  }
-
-  // Color-matched to the activity's badge (the badge_cycle in the view).
-  $lane-colors: (
-    0: var(--bs-primary),
-    1: var(--bs-success),
-    2: var(--bs-info),
-    3: var(--bs-warning),
-    4: var(--bs-dark),
-    5: var(--bs-secondary)
-  );
-  @each $index, $color in $lane-colors {
-    .timeline-bar.lane-color-#{$index} { border-left: 4px solid #{$color}; }
   }
 
   @container (max-width: 13rem) {
