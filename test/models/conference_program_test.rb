@@ -150,6 +150,64 @@ class ConferenceProgramTest < ActiveSupport::TestCase
     assert_equal 3, cp.effective_max_volunteers
   end
 
+  test "effective_min_volunteers returns override when set" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      min_volunteers: 2,
+      max_volunteers: 5
+    )
+    assert_equal 2, cp.effective_min_volunteers
+  end
+
+  test "effective_min_volunteers falls back to program default" do
+    @program.update!(min_volunteers: 2, max_volunteers: 3)
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      min_volunteers: nil
+    )
+    assert_equal 2, cp.effective_min_volunteers
+  end
+
+  test "effective_min_volunteers never exceeds effective_max_volunteers" do
+    @program.update!(min_volunteers: 3, max_volunteers: 3)
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      min_volunteers: nil,
+      max_volunteers: 2   # override cap below the program's min default
+    )
+    assert_equal 2, cp.effective_min_volunteers
+  end
+
+  test "rejects a min override above the max override" do
+    cp = ConferenceProgram.new(
+      conference: @conference,
+      program: @program,
+      min_volunteers: 5,
+      max_volunteers: 2
+    )
+    assert_not cp.valid?
+    assert cp.errors[:min_volunteers].any?
+  end
+
+  test "timeslots inherit effective_min_volunteers" do
+    @program.update!(min_volunteers: 2, max_volunteers: 3)
+    cp = ConferenceProgram.create!(
+      conference: @conference,
+      program: @program,
+      day_schedules: {
+        "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" }
+      }
+    )
+    assert cp.timeslots.any?
+    cp.timeslots.each do |timeslot|
+      assert_equal 2, timeslot.min_volunteers
+      assert_equal 3, timeslot.max_volunteers
+    end
+  end
+
   test "timeslots inherit effective_max_volunteers" do
     @program.update!(max_volunteers: 3)
     cp = ConferenceProgram.create!(

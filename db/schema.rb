@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_20_043541) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_27_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_043541) do
     t.datetime "created_at", null: false
     t.json "day_schedules"
     t.integer "max_volunteers"
+    t.integer "min_volunteers"
     t.bigint "program_id", null: false
     t.text "public_description"
     t.datetime "updated_at", null: false
@@ -138,6 +139,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_043541) do
     t.datetime "created_at", null: false
     t.text "description"
     t.integer "max_volunteers", default: 1, null: false
+    t.integer "min_volunteers", default: 1, null: false
     t.string "name", null: false
     t.datetime "updated_at", null: false
     t.bigint "village_id", null: false
@@ -193,6 +195,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_20_043541) do
     t.integer "current_volunteers_count", default: 0, null: false
     t.datetime "end_time", null: false
     t.integer "max_volunteers", default: 1, null: false
+    t.integer "min_volunteers", default: 1, null: false
     t.datetime "start_time", null: false
     t.datetime "updated_at", null: false
     t.index ["conference_program_id", "start_time"], name: "index_timeslots_on_conference_program_id_and_start_time", unique: true

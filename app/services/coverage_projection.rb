@@ -3,21 +3,24 @@
 # An activity is a position staffed continuously while the village is open;
 # this read model answers "how covered is it, and where are the holes?" for
 # one activity-day (.for) or a whole conference-day (.summary). It reads only
-# what Timeslot already stores — max_volunteers ("needed") and the
-# denormalized current_volunteers_count ("on") — so there are no counting
-# queries and no schema changes.
+# what Timeslot already stores — the [min_volunteers, max_volunteers] coverage
+# band (#259) and the denormalized current_volunteers_count ("on") — so there
+# are no counting queries.
 #
 #   projection = CoverageProjection.for(conference_program, date)
-#   projection.ticks # => [{ timeslot_id:, start:, end:, needed:, on:, state: }, ...]
+#   projection.ticks # => [{ timeslot_id:, start:, end:, needed:, max:, on:, state: }, ...]
 #   projection.gaps  # => [{ start:, end:, needed:, start_timeslot_id:, minutes: }, ...]
 #
-# States: on >= needed -> :covered, on == 0 -> :bare, otherwise :short.
-# A gap is a time-contiguous run of ticks where on < needed — exactly the
-# windows a volunteer may claim (the server already restricts self-signup to
-# non-full slots, so gaps and claimable windows coincide).
+# In ticks/gaps, needed: is min_volunteers (the coverage target) and max: the
+# signup cap. States: on == 0 -> :bare, on < min -> :short, on == min ->
+# :covered (minimum met, green), on > min -> :surplus (extra cushion, blue).
+# A gap is a time-contiguous run of ticks where on < min — the coverage holes
+# the claim stack advertises. Gaps close at min: slots between min and max are
+# still claimable via self-signup (the server blocks only full slots) but are
+# no longer advertised as needed.
 class CoverageProjection
   TICK_MINUTES = 15
-  STATE_RANK = { bare: 0, short: 1, covered: 2 }.freeze
+  STATE_RANK = { bare: 0, short: 1, covered: 2, surplus: 3 }.freeze
 
   attr_reader :ticks, :gaps
 
@@ -83,17 +86,20 @@ class CoverageProjection
       timeslot_id: slot.id,
       start: slot.start_time,
       end: slot.end_time,
-      needed: slot.max_volunteers,
+      needed: slot.min_volunteers,
+      max: slot.max_volunteers,
       on: slot.current_volunteers_count,
       state: state_of(slot)
     }
   end
 
   def state_of(slot)
-    return :covered if slot.current_volunteers_count >= slot.max_volunteers
-    return :bare if slot.current_volunteers_count.zero?
+    on = slot.current_volunteers_count
+    return :bare if on.zero?
+    return :short if on < slot.min_volunteers
+    return :covered if on == slot.min_volunteers
 
-    :short
+    :surplus
   end
 
   # Merge consecutive under-covered ticks into runs. "Consecutive" is by time,

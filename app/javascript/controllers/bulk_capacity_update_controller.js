@@ -2,34 +2,41 @@ import { Controller } from "@hotwired/stimulus"
 
 // Connects to data-controller="bulk-capacity-update"
 export default class extends Controller {
-  static targets = ["maxVolunteers", "modal", "conferenceList", "selectAll", "submitBtn", "loading"]
+  static targets = ["minVolunteers", "maxVolunteers", "modal", "conferenceList", "selectAll", "submitBtn", "loading"]
   static values = {
     programId: Number,
     originalValue: Number,
+    originalMinValue: Number,
     affectedConferencesUrl: String,
     bulkUpdateUrl: String
   }
 
   connect() {
     this.originalValueValue = parseInt(this.maxVolunteersTarget.value) || 1
+    this.originalMinValueValue = this.currentMin()
+  }
+
+  currentMin() {
+    return this.hasMinVolunteersTarget ? (parseInt(this.minVolunteersTarget.value) || 1) : 1
   }
 
   async checkForChanges(event) {
-    const newValue = parseInt(this.maxVolunteersTarget.value)
+    const newMax = parseInt(this.maxVolunteersTarget.value)
+    const newMin = this.currentMin()
+    const changed = newMax !== this.originalValueValue || newMin !== this.originalMinValueValue
 
-    // If value changed, check for affected conferences
-    if (newValue !== this.originalValueValue && newValue > 0) {
-      await this.loadAffectedConferences(newValue)
+    if (changed && newMax > 0 && newMin > 0 && newMin <= newMax) {
+      await this.loadAffectedConferences(newMin, newMax)
     }
   }
 
-  async loadAffectedConferences(newMaxVolunteers) {
+  async loadAffectedConferences(newMinVolunteers, newMaxVolunteers) {
     try {
       const response = await fetch(`${this.affectedConferencesUrlValue}?new_max_volunteers=${newMaxVolunteers}`)
       const data = await response.json()
 
       if (data.conferences && data.conferences.length > 0) {
-        this.renderConferenceList(data.conferences, newMaxVolunteers)
+        this.renderConferenceList(data.conferences, newMinVolunteers, newMaxVolunteers)
         this.showModal()
       }
     } catch (error) {
@@ -37,7 +44,7 @@ export default class extends Controller {
     }
   }
 
-  renderConferenceList(conferences, newMaxVolunteers) {
+  renderConferenceList(conferences, newMinVolunteers, newMaxVolunteers) {
     let html = ""
     conferences.forEach(conf => {
       const warningBadge = conf.over_capacity_count > 0
@@ -60,12 +67,12 @@ export default class extends Controller {
                 ${warningBadge}
                 <br>
                 <small class="text-muted">
-                  Current: ${conf.current_max_volunteers} volunteers/shift |
+                  Current: ${conf.current_min_volunteers}–${conf.current_max_volunteers} volunteers/shift |
                   ${conf.timeslots_count} timeslots
                 </small>
               </div>
               <div class="text-end">
-                <span class="badge bg-primary">${conf.current_max_volunteers} → ${newMaxVolunteers}</span>
+                <span class="badge bg-primary">${conf.current_min_volunteers}–${conf.current_max_volunteers} → ${newMinVolunteers}–${newMaxVolunteers}</span>
               </div>
             </div>
           </label>
@@ -97,6 +104,7 @@ export default class extends Controller {
     const checkboxes = this.conferenceListTarget.querySelectorAll(".conference-checkbox:checked")
     const conferenceProgrmIds = Array.from(checkboxes).map(cb => cb.value)
     const newMaxVolunteers = parseInt(this.maxVolunteersTarget.value)
+    const newMinVolunteers = this.currentMin()
 
     if (conferenceProgrmIds.length === 0) {
       this.hideModal()
@@ -114,6 +122,7 @@ export default class extends Controller {
           "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
         },
         body: JSON.stringify({
+          new_min_volunteers: newMinVolunteers,
           new_max_volunteers: newMaxVolunteers,
           conference_program_ids: conferenceProgrmIds
         })
@@ -122,8 +131,9 @@ export default class extends Controller {
       const data = await response.json()
       if (data.success) {
         this.hideModal()
-        // Update original value to prevent modal showing again
+        // Update original values to prevent modal showing again
         this.originalValueValue = newMaxVolunteers
+        this.originalMinValueValue = newMinVolunteers
       }
     } catch (error) {
       console.error("Error updating capacity:", error)
@@ -135,7 +145,8 @@ export default class extends Controller {
 
   skipUpdate() {
     this.hideModal()
-    // Update original value to prevent modal showing again on re-save
+    // Update original values to prevent modal showing again on re-save
     this.originalValueValue = parseInt(this.maxVolunteersTarget.value)
+    this.originalMinValueValue = this.currentMin()
   }
 }

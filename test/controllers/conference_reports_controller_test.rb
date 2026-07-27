@@ -98,6 +98,22 @@ class ConferenceReportsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "unmanned shifts keys off min_volunteers, not max" do
+    at_min   = @conference_program.timeslots.order(:start_time).first
+    below    = @conference_program.timeslots.order(:start_time).second
+    at_min.update!(min_volunteers: 1, max_volunteers: 2, current_volunteers_count: 1)
+    below.update!(min_volunteers: 2, max_volunteers: 2, current_volunteers_count: 1)
+    @conference_program.timeslots.where.not(id: [ at_min.id, below.id ])
+                       .update_all(min_volunteers: 1, current_volunteers_count: 1)
+
+    sign_in @village_admin
+    get unmanned_shifts_conference_reports_path(@conference, format: :csv)
+
+    lines = response.body.lines
+    assert_equal 2, lines.size, "only the below-min shift should be listed:\n#{response.body}"
+    assert_includes lines.last, below.start_time.strftime("%H:%M")
+  end
+
   test "unmanned shifts report can be exported as CSV" do
     sign_in @village_admin
     get unmanned_shifts_conference_reports_path(@conference, format: :csv)

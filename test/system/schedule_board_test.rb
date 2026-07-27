@@ -42,10 +42,11 @@ class ScheduleBoardSystemTest < ApplicationSystemTestCase
     first(".board-cell a").click
     assert_selector ".manage-panel", text: "Ham Exams"
 
-    # Raise needed to 2 for the day.
-    fill_in "Needed today", with: 2
+    # Raise the coverage band to 2–3 for the day (#259: min covered, max cap).
+    fill_in "manage-min", with: 2
+    fill_in "manage-max", with: 3
     click_button "Save"
-    assert_text "Needed set to 2 for 8 slots"
+    assert_text "Coverage set to 2–3 for 8 slots"
 
     # Add Radio Ray 9:00-10:00.
     within ".manage-panel" do
@@ -78,5 +79,12 @@ class ScheduleBoardSystemTest < ApplicationSystemTestCase
 
     assert_selector ".board-cell .badge.text-bg-success", count: 1
     assert_selector ".board-cell .tick.covered", count: 8
+
+    # Over the minimum (#259): a min..max band with extra volunteers shows blue.
+    @cp.timeslots.each { |slot| slot.update_columns(min_volunteers: 1, max_volunteers: 2, current_volunteers_count: 2) }
+    visit conference_schedule_board_path(@conference)
+
+    assert_selector ".board-cell .badge.text-bg-primary", count: 1
+    assert_selector ".board-cell .tick.surplus", count: 8
   end
 end

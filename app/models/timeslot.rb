@@ -9,6 +9,10 @@ class Timeslot < ApplicationRecord
   validates :start_time, presence: true
   validates :end_time, presence: true
   validates :max_volunteers, presence: true, numericality: { greater_than: 0 }
+  # Coverage band (#259): min_volunteers is the coverage target (green at min),
+  # max_volunteers the hard signup cap (blue band up to max).
+  validates :min_volunteers, presence: true,
+            numericality: { greater_than: 0, less_than_or_equal_to: ->(slot) { slot.max_volunteers || 1 } }
   validates :current_volunteers_count, presence: true, numericality: { greater_than_or_equal_to: 0 }
   validates :start_time, uniqueness: { scope: :conference_program_id }
 

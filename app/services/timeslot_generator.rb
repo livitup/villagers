@@ -103,6 +103,7 @@ class TimeslotGenerator
       Timeslot.create!(
         conference_program: @conference_program,
         start_time: start_time,
+        min_volunteers: @conference_program.effective_min_volunteers,
         max_volunteers: @conference_program.effective_max_volunteers
       )
     end

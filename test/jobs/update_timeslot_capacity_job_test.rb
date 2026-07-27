@@ -54,6 +54,26 @@ class UpdateTimeslotCapacityJobTest < ActiveJob::TestCase
     assert_equal 2, timeslot.max_volunteers
   end
 
+  test "updates min_volunteers alongside max when given" do
+    UpdateTimeslotCapacityJob.perform_now(@conference_program.id, 5, 3)
+
+    @conference_program.timeslots.reload.each do |timeslot|
+      assert_equal 3, timeslot.min_volunteers
+      assert_equal 5, timeslot.max_volunteers
+    end
+  end
+
+  test "clamps existing min down when only max is lowered past it" do
+    @conference_program.timeslots.each { |ts| ts.update!(min_volunteers: 2, max_volunteers: 2) }
+
+    UpdateTimeslotCapacityJob.perform_now(@conference_program.id, 1)
+
+    @conference_program.timeslots.reload.each do |timeslot|
+      assert_equal 1, timeslot.min_volunteers
+      assert_equal 1, timeslot.max_volunteers
+    end
+  end
+
   test "handles missing conference_program gracefully" do
     # Should not raise an error for non-existent conference_program
     assert_nothing_raised do

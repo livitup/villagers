@@ -3,7 +3,8 @@
   qualifications = @program_qualifications[program.id] || []
   locked = qualifications.any? { |qualification| !@user_qualification_ids.include?(qualification.id) }
   worst = projection.worst_state
-  state_badge = { bare: [ "text-bg-danger", "Bare" ], short: [ "text-bg-warning", "Short" ], covered: [ "text-bg-success", "Covered" ] }[worst]
+  state_badge = { bare: [ "text-bg-danger", "Bare" ], short: [ "text-bg-warning", "Short" ],
+                  covered: [ "text-bg-success", "Covered" ], surplus: [ "text-bg-primary", "Extra" ] }[worst]
 %>
 <div class="card coverage-card" id="activity-<%= conference_program.id %>"
      <% unless locked %>

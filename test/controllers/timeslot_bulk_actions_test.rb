@@ -124,21 +124,34 @@ class TimeslotBulkActionsTest < ActionDispatch::IntegrationTest
     )
 
     patch bulk_update_capacity_conference_timeslots_path(@conference),
-          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601, max_volunteers: 3 }
+          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601,
+                    min_volunteers: 2, max_volunteers: 3 }
 
     assert_response :redirect
-    assert_equal [ 3 ], @day1_slots.map { |slot| slot.reload.max_volunteers }.uniq
+    assert_equal [ 2 ], @day1_slots.map { |slot| slot.reload.min_volunteers }.uniq
+    assert_equal [ 3 ], @day1_slots.map(&:max_volunteers).uniq
     day2_slots = @cp.timeslots.where(start_time: (@conference.start_date + 1.day).in_time_zone.all_day)
     assert_equal [ 1 ], day2_slots.map(&:max_volunteers).uniq, "other day untouched"
     assert_equal [ 1 ], other_cp.timeslots.map(&:max_volunteers).uniq, "other activity untouched"
   end
 
-  test "rejects a capacity below 1" do
+  test "rejects a minimum below 1" do
     patch bulk_update_capacity_conference_timeslots_path(@conference),
-          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601, max_volunteers: 0 }
+          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601,
+                    min_volunteers: 0, max_volunteers: 3 }
 
     assert_match(/at least 1/i, flash[:alert])
     assert_equal [ 1 ], @day1_slots.map { |slot| slot.reload.max_volunteers }.uniq
+  end
+
+  test "rejects a maximum below the minimum" do
+    patch bulk_update_capacity_conference_timeslots_path(@conference),
+          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601,
+                    min_volunteers: 3, max_volunteers: 2 }
+
+    assert_match(/at least the minimum/i, flash[:alert])
+    assert_equal [ 1 ], @day1_slots.map { |slot| slot.reload.min_volunteers }.uniq
+    assert_equal [ 1 ], @day1_slots.map(&:max_volunteers).uniq
   end
 
   # --- authorization ---
@@ -152,7 +165,8 @@ class TimeslotBulkActionsTest < ActionDispatch::IntegrationTest
     assert_equal 1, @target.volunteer_signups.count
 
     patch bulk_update_capacity_conference_timeslots_path(@conference),
-          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601, max_volunteers: 2 }
+          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601,
+                    min_volunteers: 2, max_volunteers: 2 }
     assert_equal [ 2 ], @day1_slots.map { |slot| slot.reload.max_volunteers }.uniq
   end
 
@@ -178,7 +192,8 @@ class TimeslotBulkActionsTest < ActionDispatch::IntegrationTest
     assert_equal 0, @target.volunteer_signups.count
 
     patch bulk_update_capacity_conference_timeslots_path(@conference),
-          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601, max_volunteers: 5 }
+          params: { conference_program_id: @cp.id, date: @conference.start_date.iso8601,
+                    min_volunteers: 5, max_volunteers: 5 }
     assert_equal [ 1 ], @day1_slots.map { |slot| slot.reload.max_volunteers }.uniq
   end
 
