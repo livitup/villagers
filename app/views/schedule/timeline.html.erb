@@ -64,7 +64,7 @@
       badge_class = @programs.each_with_index.to_h { |program, index| [ program.name, badge_cycle[index % badge_cycle.size] ] }
     %>
     <div class="timeline-scroll pb-2">
-      <div class="staffing-timeline" style="min-width: <%= [ hours * 6, 24 ].max %>rem;">
+      <div class="staffing-timeline" style="min-width: <%= [ hours * 8, 24 ].max %>rem;">
         <div class="timeline-ruler">
           <% ruler_marks.each_with_index do |mark, index| %>
             <span class="hour-label <%= "edge-start" if index.zero? %>" style="left: <%= position.call(mark) %>%;"><%= mark.strftime("%-l %p") %></span>
@@ -78,14 +78,16 @@
             <div class="timeline-now" style="left: <%= position.call(now) %>%;" title="Now"></div>
           <% end %>
           <% @bars.each_with_index do |bar, row| %>
-            <%# min-width: fit-content lets short shifts show their full label;
-                the bar's left edge is the truthful time anchor. %>
+            <%# The bar's width is the truthful time span. As it narrows, the
+                time range and then the activity badge drop out (container
+                queries) and the name ellipsizes; the tooltip always carries
+                the full details. %>
             <%= link_to managed_user_path(bar[:user]), class: "timeline-bar",
                 style: "left: #{position.call(bar[:starts_at])}%; width: #{(position.call(bar[:ends_at]) - position.call(bar[:starts_at])).round(3)}%; top: #{(row * row_height + 0.25).round(2)}rem;",
                 title: "#{display_name_with_callsign(bar[:user])} — #{bar[:program_name]}, #{bar[:starts_at].strftime("%-l:%M %p")} – #{bar[:ends_at].strftime("%-l:%M %p")}" do %>
-              <strong><%= display_name_with_callsign(bar[:user]) %></strong>
-              <span class="badge <%= badge_class.fetch(bar[:program_name], "text-bg-primary") %>"><%= bar[:program_name] %></span>
-              <span class="text-muted small"><%= bar[:starts_at].strftime("%-l:%M") %>–<%= bar[:ends_at].strftime("%-l:%M %p") %></span>
+              <strong class="bar-name"><%= display_name_with_callsign(bar[:user]) %></strong>
+              <span class="badge bar-activity <%= badge_class.fetch(bar[:program_name], "text-bg-primary") %>"><%= bar[:program_name] %></span>
+              <span class="text-muted small bar-times"><%= bar[:starts_at].strftime("%-l:%M") %>–<%= bar[:ends_at].strftime("%-l:%M %p") %></span>
             <% end %>
           <% end %>
         </div>

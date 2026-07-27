@@ -3,41 +3,33 @@
     <div class="col-lg-10 col-xl-8">
       <div class="card">
         <div class="card-header d-flex align-items-center">
-          <%= link_to managed_users_path, class: "btn btn-secondary btn-sm me-3" do %>
-            <span aria-hidden="true">&larr;</span> Users
+          <% if policy(User).index? %>
+            <%= link_to managed_users_path, class: "btn btn-secondary btn-sm me-3" do %>
+              <span aria-hidden="true">&larr;</span> Users
+            <% end %>
           <% end %>
           <h2 class="h4 mb-0"><%= @user.email %></h2>
         </div>
         <div class="card-body">
+          <%# Every profile attribute, blank or not (#262) — a viewer must be
+              able to tell "not set" from "hidden". %>
           <dl class="row">
-            <% if @user.handle.present? %>
-              <dt class="col-sm-3">Display Name:</dt>
-              <dd class="col-sm-9"><%= @user.handle %></dd>
-            <% end %>
-
-            <% if @user.callsign.present? %>
-              <dt class="col-sm-3">Callsign:</dt>
-              <dd class="col-sm-9"><%= @user.callsign %></dd>
-            <% end %>
-
-            <% if @user.phone.present? %>
-              <dt class="col-sm-3">Phone:</dt>
-              <dd class="col-sm-9"><%= @user.phone %></dd>
-            <% end %>
-
-            <% if @user.twitter.present? %>
-              <dt class="col-sm-3">Twitter:</dt>
-              <dd class="col-sm-9"><%= @user.twitter %></dd>
-            <% end %>
-
-            <% if @user.signal.present? %>
-              <dt class="col-sm-3">Signal:</dt>
-              <dd class="col-sm-9"><%= @user.signal %></dd>
-            <% end %>
-
-            <% if @user.discord.present? %>
-              <dt class="col-sm-3">Discord:</dt>
-              <dd class="col-sm-9"><%= @user.discord %></dd>
+            <% {
+                 "Display Name" => @user.handle,
+                 "Callsign" => @user.callsign,
+                 "Phone" => @user.phone,
+                 "Twitter" => @user.twitter,
+                 "Signal" => @user.signal,
+                 "Discord" => @user.discord
+               }.each do |label, value| %>
+              <dt class="col-sm-3"><%= label %>:</dt>
+              <dd class="col-sm-9">
+                <% if value.present? %>
+                  <%= value %>
+                <% else %>
+                  <span class="text-muted">&mdash;</span>
+                <% end %>
+              </dd>
             <% end %>
           </dl>
 

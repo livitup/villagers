@@ -93,11 +93,25 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
     get managed_user_path(@volunteer)
 
     assert_response :success
-    # Admin-only controls stay hidden.
+    # Admin-only controls stay hidden — including both links to the
+    # admin-only user index (header and footer).
     assert_select "a", text: "Edit", count: 0
-    assert_select "a", text: "← Back to Users", count: 0
+    assert_select "a[href=?]", managed_users_path, count: 0
     assert_select "input[type=submit][value=Grant]", count: 0
     assert_select "form[action=?]", managed_user_village_admin_role_path(@volunteer), count: 0
+  end
+
+  test "the profile lists every contact attribute, with placeholders for blanks" do
+    @volunteer.update!(discord: "vol#1234")   # everything else stays blank
+    sign_in_user(@village_admin)
+
+    get managed_user_path(@volunteer)
+
+    [ "Display Name:", "Callsign:", "Phone:", "Twitter:", "Signal:", "Discord:" ].each do |label|
+      assert_select "dt", text: label
+    end
+    assert_select "dd", text: "vol#1234"
+    assert_select "dd .text-muted", minimum: 1   # blank fields show a placeholder
   end
 
   test "an activity lead can view a volunteer's profile" do
