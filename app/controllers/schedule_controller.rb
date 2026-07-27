@@ -91,10 +91,84 @@ class ScheduleController < ApplicationController
     load_manage_panel if params[:manage].present?
   end
 
+  # Staffing timeline (#262): who works when, at a glance — one horizontal bar
+  # per contiguous volunteer shift across the day's manageable activities.
+  # Conference managers see every activity; activity leads only their own.
+  # Filters: day, activity (program_id), and a from/to time window.
+  def timeline
+    authorize @conference, :show?, policy_class: ConferencePolicy
+
+    @manageable_program_ids = manageable_program_ids
+    if @manageable_program_ids.empty?
+      redirect_to conference_schedule_coverage_path(@conference),
+                  alert: "You don't manage any activities at this conference."
+      return
+    end
+
+    @days = (@conference.start_date..@conference.end_date).to_a
+    @day = resolve_day
+
+    @programs = Program.where(id: @manageable_program_ids).order(:name)
+    @program_filter = @programs.find_by(id: params[:program_id])
+    program_ids = @program_filter ? [ @program_filter.id ] : @manageable_program_ids.to_a
+
+    day_slots = Timeslot.joins(:conference_program)
+                        .where(conference_programs: { conference_id: @conference.id, program_id: program_ids })
+                        .where(start_time: @day.in_time_zone.all_day)
+    scheduled_start = day_slots.minimum(:start_time)
+    scheduled_end = day_slots.maximum(:end_time)
+    if scheduled_start.nil?
+      @bars = []
+      return
+    end
+
+    # The visible window: the day's scheduled span, narrowed by from/to.
+    @window_start = parse_window_time(params[:from]) || scheduled_start
+    @window_end = parse_window_time(params[:to]) || scheduled_end
+    @window_end = @window_start + 1.hour if @window_end <= @window_start
+
+    @bars = timeline_bars(program_ids)
+            .select { |bar| bar[:starts_at] < @window_end && bar[:ends_at] > @window_start }
+            .sort_by { |bar| [ bar[:starts_at], bar[:user].display_name ] }
+  end
+
   private
 
   def set_conference
     @conference = Conference.find(params[:conference_id])
+  end
+
+  # The day's signups for the given programs, collapsed into contiguous
+  # ranges per volunteer+activity: [{ user:, program_name:, starts_at:, ends_at: }]
+  def timeline_bars(program_ids)
+    signups = VolunteerSignup.joins(timeslot: :conference_program)
+                             .where(conference_programs: { conference_id: @conference.id, program_id: program_ids })
+                             .where(timeslots: { start_time: @day.in_time_zone.all_day })
+                             .includes(:user, timeslot: { conference_program: :program })
+                             .sort_by { |signup| signup.timeslot.start_time }
+
+    signups.group_by { |signup| [ signup.user_id, signup.timeslot.conference_program_id ] }
+           .values
+           .flat_map do |group|
+      group.chunk_while { |a, b| a.timeslot.end_time == b.timeslot.start_time }.map do |run|
+        {
+          user: run.first.user,
+          program_name: run.first.timeslot.conference_program.program.name,
+          starts_at: run.first.timeslot.start_time,
+          ends_at: run.last.timeslot.end_time
+        }
+      end
+    end
+  end
+
+  # "HH:MM" on the selected day, in the conference's zone; nil when absent
+  # or unparseable.
+  def parse_window_time(value)
+    return nil if value.blank?
+
+    Time.zone.parse("#{@day.iso8601} #{value}")
+  rescue ArgumentError
+    nil
   end
 
   # Swap-or-keep confirmation (#267): a conflicting claim redirects here with

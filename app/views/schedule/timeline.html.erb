@@ -1,0 +1,97 @@
+<%# Staffing timeline (#262): horizontally-scrolling who-works-when view.
+    One bar per contiguous volunteer shift, positioned by time within the
+    day's scheduled window; the badge names the activity. %>
+<div class="container-fluid mt-4" style="max-width: 1440px;">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+    <h1 class="mb-0"><%= @conference.name %> - Staffing Timeline</h1>
+    <div class="d-flex gap-2">
+      <%= link_to "Schedule", conference_schedule_path(@conference), class: "btn btn-outline-secondary btn-sm" %>
+      <%= link_to "Coverage board", conference_schedule_board_path(@conference), class: "btn btn-outline-primary btn-sm" %>
+    </div>
+  </div>
+  <p class="text-muted">Who is scheduled when — spot thin handoffs and high-turnover stretches at a glance.</p>
+
+  <div class="d-flex align-items-center flex-wrap gap-3 mb-3">
+    <div class="btn-group" role="group" aria-label="Day" data-current-day="<%= @day.iso8601 %>">
+      <% @days.each do |day| %>
+        <%= link_to day.strftime("%a %-m/%-d"),
+            conference_schedule_timeline_path(@conference, day: day.iso8601,
+              program_id: params[:program_id].presence, from: params[:from].presence, to: params[:to].presence),
+            class: "btn btn-sm #{day == @day ? 'btn-primary' : 'btn-outline-primary'}" %>
+      <% end %>
+    </div>
+
+    <%= form_with url: conference_schedule_timeline_path(@conference), method: :get, local: true,
+                  class: "d-flex align-items-end flex-wrap gap-2", data: { controller: "auto-submit" } do %>
+      <input type="hidden" name="day" value="<%= @day.iso8601 %>">
+      <div>
+        <label class="form-label small mb-0" for="timeline-program">Activity</label>
+        <%= select_tag :program_id,
+            options_from_collection_for_select(@programs, :id, :name, params[:program_id]),
+            include_blank: "All activities", id: "timeline-program",
+            class: "form-select form-select-sm", data: { action: "change->auto-submit#submit" } %>
+      </div>
+      <div>
+        <label class="form-label small mb-0" for="timeline-from">From</label>
+        <%= time_field_tag :from, params[:from], id: "timeline-from", class: "form-control form-control-sm" %>
+      </div>
+      <div>
+        <label class="form-label small mb-0" for="timeline-to">To</label>
+        <%= time_field_tag :to, params[:to], id: "timeline-to", class: "form-control form-control-sm" %>
+      </div>
+      <button type="submit" class="btn btn-primary btn-sm">Apply</button>
+      <%= link_to "Clear", conference_schedule_timeline_path(@conference, day: @day.iso8601),
+          class: "btn btn-outline-secondary btn-sm" %>
+    <% end %>
+  </div>
+
+  <% if @bars.empty? %>
+    <div class="alert alert-secondary">
+      No one is scheduled<%= " for the selected filters" if params[:program_id].present? || params[:from].present? || params[:to].present? %>
+      on <%= @day.strftime("%A, %B %-d") %>.
+    </div>
+  <% else %>
+    <%
+      window_seconds = (@window_end - @window_start).to_f
+      position = ->(time) { ((time.clamp(@window_start, @window_end) - @window_start) / window_seconds * 100).round(3) }
+      hours = (window_seconds / 1.hour).ceil
+      ruler_marks = (0..hours).map { |offset| @window_start + offset.hours }.select { |mark| mark <= @window_end }
+      row_height = 2.5
+      now = Time.current
+      show_now = now.between?(@window_start, @window_end)
+      # A stable Bootstrap color per activity so bars group visually.
+      badge_cycle = %w[text-bg-primary text-bg-success text-bg-info text-bg-warning text-bg-dark text-bg-secondary]
+      badge_class = @programs.each_with_index.to_h { |program, index| [ program.name, badge_cycle[index % badge_cycle.size] ] }
+    %>
+    <div class="timeline-scroll pb-2">
+      <div class="staffing-timeline" style="min-width: <%= [ hours * 6, 24 ].max %>rem;">
+        <div class="timeline-ruler">
+          <% ruler_marks.each_with_index do |mark, index| %>
+            <span class="hour-label <%= "edge-start" if index.zero? %>" style="left: <%= position.call(mark) %>%;"><%= mark.strftime("%-l %p") %></span>
+          <% end %>
+        </div>
+        <div class="timeline-body" style="height: <%= @bars.size * row_height + 0.5 %>rem;">
+          <% ruler_marks.each do |mark| %>
+            <div class="hour-line" style="left: <%= position.call(mark) %>%;"></div>
+          <% end %>
+          <% if show_now %>
+            <div class="timeline-now" style="left: <%= position.call(now) %>%;" title="Now"></div>
+          <% end %>
+          <% @bars.each_with_index do |bar, row| %>
+            <div class="timeline-bar"
+                 style="left: <%= position.call(bar[:starts_at]) %>%; width: <%= (position.call(bar[:ends_at]) - position.call(bar[:starts_at])).round(3) %>%; top: <%= (row * row_height + 0.25).round(2) %>rem;"
+                 title="<%= display_name_with_callsign(bar[:user]) %> — <%= bar[:program_name] %>, <%= bar[:starts_at].strftime("%-l:%M %p") %> – <%= bar[:ends_at].strftime("%-l:%M %p") %>">
+              <strong><%= display_name_with_callsign(bar[:user]) %></strong>
+              <span class="badge <%= badge_class.fetch(bar[:program_name], "text-bg-primary") %>"><%= bar[:program_name] %></span>
+              <span class="text-muted small"><%= bar[:starts_at].strftime("%-l:%M") %>–<%= bar[:ends_at].strftime("%-l:%M %p") %></span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </div>
+    <p class="text-muted small">
+      <%= @bars.size %> shift<%= "s" unless @bars.size == 1 %> ·
+      <%= @window_start.strftime("%-l:%M %p") %> – <%= @window_end.strftime("%-l:%M %p") %>
+    </p>
+  <% end %>
+</div>
