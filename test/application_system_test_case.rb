@@ -48,10 +48,13 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   private
 
+  # Effect forms: a selector (optionally narrowed by text:/count:), bare
+  # text: (page-wide), or gone: (selector must disappear).
   def click_effect?(effect_selector, text:, count:, gone:, wait:)
     if effect_selector
       options = { wait: wait }
       options[:count] = count if count
+      options[:text] = text if text
       page.has_selector?(effect_selector, **options)
     elsif gone
       page.has_no_selector?(gone, wait: wait)

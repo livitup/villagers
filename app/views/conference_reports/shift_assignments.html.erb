@@ -6,7 +6,7 @@
       <% end %>
       <h1 class="mb-0">Shift Assignments: <%= @conference.name %></h1>
     </div>
-    <%= link_to "Export CSV", shift_assignments_conference_reports_path(@conference, format: :csv, program_id: params[:program_id], date: params[:date]), class: "btn btn-success" %>
+    <%= link_to "Export CSV", shift_assignments_conference_reports_path(@conference, format: :csv, program_id: params[:program_id], date: params[:date], columns: @profile_columns.presence), class: "btn btn-success" %>
   </div>
 
   <div class="card shadow-sm mb-4">
@@ -14,7 +14,7 @@
       <h5 class="mb-0">Filters</h5>
     </div>
     <div class="card-body">
-      <%= form_with url: shift_assignments_conference_reports_path(@conference), method: :get, local: true, class: "row g-3" do %>
+      <%= form_with url: shift_assignments_conference_reports_path(@conference), method: :get, local: true, class: "row g-3", data: { controller: "auto-submit" } do %>
         <div class="col-md-4">
           <label for="program_id" class="form-label">Program</label>
           <%= select_tag :program_id,
@@ -29,6 +29,21 @@
         <div class="col-md-4 d-flex align-items-end">
           <%= submit_tag "Apply Filters", class: "btn btn-primary me-2" %>
           <%= link_to "Clear", shift_assignments_conference_reports_path(@conference), class: "btn btn-outline-secondary" %>
+        </div>
+        <%# Optional profile columns (#261): shown in the table and included in
+            the CSV export. Toggling applies immediately (auto-submit);
+            nothing checked = the classic report. %>
+        <div class="col-12">
+          <label class="form-label mb-1">Extra columns</label>
+          <div class="d-flex flex-wrap gap-3">
+            <% ConferenceReportsController::PROFILE_COLUMNS.each do |key, label| %>
+              <div class="form-check">
+                <%= check_box_tag "columns[]", key, @profile_columns.include?(key), id: "column-#{key}",
+                    class: "form-check-input", data: { action: "change->auto-submit#submit" } %>
+                <label class="form-check-label" for="column-<%= key %>"><%= label %></label>
+              </div>
+            <% end %>
+          </div>
         </div>
       <% end %>
     </div>
@@ -45,6 +60,9 @@
               <th>Program</th>
               <th>Volunteer</th>
               <th>Email</th>
+              <% @profile_columns.each do |column| %>
+                <th><%= ConferenceReportsController::PROFILE_COLUMNS[column] %></th>
+              <% end %>
             </tr>
           </thead>
           <tbody>
@@ -56,6 +74,9 @@
                   <td><%= timeslot.conference_program.program.name %></td>
                   <td><%= user.display_name %></td>
                   <td><%= user.email %></td>
+                  <% @profile_columns.each do |column| %>
+                    <td><%= user.public_send(column) %></td>
+                  <% end %>
                 </tr>
               <% end %>
             <% end %>

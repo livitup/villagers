@@ -4,6 +4,9 @@
 
 import { application } from "./application"
 
+import AutoSubmitController from "./auto_submit_controller"
+application.register("auto-submit", AutoSubmitController)
+
 import BulkCapacityUpdateController from "./bulk_capacity_update_controller"
 application.register("bulk-capacity-update", BulkCapacityUpdateController)
 
