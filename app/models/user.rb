@@ -46,25 +46,40 @@ class User < ApplicationRecord
     !profile_complete?
   end
 
+  # Profile attributes refreshed from the OAuth provider's userinfo on every
+  # login (#260): attribute => auth.info key.
+  OAUTH_PROFILE_FIELDS = {
+    handle: :name,
+    phone: :phone,
+    signal: :signal,
+    discord: :discord,
+    twitter: :twitter,
+    callsign: :callsign
+  }.freeze
+
   # Find or create a user from an OmniAuth callback.
   # Resolution order: existing identity (provider + uid) -> existing account
   # with the same email (linked) -> brand new just-in-time provisioned user.
   # OAuth users are auto-confirmed since the provider vouches for the email.
+  #
+  # Every mapped profile field is refreshed from the provider on every login —
+  # the IdP is authoritative (#260 product decision), including over a
+  # locally-edited Display Name. Absent values never blank an existing field.
   def self.from_omniauth(auth)
     # Only match an existing identity by a present uid. A blank uid identifies
     # no one, so matching on it would collapse every blank-uid login onto the
     # first such account (callers should reject blank uids before this).
-    if auth.uid.present?
-      identity = find_by(provider: auth.provider, uid: auth.uid)
-      return identity if identity
+    user = auth.uid.present? ? find_by(provider: auth.provider, uid: auth.uid) : nil
+    user ||= find_or_initialize_by(email: auth.info.email).tap do |account|
+      account.provider = auth.provider
+      account.uid = auth.uid
     end
 
-    user = find_or_initialize_by(email: auth.info.email)
-    user.provider = auth.provider
-    user.uid = auth.uid
-    # Prefill the Display Name from the provider's name on first sign-in only;
-    # never overwrite a handle the volunteer has since chosen for themselves.
-    user.handle = auth.info.name if user.handle.blank? && auth.info.name.present?
+    OAUTH_PROFILE_FIELDS.each do |attribute, info_key|
+      value = auth.info[info_key]
+      user.public_send("#{attribute}=", value) if value.present?
+    end
+
     user.password = Devise.friendly_token[0, 32] if user.encrypted_password.blank?
     user.skip_confirmation! unless user.confirmed?
     user.save
