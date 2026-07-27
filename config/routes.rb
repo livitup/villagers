@@ -103,6 +103,8 @@ Rails.application.routes.draw do
   resources :qualifications
   resources :managed_users, controller: "users", path: "manage/users" do
     resources :user_qualifications, only: [ :create, :destroy ]
+    # Grant/revoke the village admin role (#263)
+    resource :village_admin_role, only: [ :create, :destroy ]
   end
 
   # Leaderboard

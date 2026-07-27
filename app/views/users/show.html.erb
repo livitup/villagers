@@ -57,6 +57,28 @@
             <span class="badge bg-secondary">Volunteer</span>
           <% end %>
 
+          <%# Grant/revoke the village admin role (#263). Revoking the last
+              remaining admin is refused server-side. %>
+          <% if policy(@user).manage_village_admin_role? %>
+            <div class="mt-2">
+              <% if @user.village_admin? %>
+                <%= form_with url: managed_user_village_admin_role_path(@user), method: :delete do %>
+                  <button type="submit" class="btn btn-sm btn-outline-danger"
+                          data-turbo-confirm="Revoke the village admin role from <%= @user.display_name %>?">
+                    Revoke Village Admin
+                  </button>
+                <% end %>
+              <% else %>
+                <%= form_with url: managed_user_village_admin_role_path(@user), method: :post do %>
+                  <button type="submit" class="btn btn-sm btn-outline-primary"
+                          data-turbo-confirm="Make <%= @user.display_name %> a village admin? They will be able to manage everything in the village.">
+                    Make Village Admin
+                  </button>
+                <% end %>
+              <% end %>
+            </div>
+          <% end %>
+
           <hr>
 
           <div class="card bg-light">
