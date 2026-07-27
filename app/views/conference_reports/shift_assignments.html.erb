@@ -14,7 +14,7 @@
       <h5 class="mb-0">Filters</h5>
     </div>
     <div class="card-body">
-      <%= form_with url: shift_assignments_conference_reports_path(@conference), method: :get, local: true, class: "row g-3" do %>
+      <%= form_with url: shift_assignments_conference_reports_path(@conference), method: :get, local: true, class: "row g-3", data: { controller: "auto-submit" } do %>
         <div class="col-md-4">
           <label for="program_id" class="form-label">Program</label>
           <%= select_tag :program_id,
@@ -31,13 +31,15 @@
           <%= link_to "Clear", shift_assignments_conference_reports_path(@conference), class: "btn btn-outline-secondary" %>
         </div>
         <%# Optional profile columns (#261): shown in the table and included in
-            the CSV export. Nothing checked = the classic report. %>
+            the CSV export. Toggling applies immediately (auto-submit);
+            nothing checked = the classic report. %>
         <div class="col-12">
           <label class="form-label mb-1">Extra columns</label>
           <div class="d-flex flex-wrap gap-3">
             <% ConferenceReportsController::PROFILE_COLUMNS.each do |key, label| %>
               <div class="form-check">
-                <%= check_box_tag "columns[]", key, @profile_columns.include?(key), id: "column-#{key}", class: "form-check-input" %>
+                <%= check_box_tag "columns[]", key, @profile_columns.include?(key), id: "column-#{key}",
+                    class: "form-check-input", data: { action: "change->auto-submit#submit" } %>
                 <label class="form-check-label" for="column-<%= key %>"><%= label %></label>
               </div>
             <% end %>
