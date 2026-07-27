@@ -77,6 +77,50 @@ class UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   # Edit action tests
+  # Manager-level read access (#262): the staffing timeline links volunteers'
+  # profiles, and its audience includes conference managers and activity leads.
+  test "a conference lead can view a volunteer's profile read-only" do
+    conference = Conference.create!(
+      village: @village, name: "Test Conference",
+      start_date: Date.tomorrow, end_date: Date.tomorrow + 1.day,
+      conference_hours_start: "09:00", conference_hours_end: "17:00"
+    )
+    lead = User.create!(email: "lead@example.com", password: "password123",
+                        password_confirmation: "password123", handle: "lead")
+    ConferenceRole.create!(user: lead, conference: conference, role_name: ConferenceRole::CONFERENCE_LEAD)
+    sign_in_user(lead)
+
+    get managed_user_path(@volunteer)
+
+    assert_response :success
+    # Admin-only controls stay hidden.
+    assert_select "a", text: "Edit", count: 0
+    assert_select "a", text: "← Back to Users", count: 0
+    assert_select "input[type=submit][value=Grant]", count: 0
+    assert_select "form[action=?]", managed_user_village_admin_role_path(@volunteer), count: 0
+  end
+
+  test "an activity lead can view a volunteer's profile" do
+    conference = Conference.create!(
+      village: @village, name: "Test Conference",
+      start_date: Date.tomorrow, end_date: Date.tomorrow + 1.day,
+      conference_hours_start: "09:00", conference_hours_end: "17:00"
+    )
+    conference_program = ConferenceProgram.create!(
+      conference: conference,
+      program: Program.create!(name: "Ham Exams", village: @village)
+    )
+    activity_lead = User.create!(email: "activity-lead@example.com", password: "password123",
+                                 password_confirmation: "password123", handle: "activitylead")
+    ConferenceProgramRole.create!(user: activity_lead, conference_program: conference_program,
+                                  role_name: ConferenceProgramRole::ACTIVITY_LEAD)
+    sign_in_user(activity_lead)
+
+    get managed_user_path(@volunteer)
+
+    assert_response :success
+  end
+
   test "should get edit as village admin" do
     sign_in_user(@village_admin)
     get edit_managed_user_url(@volunteer)

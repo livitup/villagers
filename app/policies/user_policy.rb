@@ -3,8 +3,15 @@ class UserPolicy < ApplicationPolicy
     user&.village_admin?
   end
 
+  # Conference managers and activity leads may read volunteer profiles (#262):
+  # the staffing timeline links to them, and these roles already receive the
+  # same contact data through the reports. Editing stays village-admin-only.
   def show?
-    user&.village_admin?
+    return true if user&.village_admin?
+    return false if user.nil?
+
+    ConferenceRole.exists?(user: user) ||
+      ConferenceProgramRole.exists?(user: user, role_name: ConferenceProgramRole::ACTIVITY_LEAD)
   end
 
   def edit?

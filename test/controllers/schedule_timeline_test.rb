@@ -121,6 +121,25 @@ class ScheduleTimelineTest < ActionDispatch::IntegrationTest
     assert_select ".timeline-bar", 0
   end
 
+  test "bars link to the volunteer's profile" do
+    sign_in @admin
+    get conference_schedule_timeline_path(@conference)
+
+    assert_select "a.timeline-bar[href='#{managed_user_path(@volunteer)}']", text: /Radio Ray/
+    assert_select "a.timeline-bar[href='#{managed_user_path(@other_volunteer)}']", text: /Sam/
+  end
+
+  test "bars link to the volunteer's profile for activity leads too" do
+    lead = create_user("activity-lead@example.com", handle: "Exams Lead")
+    ConferenceProgramRole.create!(user: lead, conference_program: @exams,
+                                  role_name: ConferenceProgramRole::ACTIVITY_LEAD)
+    sign_in lead
+
+    get conference_schedule_timeline_path(@conference)
+
+    assert_select "a.timeline-bar[href='#{managed_user_path(@volunteer)}']"
+  end
+
   test "managers get a link to the timeline from the schedule and the board" do
     sign_in @admin
 
