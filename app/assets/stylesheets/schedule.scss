@@ -19,6 +19,8 @@
     &.bare { background: var(--bs-danger); }
     &.short { background: var(--bs-warning); }
     &.covered { background: var(--bs-success); }
+    // Over the minimum (#259): healthy surplus up to the signup cap.
+    &.surplus { background: var(--bs-primary); }
 
     // My own shifts: an info underline on top of whatever state color.
     &.mine { box-shadow: inset 0 -4px 0 var(--bs-info); }

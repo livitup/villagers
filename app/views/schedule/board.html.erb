@@ -25,7 +25,8 @@
                 <% if projection %>
                   <%
                     state_badge = { bare: [ "text-bg-danger", "Bare" ], short: [ "text-bg-warning", "Short" ],
-                                    covered: [ "text-bg-success", "Covered" ] }[projection.worst_state]
+                                    covered: [ "text-bg-success", "Covered" ],
+                                    surplus: [ "text-bg-primary", "Extra" ] }[projection.worst_state]
                   %>
                   <%= link_to conference_schedule_board_path(@conference, manage: row[:conference_program].id, day: day.iso8601),
                       class: "text-decoration-none d-block" do %>

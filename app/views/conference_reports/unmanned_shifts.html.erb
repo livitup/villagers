@@ -44,21 +44,22 @@
               <th>Time</th>
               <th>Program</th>
               <th>Current</th>
+              <th>Min</th>
               <th>Max</th>
-              <th>Spots Available</th>
+              <th>Needed to Cover</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
             <% @timeslots.each do |timeslot| %>
-              <% spots_available = timeslot.max_volunteers - timeslot.current_volunteers_count %>
               <tr class="<%= timeslot.current_volunteers_count == 0 ? 'table-danger' : 'table-warning' %>">
                 <td><%= timeslot.start_time.strftime("%A, %B %d") %></td>
                 <td><%= timeslot.start_time.strftime("%l:%M %p") %> - <%= timeslot.end_time.strftime("%l:%M %p") %></td>
                 <td><%= timeslot.conference_program.program.name %></td>
                 <td><%= timeslot.current_volunteers_count %></td>
+                <td><%= timeslot.min_volunteers %></td>
                 <td><%= timeslot.max_volunteers %></td>
-                <td><%= spots_available %></td>
+                <td><%= timeslot.min_volunteers - timeslot.current_volunteers_count %></td>
                 <td>
                   <% if timeslot.current_volunteers_count == 0 %>
                     <span class="badge bg-danger">Unmanned</span>
@@ -74,7 +75,7 @@
     </div>
     <p class="text-muted mt-3">
       Showing <%= @timeslots.size %> shifts that need volunteers.
-      Total spots available: <%= @timeslots.sum { |t| t.max_volunteers - t.current_volunteers_count } %>
+      Total volunteers needed to cover: <%= @timeslots.sum { |t| t.min_volunteers - t.current_volunteers_count } %>
     </p>
   <% else %>
     <div class="alert alert-success">

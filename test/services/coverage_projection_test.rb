@@ -30,6 +30,10 @@ class CoverageProjectionTest < ActiveSupport::TestCase
     slot.update_column(:current_volunteers_count, count)
   end
 
+  def band(slot, min, max)
+    slot.update_columns(min_volunteers: min, max_volunteers: max)
+  end
+
   # --- ticks ---
 
   test "ticks are ordered, one per slot, with needed/on read from the slot" do
@@ -39,15 +43,20 @@ class CoverageProjectionTest < ActiveSupport::TestCase
     assert_equal @slots.map(&:id), projection.ticks.map { |t| t[:timeslot_id] }
     assert_equal @slots.first.start_time, projection.ticks.first[:start]
     assert_equal [ 1 ], projection.ticks.map { |t| t[:needed] }.uniq
+    assert_equal [ 1 ], projection.ticks.map { |t| t[:max] }.uniq
     assert_equal [ 0 ], projection.ticks.map { |t| t[:on] }.uniq
   end
 
-  test "tick states: bare when empty, short when under target, covered at or over target" do
-    cover(@slots[1], 1)              # covered (1/1)
-    @slots[2].update_column(:max_volunteers, 2)
-    cover(@slots[2], 1)              # short (1/2)
-    @slots[3].update_column(:max_volunteers, 2)
-    cover(@slots[3], 3)              # covered (3/2 — admin over-cover)
+  test "tick states: bare when empty, short below min, covered at min, surplus above min" do
+    cover(@slots[1], 1)              # covered (1 == min 1)
+    band(@slots[2], 2, 3)
+    cover(@slots[2], 1)              # short (1 < min 2)
+    band(@slots[3], 2, 3)
+    cover(@slots[3], 2)              # covered (2 == min 2)
+    band(@slots[4], 2, 4)
+    cover(@slots[4], 3)              # surplus (min 2 < 3 <= max 4)
+    band(@slots[5], 2, 3)
+    cover(@slots[5], 4)              # surplus (admin over-cover past max)
 
     states = CoverageProjection.for(@cp, @day).ticks.map { |t| t[:state] }
 
@@ -55,6 +64,8 @@ class CoverageProjectionTest < ActiveSupport::TestCase
     assert_equal :covered, states[1]
     assert_equal :short,   states[2]
     assert_equal :covered, states[3]
+    assert_equal :surplus, states[4]
+    assert_equal :surplus, states[5]
   end
 
   test "only the requested date's slots appear" do
@@ -109,7 +120,7 @@ class CoverageProjectionTest < ActiveSupport::TestCase
 
   test "short slots count as gaps and carry the run's max needed" do
     @slots.each { |slot| cover(slot, 1) }
-    @slots[5].update_column(:max_volunteers, 3)   # 1/3 -> short
+    band(@slots[5], 3, 3)   # 1/3 -> short
 
     gaps = CoverageProjection.for(@cp, @day).gaps
 
@@ -117,6 +128,13 @@ class CoverageProjectionTest < ActiveSupport::TestCase
     assert_equal @slots[5].start_time, gaps.first[:start]
     assert_equal @slots[5].end_time,   gaps.first[:end]
     assert_equal 3, gaps.first[:needed]
+  end
+
+  test "gaps close at min: a slot at min but below max is not a gap" do
+    @slots.each { |slot| band(slot, 1, 3) }
+    @slots.each { |slot| cover(slot, 1) }
+
+    assert_empty CoverageProjection.for(@cp, @day).gaps
   end
 
   test "a schedule break splits a gap even when both sides are uncovered" do
@@ -151,7 +169,7 @@ class CoverageProjectionTest < ActiveSupport::TestCase
       day_schedules: { "0" => { "enabled" => true, "start" => "09:00", "end" => "10:00" } }
     )
     short_program.timeslots.each { |slot| slot.update_column(:current_volunteers_count, 1) }
-    short_program.timeslots.first.update_column(:max_volunteers, 2)  # one short slot
+    band(short_program.timeslots.first, 2, 2)  # one short slot
     covered_program = ConferenceProgram.create!(
       conference: @conference,
       program: Program.create!(name: "Front Desk", village: @village),
@@ -179,6 +197,15 @@ class CoverageProjectionTest < ActiveSupport::TestCase
     assert_equal 0,        covered_entry[:uncovered_minutes]
     assert_nil covered_entry[:first_gap]
     assert_equal bare_entry[:first_gap][:start], @slots.first.start_time
+  end
+
+  test "worst_state treats surplus as healthier than covered" do
+    @slots.each { |slot| band(slot, 1, 3) }
+    @slots.each { |slot| cover(slot, 2) }   # all above min
+    assert_equal :surplus, CoverageProjection.for(@cp, @day).worst_state
+
+    cover(@slots[0], 1)                     # one slot exactly at min
+    assert_equal :covered, CoverageProjection.for(@cp, @day).worst_state
   end
 
   test "summary orders same-state programs by uncovered minutes, worst first" do

@@ -95,6 +95,48 @@ class TimeslotTest < ActiveSupport::TestCase
     assert_equal @conference, timeslot.conference
   end
 
+  # --- coverage band (#259): min_volunteers target vs max_volunteers cap ---
+
+  test "should default min_volunteers to 1" do
+    timeslot = Timeslot.new(
+      conference_program: @conference_program,
+      start_time: Time.zone.parse("#{@conference.start_date} 09:00")
+    )
+    assert_equal 1, timeslot.min_volunteers
+  end
+
+  test "should require min_volunteers of at least 1" do
+    timeslot = Timeslot.new(
+      conference_program: @conference_program,
+      start_time: Time.zone.parse("#{@conference.start_date} 09:00"),
+      min_volunteers: 0,
+      max_volunteers: 5
+    )
+    assert_not timeslot.valid?
+    assert timeslot.errors[:min_volunteers].any?
+  end
+
+  test "should reject min_volunteers above max_volunteers" do
+    timeslot = Timeslot.new(
+      conference_program: @conference_program,
+      start_time: Time.zone.parse("#{@conference.start_date} 09:00"),
+      min_volunteers: 6,
+      max_volunteers: 5
+    )
+    assert_not timeslot.valid?
+    assert timeslot.errors[:min_volunteers].any?
+  end
+
+  test "should allow min_volunteers equal to max_volunteers" do
+    timeslot = Timeslot.new(
+      conference_program: @conference_program,
+      start_time: Time.zone.parse("#{@conference.start_date} 09:00"),
+      min_volunteers: 5,
+      max_volunteers: 5
+    )
+    assert timeslot.valid?
+  end
+
   test "should belong to program through conference_program" do
     timeslot = Timeslot.create!(
       conference_program: @conference_program,

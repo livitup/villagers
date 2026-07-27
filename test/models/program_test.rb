@@ -14,6 +14,26 @@ class ProgramTest < ActiveSupport::TestCase
     assert program.valid?
   end
 
+  test "should default min_volunteers to 1 and reject values below 1" do
+    program = Program.new(name: "Ham Test", village: @village)
+    assert_equal 1, program.min_volunteers
+
+    program.min_volunteers = 0
+    assert_not program.valid?
+    assert program.errors[:min_volunteers].any?
+  end
+
+  test "should reject min_volunteers above max_volunteers" do
+    program = Program.new(
+      name: "Ham Test",
+      village: @village,
+      min_volunteers: 4,
+      max_volunteers: 2
+    )
+    assert_not program.valid?
+    assert program.errors[:min_volunteers].any?
+  end
+
   test "should require name" do
     program = Program.new(
       description: "Amateur radio license testing",

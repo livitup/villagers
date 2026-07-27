@@ -22,10 +22,12 @@ class ConferenceReportsController < ApplicationController
     end
   end
 
+  # Under-covered = below the coverage target (min_volunteers, #259); slots
+  # between min and max are adequately staffed and not reported.
   def unmanned_shifts
     @timeslots = filtered_timeslots
                  .includes(conference_program: :program)
-                 .where("timeslots.current_volunteers_count < timeslots.max_volunteers")
+                 .where("timeslots.current_volunteers_count < timeslots.min_volunteers")
                  .order(:start_time)
 
     respond_to do |format|
@@ -84,7 +86,7 @@ class ConferenceReportsController < ApplicationController
 
   def send_unmanned_shifts_csv
     csv_data = CSV.generate(headers: true) do |csv|
-      csv << [ "Date", "Time", "Program", "Current Volunteers", "Max Volunteers", "Spots Available" ]
+      csv << [ "Date", "Time", "Program", "Current Volunteers", "Min Volunteers", "Max Volunteers", "Needed to Cover" ]
 
       @timeslots.each do |timeslot|
         csv << [
@@ -92,8 +94,9 @@ class ConferenceReportsController < ApplicationController
           "#{timeslot.start_time.strftime('%H:%M')} - #{timeslot.end_time.strftime('%H:%M')}",
           timeslot.conference_program.program.name,
           timeslot.current_volunteers_count,
+          timeslot.min_volunteers,
           timeslot.max_volunteers,
-          timeslot.max_volunteers - timeslot.current_volunteers_count
+          timeslot.min_volunteers - timeslot.current_volunteers_count
         ]
       end
     end

@@ -12,16 +12,22 @@
   <div class="offcanvas-body">
     <%= render "coverage_ribbon", projection: @manage_projection, interactive: false %>
 
-    <%# Needed today: one value per day (settled decision) -> #242 capacity path %>
+    <%# Coverage band today (#259): min = covered (green), max = signup cap.
+        One value pair per day (settled decision) -> #242 capacity path %>
     <%= form_with url: bulk_update_capacity_conference_timeslots_path(@conference), method: :patch, data: { turbo: false }, class: "mt-3" do %>
       <input type="hidden" name="conference_program_id" value="<%= @manage_cp.id %>">
       <input type="hidden" name="date" value="<%= @manage_day.iso8601 %>">
-      <label class="form-label mb-1" for="manage-needed">Needed today</label>
-      <div class="input-group input-group-sm" style="max-width: 12rem;">
-        <input type="number" id="manage-needed" name="max_volunteers" min="1" class="form-control"
+      <label class="form-label mb-1" for="manage-min">Coverage today</label>
+      <div class="input-group input-group-sm" style="max-width: 18rem;">
+        <span class="input-group-text">Min</span>
+        <input type="number" id="manage-min" name="min_volunteers" min="1" class="form-control"
                value="<%= @manage_projection.ticks.map { |tick| tick[:needed] }.max || 1 %>">
+        <span class="input-group-text">Max</span>
+        <input type="number" id="manage-max" name="max_volunteers" min="1" class="form-control" aria-label="Max"
+               value="<%= @manage_projection.ticks.map { |tick| tick[:max] }.max || 1 %>">
         <button type="submit" class="btn btn-outline-primary">Save</button>
       </div>
+      <p class="text-muted small mt-1 mb-0">Min met shows green; extra volunteers up to Max show blue. Signups close at Max.</p>
     <% end %>
 
     <hr>

@@ -64,6 +64,7 @@ class ProgramsController < ApplicationController
         {
           conference_program_id: cp.id,
           conference_name: cp.conference.name,
+          current_min_volunteers: cp.effective_min_volunteers,
           current_max_volunteers: cp.effective_max_volunteers,
           timeslots_count: timeslots_count,
           over_capacity_count: over_capacity_count,
@@ -78,10 +79,11 @@ class ProgramsController < ApplicationController
   def bulk_update_capacity
     authorize @program, :update?, policy_class: ProgramPolicy
     new_max_volunteers = params[:new_max_volunteers].to_i
+    new_min_volunteers = params[:new_min_volunteers].presence&.to_i
     conference_program_ids = params[:conference_program_ids] || []
 
     conference_program_ids.each do |cp_id|
-      UpdateTimeslotCapacityJob.perform_later(cp_id.to_i, new_max_volunteers)
+      UpdateTimeslotCapacityJob.perform_later(cp_id.to_i, new_max_volunteers, new_min_volunteers)
     end
 
     render json: {
@@ -102,6 +104,6 @@ class ProgramsController < ApplicationController
   end
 
   def program_params
-    params.require(:program).permit(:name, :description, :max_volunteers)
+    params.require(:program).permit(:name, :description, :min_volunteers, :max_volunteers)
   end
 end

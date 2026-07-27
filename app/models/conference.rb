@@ -45,12 +45,14 @@ class Conference < ApplicationRecord
     timeslots.count
   end
 
+  # "Filled" means the coverage target is met (min_volunteers, #259), not that
+  # the slot is at its signup cap.
   def filled_timeslots
-    timeslots.where("timeslots.current_volunteers_count >= timeslots.max_volunteers").count
+    timeslots.where("timeslots.current_volunteers_count >= timeslots.min_volunteers").count
   end
 
   def unfilled_timeslots
-    timeslots.where("timeslots.current_volunteers_count < timeslots.max_volunteers").count
+    timeslots.where("timeslots.current_volunteers_count < timeslots.min_volunteers").count
   end
 
   def volunteer_count

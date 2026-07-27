@@ -83,7 +83,7 @@ class ConferenceProgramsController < ApplicationController
   end
 
   def conference_program_params
-    params.require(:conference_program).permit(:program_id, :public_description, :max_volunteers)
+    params.require(:conference_program).permit(:program_id, :public_description, :min_volunteers, :max_volunteers)
   end
 
   def process_day_schedules

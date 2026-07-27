@@ -36,10 +36,18 @@
             </div>
 
             <div class="mb-3">
-              <%= form.label :max_volunteers, "Volunteers Needed Per Shift (Override)", class: "form-label" %>
+              <%= form.label :min_volunteers, "Minimum Volunteers Per Shift (Override)", class: "form-label" %>
+              <%= form.number_field :min_volunteers, min: 1, class: "form-control", style: "max-width: 150px;", placeholder: "Use program default" %>
+              <small class="form-text text-muted">
+                Volunteers needed for a shift to count as covered. Leave blank to use the program's default.
+              </small>
+            </div>
+
+            <div class="mb-3">
+              <%= form.label :max_volunteers, "Maximum Volunteers Per Shift (Override)", class: "form-label" %>
               <%= form.number_field :max_volunteers, min: 1, class: "form-control", style: "max-width: 150px;", placeholder: "Use program default" %>
               <small class="form-text text-muted">
-                Leave blank to use the program's default. Set a value to override for this conference only.
+                Hard cap — signups close once a shift reaches this. Leave blank to use the program's default.
               </small>
             </div>
 

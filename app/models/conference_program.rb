@@ -18,10 +18,18 @@ class ConferenceProgram < ApplicationRecord
   validates :conference, presence: true
   validates :program, presence: true, uniqueness: { scope: :conference_id }
   validates :max_volunteers, numericality: { greater_than: 0 }, allow_nil: true
+  validates :min_volunteers, numericality: { greater_than: 0 }, allow_nil: true
+  validate :min_not_above_max
 
   # Returns the effective max_volunteers (override or program default)
   def effective_max_volunteers
     max_volunteers || program&.max_volunteers || 1
+  end
+
+  # Coverage target (#259): override or program default, but never above the
+  # effective cap — a max override may undercut the program's min default.
+  def effective_min_volunteers
+    [ min_volunteers || program&.min_volunteers || 1, effective_max_volunteers ].min
   end
 
   after_create :generate_timeslots
@@ -33,6 +41,14 @@ class ConferenceProgram < ApplicationRecord
   end
 
   private
+
+  def min_not_above_max
+    return unless min_volunteers && max_volunteers
+
+    if min_volunteers > max_volunteers
+      errors.add(:min_volunteers, "must be less than or equal to max volunteers")
+    end
+  end
 
   # day_schedules are keyed by calendar date (ISO "YYYY-MM-DD") so a
   # conference date change never re-assigns a day's hours to a different

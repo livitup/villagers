@@ -60,6 +60,6 @@ class CustomProgramsController < ApplicationController
   end
 
   def program_params
-    params.require(:program).permit(:name, :description, :max_volunteers)
+    params.require(:program).permit(:name, :description, :min_volunteers, :max_volunteers)
   end
 end
